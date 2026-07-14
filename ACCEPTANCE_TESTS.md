@@ -127,10 +127,14 @@
 - [ ] Same seed and fixtures produce identical results.
 - [ ] Every benchmark API and UI surface labels results as prototype outcomes on synthetic data.
 - [ ] Documentation makes no real-world accuracy or false-positive guarantee.
-- [ ] `benchmark-v2` is documented as a prospective, separately versioned future item and is not created in Milestone 4.
+- [ ] `benchmark-v2` is documented as a prospective, separately versioned future item and is not created in Milestone 5.
 
 ## Frontend
 
+- [ ] Login uses `/api/auth/login` followed by `/api/auth/me` and keeps JWT state in memory only.
+- [ ] Protected routes redirect unauthenticated users to login and preserve the intended path.
+- [ ] Analyst navigation does not expose administrator-only controls or the system-health route.
+- [ ] A 401 or token expiry clears auth state and cached server data.
 - [ ] Overview uses API data from the 14-day baseline.
 - [ ] Overview metrics have defined operational meaning.
 - [ ] Incident filters work.
@@ -140,6 +144,9 @@
 - [ ] All scenarios run with visible progress and final state.
 - [ ] Scenario B visibly shows guarded, permitted, and monitored with no hold.
 - [ ] Loading, empty, success, and error states exist.
+- [ ] Incident workflow controls come from backend-returned valid actions and handle stale `409` conflicts.
+- [ ] Scenario expected outcomes and important signals come from the API rather than duplicated browser logic.
+- [ ] Quantum-readiness and benchmark screens retain all required disclaimers and exact bounded language.
 - [ ] No placeholders, debug UI, or hard-coded product metrics remain.
 
 ## Authentication and security

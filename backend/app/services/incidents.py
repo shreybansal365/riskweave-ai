@@ -43,6 +43,7 @@ from app.schemas.incidents import (
     TimelineItemResponse,
     TransactionSummaryResponse,
 )
+from app.services.analyst_workflows import available_actions_for
 from app.services.presentation import masked_ip, masked_uuid
 from app.services.quantum_readiness import (
     FRAUD_RISK_SEPARATION_NOTICE,
@@ -302,6 +303,7 @@ class IncidentQueryService:
                 if item.category == ContributionCategory.CORRELATION
             ],
             analyst_actions=analyst_actions,
+            available_actions=available_actions_for(incident.status, transaction.status),
         )
 
     @staticmethod

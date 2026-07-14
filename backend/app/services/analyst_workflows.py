@@ -181,6 +181,22 @@ class AnalystWorkflowService:
         )
 
 
+def available_actions_for(
+    incident_status: IncidentStatus,
+    transaction_status: TransactionStatus,
+) -> list[AnalystActionType]:
+    """List actions accepted by the same transition function used for mutations."""
+
+    available: list[AnalystActionType] = []
+    for action_type in AnalystActionType:
+        try:
+            _transition(incident_status, transaction_status, action_type)
+        except WorkflowConflictError:
+            continue
+        available.append(action_type)
+    return available
+
+
 def _transition(
     incident_status: IncidentStatus,
     transaction_status: TransactionStatus,

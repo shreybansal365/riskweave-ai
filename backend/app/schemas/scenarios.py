@@ -16,6 +16,17 @@ from app.models.enums import (
 from app.schemas.common import ApiModel
 
 
+class ScenarioExpectedOutcomeResponse(ApiModel):
+    cyber_score: int = Field(ge=0, le=100)
+    transaction_score: int = Field(ge=0, le=100)
+    correlation_bonus: int = Field(ge=0, le=18)
+    raw_fused_score: Decimal = Field(ge=0, le=100)
+    fused_score: int = Field(ge=0, le=100)
+    severity: Severity
+    recommended_action: RecommendedAction
+    transaction_status: TransactionStatus
+
+
 class ScenarioDefinitionResponse(ApiModel):
     scenario_key: ScenarioKey
     title: str
@@ -25,6 +36,8 @@ class ScenarioDefinitionResponse(ApiModel):
     started_at: datetime
     completed_at: datetime | None
     result_incident_id: UUID | None
+    important_signals: list[str]
+    expected_outcome: ScenarioExpectedOutcomeResponse
 
 
 class ScenarioCatalogResponse(ApiModel):

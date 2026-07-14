@@ -2,11 +2,12 @@
 
 RiskWeave AI is an explainable cyber-transaction intelligence prototype for FinSpark’26 Problem Statement 2. The approved product vision correlates cybersecurity telemetry with transaction behaviour, while keeping every decision deterministic, inspectable, and clearly qualified as a synthetic-data prototype.
 
-Milestone 4 exposes the persisted intelligence core through authenticated, typed business APIs. It
-adds incident investigation and analyst workflows, source-backed dashboard aggregates and 14-day
-trends, bounded customer/account context, admin-only deterministic scenario controls, explainable
-channel-linked quantum-readiness services, and transparent benchmark-v1 reporting. Business screens
-remain deliberately deferred to Milestone 5.
+Milestone 5 adds the complete authenticated analyst experience on top of the persisted intelligence
+core: an operational overview, server-filtered incident queue, evidence-dense investigation workspace,
+role-aware deterministic simulator, quantum-readiness inventory, administrator health view, and an
+honest benchmark-v1 evidence surface. The browser presents API-owned values and server-approved
+workflow actions; it contains no scoring formula, threshold engine, scenario logic, or fabricated
+banking metric.
 
 > **Built and maintained by Shrey Bansal.**
 > Developed for the FinSpark’26 Hackathon under Team CyberForge.
@@ -90,7 +91,7 @@ Expected foundation responses:
 {
   "status": "ok",
   "service": "RiskWeave API",
-  "version": "0.4.0"
+  "version": "0.5.0"
 }
 ```
 
@@ -117,6 +118,26 @@ docker compose exec backend python -m app.cli.seed_demo_users
 
 The seed is idempotent: rerunning it preserves the same UUIDv5 identities and does not rehash unchanged
 passwords. Authentication remains fail-closed with a safe `503` response when `JWT_SECRET` is unset.
+
+### Product routes
+
+After seeding users and the deterministic dataset, sign in at
+[http://localhost:4173/login](http://localhost:4173/login). The browser keeps the short-lived JWT only
+in application memory; a hard refresh intentionally requires a new sign-in.
+
+| Route | Purpose | Access |
+|---|---|---|
+| `/overview` | Source-backed metrics, 14-day trends, priority cases, source health | analyst, admin |
+| `/incidents` | Server-filtered and URL-preserved investigation queue | analyst, admin |
+| `/incidents/:incidentId` | Evidence convergence, timeline, context, and analyst workflow | analyst, admin |
+| `/simulator` | Scenario state and authoritative expected outcomes | read: analyst/admin; run/reset: admin |
+| `/quantum-readiness` | Channel-linked crypto migration posture | analyst, admin |
+| `/system-health` | Liveness, readiness, migration, and source diagnostics | admin |
+| `/evaluation` | Qualified benchmark-v1 evidence at 40+, 60+, and 80+ | analyst, admin |
+
+Frontend architecture, API-client ownership, authentication flow, and route behavior are documented in
+`docs/FRONTEND_ARCHITECTURE.md`. The reusable visual language is documented in
+`docs/DESIGN_SYSTEM.md`.
 
 Restore the exact deterministic background dataset:
 
@@ -196,7 +217,7 @@ The current runtime consumes:
 | Variable | Purpose | Safe local default |
 |---|---|---|
 | `APP_NAME` | API display name | `RiskWeave API` |
-| `APP_VERSION` | API version | `0.4.0` |
+| `APP_VERSION` | API version | `0.5.0` |
 | `APP_ENV` | `development`, `test`, or `production` | `development` |
 | `LOG_LEVEL` | Typed Python log level | `INFO` |
 | `DATABASE_URL` | PostgreSQL connection using psycopg | Docker Compose value |
@@ -225,7 +246,7 @@ drift silently.
 │   ├── app/services/        Database-backed use-case and scenario orchestration
 │   ├── risk_engine/         Pure rules, anomaly, correlation, fusion, explanation, benchmark
 │   └── data/                Versioned baseline manifest and 48 benchmark fixtures
-├── frontend/                React, strict TypeScript, service-status shell
+├── frontend/                Authenticated React product UI, typed API client, design system, tests
 ├── docs/                    Intelligence, synthetic-data, and benchmark implementation notes
 ├── .github/workflows/       CI quality gates
 ├── docker-compose.yml       Local frontend, backend, and PostgreSQL topology
@@ -258,6 +279,10 @@ GitHub Actions verifies:
 - admin-only deterministic scenario APIs and exact atomic reset;
 - explainable quantum-readiness and qualified benchmark-v1 API reports;
 - successful OpenAPI generation for the complete Milestone 4 surface;
+- in-memory JWT login, authenticated routing, and role-aware analyst/admin navigation;
+- API-backed overview, queue, investigation, simulator, quantum, health, and evaluation views;
+- Vitest, Testing Library, keyboard-flow, and automated accessibility checks for core UI behavior;
+- V8 frontend coverage reporting through `npm run test:coverage`;
 - valid Docker Compose configuration.
 
 ## Implemented API and security boundary
@@ -331,15 +356,16 @@ that are not calibrated identically. It does not establish universal false-posit
 > RiskWeave demonstrates context-aware avoidance of an unnecessary intervention in the deterministic legitimate-new-device scenario. Broader false-positive reduction has not yet been established by benchmark-v1.
 
 A separately versioned, prospectively designed `benchmark-v2` remains future work; it is not created
-in Milestone 4.
+in Milestone 5.
 
 ## Deferred boundary
 
-The following are explicitly deferred until their approved milestones:
+Milestone 5 provides the complete functional product UI, but deliberately does not claim final visual
+masterpiece status. The following remain outside this milestone:
 
-- frontend authentication and business screens;
-- incident queue, investigation workspace, scenario simulator, charts, and final visual polish;
-- deployment changes, presentation assets, screenshots, and demo video;
+- Milestone 6 visual critique, refinement, and final animation/responsive polish;
+- complete Playwright end-to-end coverage and cloud deployment;
+- final GitHub presentation treatment, screenshots, PPT, and demo video;
 - prospectively designed benchmark-v2.
 
 This is a synthetic-data prototype, not a production banking control. Later benchmark outcomes must be

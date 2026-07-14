@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "RiskWeave API"
-    app_version: str = "0.4.0"
+    app_version: str = "0.5.0"
     app_env: AppEnvironment = "development"
     log_level: LogLevel = "INFO"
     api_host: str = "0.0.0.0"

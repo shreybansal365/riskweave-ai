@@ -12,11 +12,12 @@ from app.schemas.scenarios import (
     ScenarioCatalogResponse,
     ScenarioDefinitionResponse,
     ScenarioExecutionResponse,
+    ScenarioExpectedOutcomeResponse,
     ScenarioResetResponse,
 )
 from app.services.audit import AuditRecorder
 from app.services.demo_data import DATASET_VERSION, EXPECTED_BASELINE_COUNTS, DemoDataService
-from app.services.scenarios import ScenarioService
+from app.services.scenarios import ScenarioService, expected_showcase_fusion
 
 SYNTHETIC_NOTICE = "All showcase scenarios operate only on deterministic synthetic data."
 
@@ -24,14 +25,17 @@ _SCENARIO_COPY = {
     ScenarioKey.NORMAL_ACTIVITY: (
         "Normal activity",
         "Demonstrates a low-risk permitted transaction from familiar context.",
+        ["Known device", "Usual location", "Familiar beneficiary", "Typical amount"],
     ),
     ScenarioKey.LEGITIMATE_NEW_DEVICE: (
         "Legitimate new device",
         "Demonstrates guarded monitoring without a hold or step-up requirement.",
+        ["New device", "Successful verification", "Familiar beneficiary", "Typical amount"],
     ),
     ScenarioKey.ACCOUNT_TAKEOVER: (
         "Account takeover",
         "Demonstrates cross-domain evidence leading to a critical held transaction.",
+        ["Failed MFA", "Risky network", "Endpoint alert", "New beneficiary", "Velocity spike"],
     ),
 }
 
@@ -46,20 +50,34 @@ class ScenarioOperationsService:
 
     def catalog(self, session: Session) -> ScenarioCatalogResponse:
         runs = session.scalars(select(ScenarioRun).order_by(ScenarioRun.scenario_key)).all()
+
+        def definition(run: ScenarioRun) -> ScenarioDefinitionResponse:
+            expected = expected_showcase_fusion(run.scenario_key)
+            copy = _SCENARIO_COPY[run.scenario_key]
+            return ScenarioDefinitionResponse(
+                scenario_key=run.scenario_key,
+                title=copy[0],
+                purpose=copy[1],
+                important_signals=copy[2],
+                expected_outcome=ScenarioExpectedOutcomeResponse(
+                    cyber_score=expected.cyber_score,
+                    transaction_score=expected.transaction_score,
+                    correlation_bonus=expected.correlation_bonus,
+                    raw_fused_score=expected.raw_fused_score,
+                    fused_score=expected.fused_score,
+                    severity=expected.severity,
+                    recommended_action=expected.recommended_action,
+                    transaction_status=expected.transaction_status,
+                ),
+                status=run.status,
+                simulation_epoch=run.simulation_epoch,
+                started_at=run.started_at,
+                completed_at=run.completed_at,
+                result_incident_id=run.result_incident_id,
+            )
+
         return ScenarioCatalogResponse(
-            items=[
-                ScenarioDefinitionResponse(
-                    scenario_key=run.scenario_key,
-                    title=_SCENARIO_COPY[run.scenario_key][0],
-                    purpose=_SCENARIO_COPY[run.scenario_key][1],
-                    status=run.status,
-                    simulation_epoch=run.simulation_epoch,
-                    started_at=run.started_at,
-                    completed_at=run.completed_at,
-                    result_incident_id=run.result_incident_id,
-                )
-                for run in runs
-            ],
+            items=[definition(run) for run in runs],
             synthetic_data_notice=SYNTHETIC_NOTICE,
         )
 

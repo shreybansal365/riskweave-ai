@@ -1,167 +1,187 @@
-import { useQuery } from "@tanstack/react-query";
+import { lazy, Suspense, useMemo, type ReactNode } from "react";
+import {
+  createBrowserRouter,
+  Navigate,
+  Outlet,
+  RouterProvider,
+  useLocation,
+  type RouteObject,
+} from "react-router-dom";
 
-import { fetchHealth, fetchReadiness } from "./features/service-status/api";
-import { API_BASE_URL } from "./lib/api-client";
+import { useAuth } from "./app/use-auth";
+import { AppShell } from "./components/AppShell";
+import { ErrorState, LoadingSkeleton } from "./components/ui";
 
-type ConnectionState = "checking" | "connected" | "attention" | "unavailable";
+const LoginPage = lazy(() =>
+  import("./pages/LoginPage").then((module) => ({ default: module.LoginPage })),
+);
+const OverviewPage = lazy(() =>
+  import("./pages/OverviewPage").then((module) => ({ default: module.OverviewPage })),
+);
+const IncidentsPage = lazy(() =>
+  import("./pages/IncidentsPage").then((module) => ({ default: module.IncidentsPage })),
+);
+const IncidentDetailPage = lazy(() =>
+  import("./pages/IncidentDetailPage").then((module) => ({
+    default: module.IncidentDetailPage,
+  })),
+);
+const SimulatorPage = lazy(() =>
+  import("./pages/SimulatorPage").then((module) => ({ default: module.SimulatorPage })),
+);
+const QuantumReadinessPage = lazy(() =>
+  import("./pages/QuantumReadinessPage").then((module) => ({
+    default: module.QuantumReadinessPage,
+  })),
+);
+const SystemHealthPage = lazy(() =>
+  import("./pages/SystemHealthPage").then((module) => ({
+    default: module.SystemHealthPage,
+  })),
+);
+const EvaluationPage = lazy(() =>
+  import("./pages/EvaluationPage").then((module) => ({ default: module.EvaluationPage })),
+);
 
-interface ServiceRowProps {
-  name: string;
-  endpoint: string;
-  state: ConnectionState;
-  label: string;
-  detail: string;
-}
-
-const statusLabels: Record<ConnectionState, string> = {
-  checking: "Checking",
-  connected: "Connected",
-  attention: "Needs attention",
-  unavailable: "Unavailable",
-};
-
-function ServiceRow({ name, endpoint, state, label, detail }: ServiceRowProps) {
+function RouteLoading({ children }: { children: ReactNode }) {
   return (
-    <article className="service-row" aria-label={`${name}: ${statusLabels[state]}`}>
-      <div className="service-identity">
-        <span
-          className={`status-indicator status-indicator--${state}`}
-          aria-hidden="true"
-        />
-        <div>
-          <h2>{name}</h2>
-          <code>{endpoint}</code>
-        </div>
-      </div>
-      <div className="service-result">
-        <span className={`status-label status-label--${state}`}>{label}</span>
-        <p>{detail}</p>
-      </div>
-    </article>
+    <Suspense fallback={<LoadingSkeleton label="Loading RiskWeave view" />}>
+      {children}
+    </Suspense>
   );
 }
+
+function RequireAuth() {
+  const { session } = useAuth();
+  const location = useLocation();
+  if (session === null)
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: `${location.pathname}${location.search}` }}
+      />
+    );
+  return <Outlet />;
+}
+
+function RequireAdmin({ children }: { children: ReactNode }) {
+  const { session } = useAuth();
+  if (session?.user.role !== "admin") return <Navigate to="/overview" replace />;
+  return children;
+}
+
+function StartRoute() {
+  const { session } = useAuth();
+  return <Navigate to={session === null ? "/login" : "/overview"} replace />;
+}
+
+function RouteFailure() {
+  return (
+    <ErrorState
+      title="This workspace view failed"
+      message="RiskWeave contained the route failure. Return to the overview or retry the page."
+    />
+  );
+}
+
+function NotFoundPage() {
+  return (
+    <main className="not-found">
+      <p className="eyebrow">404 · Unknown route</p>
+      <h1>This workspace path does not exist.</h1>
+      <p>
+        Return to the operational overview and continue from a supported product route.
+      </p>
+      <a href="/overview">Return to overview</a>
+    </main>
+  );
+}
+
+const riskWeaveRoutes: RouteObject[] = [
+  { path: "/", element: <StartRoute /> },
+  {
+    path: "/login",
+    element: (
+      <RouteLoading>
+        <LoginPage />
+      </RouteLoading>
+    ),
+    errorElement: <RouteFailure />,
+  },
+  {
+    element: <RequireAuth />,
+    children: [
+      {
+        element: <AppShell />,
+        errorElement: <RouteFailure />,
+        children: [
+          {
+            path: "/overview",
+            element: (
+              <RouteLoading>
+                <OverviewPage />
+              </RouteLoading>
+            ),
+          },
+          {
+            path: "/incidents",
+            element: (
+              <RouteLoading>
+                <IncidentsPage />
+              </RouteLoading>
+            ),
+          },
+          {
+            path: "/incidents/:incidentId",
+            element: (
+              <RouteLoading>
+                <IncidentDetailPage />
+              </RouteLoading>
+            ),
+          },
+          {
+            path: "/simulator",
+            element: (
+              <RouteLoading>
+                <SimulatorPage />
+              </RouteLoading>
+            ),
+          },
+          {
+            path: "/quantum-readiness",
+            element: (
+              <RouteLoading>
+                <QuantumReadinessPage />
+              </RouteLoading>
+            ),
+          },
+          {
+            path: "/system-health",
+            element: (
+              <RequireAdmin>
+                <RouteLoading>
+                  <SystemHealthPage />
+                </RouteLoading>
+              </RequireAdmin>
+            ),
+          },
+          {
+            path: "/evaluation",
+            element: (
+              <RouteLoading>
+                <EvaluationPage />
+              </RouteLoading>
+            ),
+          },
+        ],
+      },
+    ],
+  },
+  { path: "*", element: <NotFoundPage /> },
+];
 
 export function App() {
-  const health = useQuery({
-    queryKey: ["system", "health"],
-    queryFn: ({ signal }) => fetchHealth(signal),
-  });
-  const readiness = useQuery({
-    queryKey: ["system", "readiness"],
-    queryFn: ({ signal }) => fetchReadiness(signal),
-  });
-
-  const healthState: ConnectionState = health.isPending
-    ? "checking"
-    : health.isSuccess
-      ? "connected"
-      : "unavailable";
-
-  const readinessState: ConnectionState = readiness.isPending
-    ? "checking"
-    : readiness.isError
-      ? "unavailable"
-      : readiness.data.status === "ready"
-        ? "connected"
-        : "attention";
-
-  const healthDetail = health.isPending
-    ? "Waiting for the application service to respond."
-    : health.isSuccess
-      ? `${health.data.service} v${health.data.version} is responding.`
-      : "The browser could not reach the application service.";
-
-  const readinessDetail = readiness.isPending
-    ? "Verifying PostgreSQL connectivity and migration state."
-    : readiness.isError
-      ? "The readiness response could not be retrieved."
-      : readiness.data.status === "ready"
-        ? `PostgreSQL ${readiness.data.checks.database}; migrations ${readiness.data.checks.migrations}.`
-        : `PostgreSQL ${readiness.data.checks.database}; migrations ${readiness.data.checks.migrations}.`;
-
-  const retry = () => {
-    void health.refetch();
-    void readiness.refetch();
-  };
-
-  return (
-    <div className="app-shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="RiskWeave AI home">
-          <span className="brand-mark" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </span>
-          <span className="brand-name">
-            RiskWeave <strong>AI</strong>
-          </span>
-        </a>
-        <div className="environment-label">
-          <span aria-hidden="true" />
-          Foundation environment
-        </div>
-      </header>
-
-      <main>
-        <section className="intro" aria-labelledby="page-title">
-          <p className="eyebrow">Milestone 2 · Security foundation</p>
-          <h1 id="page-title">Services, visibly connected.</h1>
-          <p className="intro-copy">
-            RiskWeave now has a typed application boundary, a PostgreSQL-backed readiness
-            contract, and a frontend that reports real service state. No banking data or
-            product decisions are simulated in this foundation.
-          </p>
-        </section>
-
-        <section className="connectivity" aria-labelledby="connectivity-title">
-          <div className="section-heading">
-            <div>
-              <p className="section-kicker">Runtime checks</p>
-              <h2 id="connectivity-title">Service connectivity</h2>
-            </div>
-            <button className="retry-button" type="button" onClick={retry}>
-              Retry checks
-            </button>
-          </div>
-
-          <div className="service-list" aria-live="polite">
-            <ServiceRow
-              name="Application API"
-              endpoint="GET /health"
-              state={healthState}
-              label={statusLabels[healthState]}
-              detail={healthDetail}
-            />
-            <ServiceRow
-              name="Data service"
-              endpoint="GET /ready"
-              state={readinessState}
-              label={statusLabels[readinessState]}
-              detail={readinessDetail}
-            />
-          </div>
-        </section>
-
-        <aside className="foundation-note" aria-label="Foundation boundary">
-          <span className="note-index">01</span>
-          <div>
-            <h2>Deliberately narrow</h2>
-            <p>
-              This shell establishes the real design-system and connectivity foundation.
-              Investigation workflows, scenarios, scoring, and banking screens begin only
-              after their approved milestones.
-            </p>
-          </div>
-        </aside>
-      </main>
-
-      <footer>
-        <span>RiskWeave AI · Business API foundation v0.4.0</span>
-        <span className="api-origin" title={API_BASE_URL}>
-          API {API_BASE_URL}
-        </span>
-      </footer>
-    </div>
-  );
+  const router = useMemo(() => createBrowserRouter(riskWeaveRoutes), []);
+  return <RouterProvider router={router} />;
 }

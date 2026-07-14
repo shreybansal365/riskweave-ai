@@ -173,6 +173,7 @@ class IncidentDetailResponse(IncidentScoreResponse):
     transaction_contributions: list[ContributionResponse]
     interaction_contributions: list[ContributionResponse]
     analyst_actions: list[AnalystActionResponse]
+    available_actions: list[AnalystActionType]
 
 
 class IncidentPatchRequest(ApiModel):

@@ -95,6 +95,19 @@ _EXPECTED = {
     ScenarioKey.ACCOUNT_TAKEOVER: (78, 79, 18, Decimal("88.65"), 89),
 }
 
+
+def expected_showcase_fusion(scenario_key: ScenarioKey) -> FusionResult:
+    """Return backend-authoritative display expectations for a showcase scenario."""
+
+    cyber_score, transaction_score, correlation_bonus, raw_score, fused_score = _EXPECTED[
+        scenario_key
+    ]
+    result = fuse_scores(cyber_score, transaction_score, correlation_bonus)
+    if result.raw_fused_score != raw_score or result.fused_score != fused_score:
+        raise RuntimeError(f"locked expectation is inconsistent for {scenario_key.value}")
+    return result
+
+
 _EventSpec = tuple[CyberEventType, int, EventSeverity, dict[str, object]]
 _CyberSettings = tuple[bool, bool, bool, Decimal, tuple[str, ...]]
 _TransactionSettings = tuple[

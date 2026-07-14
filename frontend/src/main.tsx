@@ -3,7 +3,9 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { App } from "./App";
+import { AuthProvider } from "./app/AuthProvider";
 import { createQueryClient } from "./app/query-client";
+import { ToastProvider } from "./components/ToastProvider";
 import "./styles/global.css";
 
 const container = document.getElementById("root");
@@ -15,7 +17,11 @@ if (container === null) {
 createRoot(container).render(
   <StrictMode>
     <QueryClientProvider client={createQueryClient()}>
-      <App />
+      <AuthProvider>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,
 );
