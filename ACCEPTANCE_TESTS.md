@@ -1,0 +1,179 @@
+# RiskWeave AI — Acceptance Tests
+
+## Specification invariants
+
+- [ ] Every document that states a read order uses the canonical order from `AGENTS.md`.
+- [ ] Every document uses PostgreSQL as the only runtime database.
+- [ ] Every document uses the same formula, thresholds, scenario keys, and enum values.
+- [ ] No document says the frontend calculates risk scores.
+- [ ] No document describes quantum readiness as active attack detection.
+
+## Setup and repository
+
+- [ ] Fresh clone works.
+- [ ] `.env.example` is complete.
+- [ ] `.gitignore` excludes `.env`, `.DS_Store`, generated files, and local secrets.
+- [ ] `docker compose up --build` starts frontend, API, and PostgreSQL.
+- [ ] No SQLite runtime path or SQLite-specific migration exists.
+- [ ] Seed and reset work deterministically.
+
+## Database and migrations
+
+- [ ] Alembic creates every entity and enum in `DATA_SCHEMA.md`.
+- [ ] Analyst and admin users are persisted with password hashes.
+- [ ] Audit events are append-oriented through application APIs.
+- [ ] Transaction channels reference crypto assets.
+- [ ] Database constraints reject invalid scores, bonuses, amounts, and relationship mismatches.
+- [ ] Migrations run against local and Supabase PostgreSQL.
+
+## Backend and API
+
+- [ ] `/health` succeeds without requiring the database.
+- [ ] `/ready` verifies database connectivity and migration readiness.
+- [ ] Invalid payloads return safe 4xx responses.
+- [ ] Risk calculations are server-side.
+- [ ] Incident detail returns the ordered timeline and all explanations.
+- [ ] Analyst actions persist and create audit events.
+- [ ] Admin-only endpoints enforce server-side authorization.
+- [ ] Dashboard and benchmark endpoints return calculated database/service values.
+
+## Fusion and rounding
+
+- [ ] Formula is `0.45 × cyber + 0.45 × transaction + correlation_bonus`.
+- [ ] Cyber and transaction streams clamp to 0–100.
+- [ ] Correlation bonus clamps to 0–18.
+- [ ] Fused value clamps to 0–100 before rounding.
+- [ ] Backend rounds half-up exactly once.
+- [ ] Frontend contains no independent risk formula or scoring constants.
+- [ ] Cyber 40, transaction 10, bonus 0 produces raw fused score 22.5 and backend half-up rounded fused score 23.
+- [ ] Cyber 78, transaction 79, bonus 18 produces fused score 89.
+
+## Rule and anomaly engines
+
+- [ ] Rules remain independently testable and are the primary point source.
+- [ ] Isolation Forest training data is deterministic and synthetic.
+- [ ] Isolation Forest uses the locked random seed.
+- [ ] Anomaly contribution is 0–10 per individual stream.
+- [ ] Anomaly output alone cannot trigger step-up authentication or a hold.
+- [ ] Same fixtures and lockfiles produce the same anomaly contribution.
+- [ ] Every anomaly explanation names an understandable feature deviation.
+- [ ] No API or UI exposes an unexplained AI probability or confidence score.
+
+## Showcase scenarios
+
+- [ ] Normal scenario produces cyber 10, transaction 10, bonus 0, fused 9, low severity, and a permitted transaction.
+- [ ] Scenario B produces cyber 40, transaction 10, bonus 0, raw fused 22.5, and rounded fused 23.
+- [ ] Scenario B severity is guarded.
+- [ ] Scenario B action is `allow_and_monitor`.
+- [ ] Scenario B transaction is permitted.
+- [ ] Scenario B has no hold and no step-up authentication.
+- [ ] Account takeover produces cyber 78, transaction 79, bonus 18, and fused 89.
+- [ ] Account takeover severity is critical.
+- [ ] Account takeover transaction is held and a critical incident is opened.
+- [ ] Every contribution has code, label, points, explanation, category, and stable order.
+
+## Correlation
+
+- [ ] Eligible events satisfy `transaction_time - 30 minutes <= event_time <= transaction_time`.
+- [ ] Correct customer, account, and session matches are required.
+- [ ] Device match is checked when present.
+- [ ] Events immediately at both inclusive window boundaries are included.
+- [ ] Future events are excluded.
+- [ ] Events one unit outside the window are excluded.
+- [ ] Mismatched customer, account, or session events are excluded.
+- [ ] Bonuses require every named signal.
+- [ ] Bonuses are awarded only for documented, genuinely satisfied cross-domain interaction rules and never to reach a preferred outcome.
+- [ ] Weaker overlapping bonuses are suppressed and total bonus never exceeds 18.
+- [ ] Timeline order and tie-breaking are deterministic.
+
+## Background data, scenario state, and reset
+
+- [ ] Baseline manifest contains the exact counts in `DATA_SCHEMA.md`.
+- [ ] Reset leaves 15 background incidents and three `not_run` scenarios.
+- [ ] Running all scenarios results in exactly 18 visible records.
+- [ ] Showcase records are visually and structurally distinguishable from background incidents.
+- [ ] Running a scenario twice produces one logical scenario result with the same identifiers and scores.
+- [ ] Reset is atomic and completes within 5 seconds locally.
+- [ ] A forced reset failure rolls back without partial state.
+
+## Synthetic benchmark
+
+- [ ] Benchmark contains exactly 48 fixed labeled cases in the approved class distribution.
+- [ ] Isolated cyber rules, isolated transaction rules, and fused decisions use the same case fixtures.
+- [ ] Benchmark outputs are calculated from engine results, not hard-coded.
+- [ ] Benchmark labels and fixtures are not constructed or altered to guarantee that the fused method wins.
+- [ ] Confusion-matrix counts reconcile to 48 for each decision mode.
+- [ ] Derived precision and recall match the counts where defined.
+- [ ] Same seed and fixtures produce identical results.
+- [ ] Every benchmark API and UI surface labels results as prototype outcomes on synthetic data.
+- [ ] Documentation makes no real-world accuracy or false-positive guarantee.
+
+## Frontend
+
+- [ ] Overview uses API data from the 14-day baseline.
+- [ ] Overview metrics have defined operational meaning.
+- [ ] Incident filters work.
+- [ ] Incident links open the correct direct case URL.
+- [ ] Cyber, transaction, correlation, and fused values are shown.
+- [ ] All values match the backend exactly.
+- [ ] All scenarios run with visible progress and final state.
+- [ ] Scenario B visibly shows guarded, permitted, and monitored with no hold.
+- [ ] Loading, empty, success, and error states exist.
+- [ ] No placeholders, debug UI, or hard-coded product metrics remain.
+
+## Authentication and security
+
+- [ ] Protected endpoints require authentication.
+- [ ] Analyst and admin permissions differ as specified.
+- [ ] Passwords use Argon2id hashes.
+- [ ] Short-lived access tokens are not stored in `localStorage`.
+- [ ] No secrets or demo plaintext passwords are committed.
+- [ ] CORS uses an explicit allowlist.
+- [ ] Notes are bounded plain text and render safely.
+- [ ] Production errors hide stack traces and secrets.
+- [ ] Authentication, score generation, recommendations, analyst actions, scenario events, and reset create audit records.
+
+## Quantum readiness
+
+- [ ] Every seeded transaction channel references a crypto asset.
+- [ ] Readiness priority is explainable from the asset fields.
+- [ ] Quantum values never modify cyber, transaction, correlation, or fused scores.
+- [ ] No UI, API, or documentation claims active quantum-attack detection.
+
+## UI quality and accessibility
+
+- [ ] No generic AI-dashboard styling.
+- [ ] No meaningless charts or unsupported metrics.
+- [ ] Consistent spacing, typography, alignment, and density.
+- [ ] Severity uses text, iconography where helpful, and colour.
+- [ ] Visible keyboard focus and correct dialog focus management.
+- [ ] Automated accessibility checks find no serious violations on core screens.
+- [ ] Works at 1440×900 and 1280×720 without clipped primary actions.
+- [ ] Account-takeover and Scenario B screenshots are presentation-ready.
+
+## Documentation
+
+- [ ] README covers problem, solution, setup, demo, architecture, risk model, benchmark, security, synthetic data, and limitations.
+- [ ] Public wording says `Built and maintained by Shrey Bansal.`
+- [ ] FinSpark’26 is acknowledged.
+- [ ] Benchmark and anomaly claims use qualified prototype language.
+- [ ] Quantum terminology follows `SECURITY.md`.
+
+## Deployment
+
+- [ ] Frontend and backend deploy.
+- [ ] Supabase PostgreSQL migrations and seeds run.
+- [ ] All three scenarios and reset work in deployment.
+- [ ] Benchmark summary works in deployment.
+- [ ] Free-tier wake-up and database-pausing behavior are documented.
+- [ ] Local Docker fallback remains functional.
+
+## Demo
+
+- [ ] Reset works before recording.
+- [ ] Demo completes in under 4 minutes.
+- [ ] All URLs and direct incident links work.
+- [ ] No private tokens or credentials appear.
+- [ ] The attack narrative is clear without narration.
+- [ ] Scenario B clearly demonstrates proportionate monitoring without intervention.
+- [ ] Synthetic-data and prototype limitations are visible where results are presented.
