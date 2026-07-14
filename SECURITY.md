@@ -139,12 +139,20 @@ Channel-linked crypto readiness is context only. It never changes cyber, transac
 
 ## Benchmark and claims
 
-- benchmark fixtures are deterministic and synthetic;
+- `benchmark-v1 — mixed synthetic security benchmark` is deterministic and synthetic;
 - results are computed from the same engine code used by the application;
 - labels and fixtures are fixed independently of observed results and are never constructed or altered to guarantee that the fused method wins;
+- 40+ escalation, 60+ operational intervention, and 80+ critical-only metrics are reported separately;
+- the 60+ result is primary only when describing a hold or operational intervention;
+- comparator inputs and score-scale differences are disclosed;
+- cohort and limitation reporting accompanies aggregate results;
 - all benchmark output is labeled as prototype evaluation on synthetic data;
 - do not claim real-world accuracy, zero false positives, guaranteed fraud prevention, or quantified banking loss reduction;
 - do not generalize benchmark results beyond the fixed fixture set.
+
+Approved performance wording:
+
+> RiskWeave demonstrates context-aware avoidance of an unnecessary intervention in the deterministic legitimate-new-device scenario. Broader false-positive reduction has not yet been established by benchmark-v1.
 
 ## Threat model
 

@@ -184,40 +184,92 @@ Reset must:
 5. complete within 5 seconds locally;
 6. leave no partially reset state if an error occurs.
 
-## Labeled synthetic benchmark
+## benchmark-v1 — mixed synthetic security benchmark
 
-The versioned benchmark contains exactly 48 cases:
+The immutable `benchmark-v1` fixture contains exactly 48 cases:
 
-- 18 normal legitimate cases;
-- 12 unusual-but-legitimate cases;
-- 18 account-takeover attack cases.
+- 18 cases whose identifiers begin with `normal-`;
+- 12 cases whose identifiers begin with `unusual-legitimate-`;
+- 18 labeled attacks.
 
-Each case has a fixed label, fixed identifiers, deterministic features, and a documented reason for the label.
+Engine-derived cohort reporting further separates the cases into seven normal legitimate, 13
+legitimate unusual cyber, 10 legitimate unusual transaction, 11 cross-domain attack, three cyber-only
+attack, and four transaction-only attack cases.
 
-Labels and fixtures are fixed independently of the observed comparison results. They must not be constructed, relabeled, or adjusted to guarantee that the fused contextual method wins.
+Each case has a fixed label, fixed identifiers, deterministic features, and a documented reason for
+the label. Labels and fixtures are fixed independently of observed results and must not be constructed,
+relabeled, or adjusted to guarantee that the fused method wins.
 
-### Compared decision modes
+### Comparators
 
-1. **Isolated cyber rules:** deterministic cyber-rule points without transaction context.
-2. **Isolated transaction rules:** deterministic transaction-rule points without cyber context.
-3. **Fused contextual decision:** full cyber and transaction streams, capped anomaly contributions, and eligible correlation bonuses.
+1. **Isolated cyber rule score:** deterministic cyber-rule points without anomaly or transaction context.
+2. **Isolated transaction rule score:** deterministic transaction-rule points without anomaly or cyber context.
+3. **Fused hybrid contextual score:** full cyber and transaction streams, capped anomaly contributions, and eligible correlation bonuses.
 
-For benchmark comparison, a case is treated as an escalation when the applicable score is 40 or above, corresponding to step-up verification or a stronger response.
+The isolated and fused score scales are not identically calibrated. Reporting must disclose this
+difference rather than describing the comparison as a controlled measurement of correlation alone.
 
-### Required output
+### Operating points
 
-For each decision mode, compute rather than hard-code:
+- **40+: escalation or step-up.** Elevated, High, and Critical decisions are positive.
+- **60+: operational hold/intervention.** High and Critical decisions are positive. This is the primary metric only when discussing held transactions or operational intervention.
+- **80+: critical-only.** Only Critical decisions are positive.
 
-- true positives;
-- false positives;
-- true negatives;
-- false negatives;
-- precision where defined;
-- recall where defined;
-- number of permitted, monitored, stepped-up, and held decisions.
-
+For each operating point and comparator, compute rather than hard-code true positives, false
+positives, true negatives, false negatives, precision, recall, F1 where defined, and decision counts.
 Every benchmark surface must display:
 
 > Prototype evaluation on deterministic synthetic data; not evidence of real-world banking accuracy.
 
-Benchmark results must be identical for the same repository version, dependency lockfiles, seed, and fixtures. The actual deterministic results must be reported even if an isolated method equals or outperforms the fused method on one or more measures.
+### Complete mixed-fixture results
+
+| Operating point | Comparator | TP | FP | TN | FN | Precision | Recall | F1 |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 40+ escalation | Isolated cyber rule score | 10 | 0 | 30 | 8 | 1.0000 | 0.5556 | 0.7143 |
+|  | Isolated transaction rule score | 10 | 0 | 30 | 8 | 1.0000 | 0.5556 | 0.7143 |
+|  | Fused hybrid contextual score | 8 | 0 | 30 | 10 | 1.0000 | 0.4444 | 0.6154 |
+| 60+ operational intervention | Isolated cyber rule score | 8 | 0 | 30 | 10 | 1.0000 | 0.4444 | 0.6154 |
+|  | Isolated transaction rule score | 8 | 0 | 30 | 10 | 1.0000 | 0.4444 | 0.6154 |
+|  | Fused hybrid contextual score | 6 | 0 | 30 | 12 | 1.0000 | 0.3333 | 0.5000 |
+| 80+ critical-only | Isolated cyber rule score | 0 | 0 | 30 | 18 | undefined | 0.0000 | undefined |
+|  | Isolated transaction rule score | 0 | 0 | 30 | 18 | undefined | 0.0000 | undefined |
+|  | Fused hybrid contextual score | 6 | 0 | 30 | 12 | 1.0000 | 0.3333 | 0.5000 |
+
+Decision distributions are score-owned and therefore independent of the reporting operating point:
+
+| Comparator | Permitted | Monitored | Stepped up | Held |
+|---|---:|---:|---:|---:|
+| Isolated cyber rule score | 29 | 9 | 2 | 8 |
+| Isolated transaction rule score | 35 | 3 | 2 | 8 |
+| Fused hybrid contextual score | 24 | 16 | 2 | 6 |
+
+### Cohort interpretation
+
+At 60+, the fused hybrid contextual score detects six of 11 cross-domain attacks, no cyber-only
+attacks, and no transaction-only attacks. The isolated cyber rule score detects seven cross-domain and
+one cyber-only attack. The isolated transaction rule score detects six cross-domain and two
+transaction-only attacks. All three comparators produce zero false positives in the 30 legitimate cases.
+
+At 80+, the fused hybrid contextual score detects the same six strong cross-domain attacks. Neither
+isolated rule score reaches the Critical boundary in this fixture. This reflects score-scale calibration
+and must not be presented as universal fused superiority.
+
+### Known limitations
+
+- No legitimate `benchmark-v1` case contains unusual evidence in both domains.
+- Seven labeled attacks are single-domain cases outside RiskWeave's primary cross-domain use case.
+- The isolated and fused score scales are not calibrated identically.
+- The fixture does not demonstrate universal false-positive reduction.
+- The fused method underperforms both isolated methods at 60+ on the complete mixed fixture.
+- All outcomes apply only to deterministic synthetic data.
+
+Approved claim:
+
+> RiskWeave demonstrates context-aware avoidance of an unnecessary intervention in the deterministic legitimate-new-device scenario. Broader false-positive reduction has not yet been established by benchmark-v1.
+
+### Future benchmark-v2
+
+`benchmark-v2` is a future, separately versioned fixture. It must be designed prospectively before
+evaluation and should test realistic cross-domain account-takeover cases, difficult legitimate
+cross-domain combinations, matched operating points, and intervention and Critical outcomes
+separately. It must not rewrite `benchmark-v1` and is not part of Milestone 3 or Milestone 4.

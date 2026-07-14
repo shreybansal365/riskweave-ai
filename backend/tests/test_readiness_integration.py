@@ -24,4 +24,4 @@ def test_postgres_probe_verifies_database_and_migration() -> None:
     assert snapshot.is_ready
     assert snapshot.database == "reachable"
     assert snapshot.migrations == "current"
-    assert snapshot.revision == "0002_domain_security"
+    assert snapshot.revision == "0003_intelligence_support"

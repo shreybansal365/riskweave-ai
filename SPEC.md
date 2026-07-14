@@ -4,7 +4,7 @@
 
 RiskWeave AI is an explainable cyber-transaction intelligence platform for banking fraud and security analysts. It correlates login, MFA, device, IP, endpoint, location, and session telemetry with beneficiary, amount, destination, velocity, channel, and customer-behaviour signals.
 
-Its focused purpose is to identify account-takeover fraud while avoiding unnecessary intervention when activity is unusual but contextually legitimate.
+Its focused purpose is to identify and explain account-takeover fraud by combining cyber and transaction context. Proportionate treatment of unusual activity is demonstrated only through the locked showcase scenarios and qualified synthetic benchmark results.
 
 ## 2. Primary user
 
@@ -129,19 +129,27 @@ Running the three showcase scenarios adds one clearly labeled decision record pe
 
 ### 4.8 Synthetic benchmark
 
-A deterministic 48-case labeled benchmark contains:
+`benchmark-v1 — mixed synthetic security benchmark` is a deterministic 48-case labeled fixture containing:
 
 - 18 normal legitimate cases;
 - 12 unusual-but-legitimate cases;
 - 18 attack cases.
 
-It compares:
+It compares these precisely named score modes:
 
-- isolated cyber-rule decisions;
-- isolated transaction-rule decisions;
-- fused contextual decisions.
+- isolated cyber rule score;
+- isolated transaction rule score;
+- fused hybrid contextual score.
 
-The benchmark reports confusion-matrix counts and derived metrics only as prototype results on synthetic data. Outputs are computed from versioned fixtures and the same scoring code used by the application; results are never hard-coded into the UI.
+It reports confusion matrices and derived metrics at three separately labeled operating points:
+
+- 40+: escalation or step-up;
+- 60+: operational hold or intervention;
+- 80+: critical-only.
+
+The 60+ operating point is primary only when discussing held transactions or operational intervention. Results are also separated into normal-legitimate, legitimate-unusual-cyber, legitimate-unusual-transaction, cross-domain-attack, cyber-only-attack, and transaction-only-attack cohorts.
+
+Outputs are computed from versioned fixtures and the same scoring code used by the application; results are never hard-coded into the UI. All results are prototype outcomes on deterministic synthetic data. `benchmark-v1` contains no legitimate case with unusual evidence in both domains, includes seven single-domain attacks outside the primary use case, and does not establish universal false-positive reduction. The isolated and fused score scales are not calibrated identically.
 
 ### 4.9 Quantum-readiness assessment
 
@@ -194,13 +202,17 @@ Quantum readiness does not alter cyber, transaction, correlation, or fused fraud
 - local Docker run works;
 - free-tier deployment works or has a documented fallback;
 - benchmark outputs are computed and clearly labeled synthetic, and fixture labels are never altered to guarantee a preferred winner;
+- benchmark-v1 reports all three operating points, approved cohorts, exact unfavorable results, comparator definitions, and limitations;
 - README, architecture, screenshots, demo, security notes, and limitations are complete;
 - UI satisfies `UI_SYSTEM.md`.
 
 ## 8. Product copy
 
 **One-line description:**
-RiskWeave AI correlates cybersecurity telemetry with transaction behaviour to detect account-takeover fraud, avoid unnecessary intervention, and explain every risk decision.
+RiskWeave AI correlates cybersecurity telemetry with transaction behaviour to identify account-takeover fraud and explain each prototype risk decision.
+
+**Qualified scenario statement:**
+RiskWeave demonstrates context-aware avoidance of an unnecessary intervention in the deterministic legitimate-new-device scenario. Broader false-positive reduction has not yet been established by benchmark-v1.
 
 **Public wording:**
 Built and maintained by Shrey Bansal. Developed for the FinSpark’26 Hackathon.

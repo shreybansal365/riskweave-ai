@@ -1,4 +1,4 @@
-.PHONY: setup backend-install frontend-install format format-check lint typecheck test audit check build migrate migration-check seed-users docker-up docker-down docker-logs
+.PHONY: setup backend-install frontend-install format format-check lint typecheck test audit check build migrate migration-check seed-users seed-data reset-data scenario benchmark docker-up docker-down docker-logs
 
 PYTHON ?= python3.12
 BACKEND_VENV := backend/.venv
@@ -27,7 +27,7 @@ lint:
 	cd frontend && npm run lint
 
 typecheck:
-	cd backend && ../$(BACKEND_VENV)/bin/mypy app tests
+	cd backend && ../$(BACKEND_VENV)/bin/mypy app risk_engine tests
 	cd frontend && npm run typecheck
 
 test:
@@ -51,6 +51,18 @@ migration-check:
 
 seed-users:
 	cd backend && ../$(BACKEND_VENV)/bin/python -m app.cli.seed_demo_users
+
+seed-data:
+	cd backend && ../$(BACKEND_VENV)/bin/python -m app.cli.seed_demo_data
+
+reset-data:
+	cd backend && ../$(BACKEND_VENV)/bin/python -m app.cli.reset_demo_data
+
+scenario:
+	cd backend && ../$(BACKEND_VENV)/bin/python -m app.cli.run_scenario $(SCENARIO)
+
+benchmark:
+	cd backend && ../$(BACKEND_VENV)/bin/python -m app.cli.run_benchmark
 
 docker-up:
 	docker compose up --build -d

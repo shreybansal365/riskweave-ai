@@ -73,7 +73,7 @@ Only `VITE_API_BASE_URL` is exposed to frontend build tooling. Passwords, JWT se
 9. configure `VITE_API_BASE_URL` and the exact CORS origin;
 10. verify analyst and admin authentication;
 11. run and reset all scenarios;
-12. verify the 48-case benchmark summary;
+12. verify the fixed benchmark-v1 40+, 60+, 80+, cohort, comparator, and limitation summary;
 13. verify channel-linked quantum readiness;
 14. capture final URLs;
 15. document free-tier wake-up and pause behavior;
@@ -106,5 +106,5 @@ Only `VITE_API_BASE_URL` is exposed to frontend build tooling. Passwords, JWT se
 - reset restores exact identifiers and counts;
 - direct incident URLs work after authentication;
 - no secrets appear in frontend assets, logs, screenshots, or repository history;
-- benchmark labels and limitations are visible;
+- benchmark-v1 identity, labels, comparator definitions, all three operating points, cohorts, and limitations are visible;
 - quantum readiness remains separate from fraud scores.

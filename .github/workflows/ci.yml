@@ -71,10 +71,15 @@ jobs:
       - run: pip-audit --cache-dir .cache/pip-audit --requirement requirements.txt --disable-pip
       - run: alembic upgrade head
       - run: python -m app.cli.seed_demo_users
+      - run: python -m app.cli.reset_demo_data
+      - run: python -m app.cli.run_scenario normal_activity
+      - run: python -m app.cli.run_scenario legitimate_new_device
+      - run: python -m app.cli.run_scenario account_takeover
+      - run: python -m app.cli.run_benchmark
       - run: alembic check
       - run: ruff format --check .
       - run: ruff check .
-      - run: mypy app tests
+      - run: mypy app risk_engine tests
       - run: pytest
 
   compose:

@@ -39,7 +39,7 @@ def client(settings: Settings) -> Iterator[TestClient]:
         ReadinessSnapshot(
             database="reachable",
             migrations="current",
-            revision="0002_domain_security",
+            revision="0003_intelligence_support",
         )
     )
     with TestClient(create_app(settings=settings, readiness_probe=probe)) as test_client:
@@ -92,7 +92,7 @@ def postgres_client(
         ReadinessSnapshot(
             database="reachable",
             migrations="current",
-            revision="0002_domain_security",
+            revision="0003_intelligence_support",
         )
     )
     with TestClient(

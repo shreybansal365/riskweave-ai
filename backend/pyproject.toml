@@ -4,26 +4,28 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "riskweave-backend"
-version = "0.2.0"
-description = "Typed domain, authentication, and security foundation for RiskWeave AI"
+version = "0.3.0"
+description = "Deterministic cyber-transaction intelligence foundation for RiskWeave AI"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "alembic==1.18.5",
   "argon2-cffi==25.1.0",
   "fastapi==0.139.0",
+  "numpy==2.5.1",
   "psycopg[binary]==3.3.4",
   "pydantic==2.13.4",
   "pydantic-settings==2.14.2",
   "PyJWT==2.13.0",
+  "scikit-learn==1.9.0",
   "sqlalchemy==2.0.51",
   "uvicorn==0.51.0",
 ]
 
 [tool.setuptools.packages.find]
-include = ["app*"]
+include = ["app*", "risk_engine*"]
 
 [tool.pytest.ini_options]
-addopts = "--strict-config --strict-markers --cov=app --cov-report=term-missing --cov-fail-under=90"
+addopts = "--strict-config --strict-markers --cov=app --cov=risk_engine --cov-report=term-missing --cov-fail-under=90"
 markers = [
   "integration: requires a migrated PostgreSQL database",
 ]
@@ -31,7 +33,7 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
-source = ["app"]
+source = ["app", "risk_engine"]
 
 [tool.coverage.report]
 exclude_also = [
@@ -48,7 +50,7 @@ line-length = 100
 select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["app"]
+known-first-party = ["app", "risk_engine"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -60,4 +62,8 @@ plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
 module = ["alembic.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*"]
 ignore_missing_imports = true

@@ -63,10 +63,14 @@ Roles:
 - `typical_login_end_hour`
 - `usual_cities`
 - `known_channels`
+- `known_device_ids`
+- `known_beneficiary_ids`
+- `usual_destination_risks`
 - `median_transaction_amount_minor`
 - `transaction_amount_mad_minor`
 - `average_daily_transaction_count`
 - `typical_beneficiary_age_days`
+- `typical_transaction_velocity_30m`
 - `model_version`
 - `updated_at`
 
@@ -184,10 +188,17 @@ The channel-to-asset relationship is used only for quantum-readiness context. It
 - `cyber_score`
 - `transaction_score`
 - `correlation_bonus`
+- `raw_fused_score` — backend Decimal value before the single rounding operation
 - `fused_score`
 - `severity` — `Severity`
 - `recommended_action` — `RecommendedAction`
 - `status` — `IncidentStatus`
+- `summary`
+- `signal_narrative` — deterministic ordered JSON projection
+- `decision_explanation`
+- `action_explanation`
+- `engine_version`
+- `model_version`
 - `created_at`
 - `updated_at`
 
@@ -203,6 +214,8 @@ All stored scores are final backend values. The frontend does not persist or sub
 - `points`
 - `explanation`
 - `source_event_id` — nullable
+- `source_transaction_id` — nullable
+- `source_baseline_id` — nullable
 - `display_order`
 
 Categories:
@@ -240,7 +253,9 @@ An anomaly contribution is always 0–10 for its stream. Explanations describe a
 - `started_at`
 - `completed_at`
 
-Only one logical result exists per showcase scenario. Re-running a scenario replaces its prior scenario-owned records atomically and produces the same identifiers and scores.
+Only one logical result exists per showcase scenario. Re-running a completed scenario returns the
+persisted result without duplicating records. Atomic reset removes scenario-owned records and restores
+the exact `not_run` baseline state; the subsequent run produces the same identifiers and scores.
 
 ### AuditEvent
 
@@ -470,7 +485,12 @@ Ordering uses event timestamp followed by a stable event-type and identifier tie
 
 ## Benchmark fixtures
 
-The 48 labeled benchmark cases are versioned fixtures under `data/benchmark/`; they are not copied real-world records. The benchmark evaluator returns calculated results without persisting hard-coded performance metrics.
+`benchmark-v1 — mixed synthetic security benchmark` contains 48 fixed labeled cases under
+`backend/data/benchmark/`; they are not copied real-world records. The benchmark evaluator returns
+calculated 40+, 60+, 80+, and cohort results without persisting hard-coded performance metrics.
+`benchmark-v1` contains no legitimate case with unusual evidence in both domains and includes seven
+single-domain attacks. A future `benchmark-v2` must use a separate versioned fixture rather than
+modifying these records.
 
 ## Synthetic baseline manifest
 

@@ -191,6 +191,8 @@ class BehaviourBaseline(Base):
         CheckConstraint("transaction_amount_mad_minor >= 0", name="mad_nonnegative"),
         CheckConstraint("average_daily_transaction_count >= 0", name="daily_count_nonnegative"),
         CheckConstraint("typical_beneficiary_age_days >= 0", name="beneficiary_age_nonnegative"),
+        CheckConstraint("typical_transaction_velocity_30m >= 0", name="velocity_30m_nonnegative"),
+        UniqueConstraint("customer_id", name="uq_behavioural_baselines_customer"),
     )
 
     baseline_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -210,10 +212,20 @@ class BehaviourBaseline(Base):
     known_channels: Mapped[list[str]] = mapped_column(
         ARRAY(String(32)), nullable=False, server_default=text("'{}'::varchar[]")
     )
+    known_device_ids: Mapped[list[UUID]] = mapped_column(
+        ARRAY(PGUUID(as_uuid=True)), nullable=False, server_default=text("'{}'::uuid[]")
+    )
+    known_beneficiary_ids: Mapped[list[UUID]] = mapped_column(
+        ARRAY(PGUUID(as_uuid=True)), nullable=False, server_default=text("'{}'::uuid[]")
+    )
+    usual_destination_risks: Mapped[list[str]] = mapped_column(
+        ARRAY(String(16)), nullable=False, server_default=text("'{}'::varchar[]")
+    )
     median_transaction_amount_minor: Mapped[int] = mapped_column(BigInteger, nullable=False)
     transaction_amount_mad_minor: Mapped[int] = mapped_column(BigInteger, nullable=False)
     average_daily_transaction_count: Mapped[Decimal] = mapped_column(Numeric(8, 2), nullable=False)
     typical_beneficiary_age_days: Mapped[Decimal] = mapped_column(Numeric(8, 2), nullable=False)
+    typical_transaction_velocity_30m: Mapped[Decimal] = mapped_column(Numeric(8, 2), nullable=False)
     model_version: Mapped[str] = mapped_column(String(64), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
@@ -458,6 +470,7 @@ class Incident(Base):
         CheckConstraint("cyber_score BETWEEN 0 AND 100", name="cyber_score_range"),
         CheckConstraint("transaction_score BETWEEN 0 AND 100", name="transaction_score_range"),
         CheckConstraint("correlation_bonus BETWEEN 0 AND 18", name="correlation_bonus_range"),
+        CheckConstraint("raw_fused_score BETWEEN 0 AND 100", name="raw_fused_score_range"),
         CheckConstraint("fused_score BETWEEN 0 AND 100", name="fused_score_range"),
         CheckConstraint("updated_at >= created_at", name="update_time_ordered"),
         Index("ix_incidents_severity_created_at", "severity", "created_at"),
@@ -481,12 +494,21 @@ class Incident(Base):
     cyber_score: Mapped[int] = mapped_column(Integer, nullable=False)
     transaction_score: Mapped[int] = mapped_column(Integer, nullable=False)
     correlation_bonus: Mapped[int] = mapped_column(Integer, nullable=False)
+    raw_fused_score: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False)
     fused_score: Mapped[int] = mapped_column(Integer, nullable=False)
     severity: Mapped[Severity] = mapped_column(SEVERITY, nullable=False)
     recommended_action: Mapped[RecommendedAction] = mapped_column(
         RECOMMENDED_ACTION, nullable=False
     )
     status: Mapped[IncidentStatus] = mapped_column(INCIDENT_STATUS, nullable=False)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    signal_narrative: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    decision_explanation: Mapped[str] = mapped_column(Text, nullable=False)
+    action_explanation: Mapped[str] = mapped_column(Text, nullable=False)
+    engine_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(64), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -531,6 +553,13 @@ class RiskContribution(Base):
     explanation: Mapped[str] = mapped_column(Text, nullable=False)
     source_event_id: Mapped[UUID | None] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("cyber_events.cyber_event_id", ondelete="SET NULL")
+    )
+    source_transaction_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("transactions.transaction_id", ondelete="SET NULL")
+    )
+    source_baseline_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("behavioural_baselines.baseline_id", ondelete="SET NULL"),
     )
     display_order: Mapped[int] = mapped_column(Integer, nullable=False)
 

@@ -2,12 +2,11 @@
 
 RiskWeave AI is an explainable cyber-transaction intelligence prototype for FinSpark’26 Problem Statement 2. The approved product vision correlates cybersecurity telemetry with transaction behaviour, while keeping every decision deterministic, inspectable, and clearly qualified as a synthetic-data prototype.
 
-Milestone 2 establishes the complete PostgreSQL domain schema plus a bounded authentication and
-security foundation: Argon2id demo identities, short-lived JWT access tokens, server-side analyst/admin
-authorization, append-only security audit records, request identifiers, security headers, safe errors,
-and a restrained React shell that reports real service connectivity. It intentionally contains no risk
-scoring, correlation, synthetic banking scenarios, incident-management APIs, business screens, charts,
-or dashboard metrics.
+Milestone 3 adds the offline intelligence core: a reproducible 14-day synthetic dataset, persisted
+behavioural baselines, transparent cyber and transaction rules, capped fixed-seed Isolation Forest
+support, strict entity/session correlation, documented interaction bonuses, backend-only Decimal
+fusion, grounded explanations, three locked showcase scenarios, atomic reset, and a 48-case synthetic
+benchmark. Public business APIs and screens remain deliberately deferred to Milestone 4.
 
 > **Built and maintained by Shrey Bansal.**
 > Developed for the FinSpark’26 Hackathon under Team CyberForge.
@@ -30,7 +29,7 @@ Read these files before changing product behaviour:
 
 The linked ChatGPT conversation is background context only. These repository documents are authoritative when anything conflicts.
 
-## Foundation architecture
+## Current architecture
 
 ```text
 Browser
@@ -39,6 +38,18 @@ Browser
   │
   └── GET /ready ───> FastAPI ──> PostgreSQL SELECT 1
                                   └─> Alembic revision check
+
+Deterministic synthetic history ──> persisted behavioural baselines
+Cyber events + transaction ───────> identity/time correlation
+                                   ├─> transparent rule scores
+                                   ├─> capped deterministic anomaly support
+                                   └─> documented cross-domain bonuses
+                                             │
+                                             v
+                            Decimal fusion + grounded explanations
+                                             │
+                                             v
+                       PostgreSQL incident/contribution/audit records
 ```
 
 The frontend displays backend-owned status. It does not recreate backend readiness logic, and no frontend scoring logic exists.
@@ -79,7 +90,7 @@ Expected foundation responses:
 {
   "status": "ok",
   "service": "RiskWeave API",
-  "version": "0.2.0"
+  "version": "0.3.0"
 }
 ```
 
@@ -91,7 +102,7 @@ Expected foundation responses:
     "database": "reachable",
     "migrations": "current"
   },
-  "revision": "0002_domain_security"
+  "revision": "0003_intelligence_support"
 }
 ```
 
@@ -106,6 +117,25 @@ docker compose exec backend python -m app.cli.seed_demo_users
 
 The seed is idempotent: rerunning it preserves the same UUIDv5 identities and does not rehash unchanged
 passwords. Authentication remains fail-closed with a safe `503` response when `JWT_SECRET` is unset.
+
+Restore the exact deterministic background dataset:
+
+```bash
+docker compose exec backend python -m app.cli.reset_demo_data
+```
+
+Run the three showcase scenarios and the synthetic benchmark:
+
+```bash
+docker compose exec backend python -m app.cli.run_scenario normal_activity
+docker compose exec backend python -m app.cli.run_scenario legitimate_new_device
+docker compose exec backend python -m app.cli.run_scenario account_takeover
+docker compose exec backend python -m app.cli.run_benchmark
+```
+
+Each scenario is idempotent. Reset restores the same UUIDs, timestamps, counts, scenario states, and
+dataset fingerprint. The benchmark output is a prototype evaluation on deterministic synthetic data,
+not evidence of real-world banking accuracy.
 
 Stop the stack without deleting PostgreSQL data:
 
@@ -151,18 +181,22 @@ Common repository commands:
 | `make migrate` | Upgrade PostgreSQL to the latest Alembic revision |
 | `make migration-check` | Verify model metadata has no ungenerated migration operations |
 | `make seed-users` | Idempotently reconcile analyst/admin identities from environment credentials |
+| `make seed-data` | Bootstrap the deterministic dataset using the same atomic restore service |
+| `make reset-data` | Atomically restore the exact deterministic background dataset |
+| `make scenario SCENARIO=normal_activity` | Run one deterministic showcase scenario |
+| `make benchmark` | Evaluate the versioned 48-case synthetic benchmark |
 | `make docker-up` | Build and start the complete local stack in the background |
 | `make docker-logs` | Show recent service logs |
 | `make docker-down` | Stop the local stack |
 
 ## Environment contract
 
-Milestone 2 consumes:
+The current runtime consumes:
 
 | Variable | Purpose | Safe local default |
 |---|---|---|
 | `APP_NAME` | API display name | `RiskWeave API` |
-| `APP_VERSION` | API version | `0.2.0` |
+| `APP_VERSION` | API version | `0.3.0` |
 | `APP_ENV` | `development`, `test`, or `production` | `development` |
 | `LOG_LEVEL` | Typed Python log level | `INFO` |
 | `DATABASE_URL` | PostgreSQL connection using psycopg | Docker Compose value |
@@ -175,16 +209,24 @@ Milestone 2 consumes:
 | `DEMO_ADMIN_PASSWORD` | Admin seed password; stored only as Argon2id | none |
 | `DEMO_ANALYST_EMAIL` | Deterministic analyst identity | `analyst@riskweave.demo` |
 | `DEMO_ANALYST_PASSWORD` | Analyst seed password; stored only as Argon2id | none |
+| `DEMO_SEED` | Locked data-generation seed | `26026` |
+| `MODEL_RANDOM_SEED` | Locked Isolation Forest seed | `26026` |
+| `SIMULATION_EPOCH` | Locked UTC simulation epoch | `2026-07-14T09:00:00Z` |
 | `VITE_API_BASE_URL` | Browser-visible API origin | `http://localhost:8000` |
 
-The simulation and model variables in `.env.example` remain reserved for approved later milestones.
+The backend rejects other simulation epochs or seeds so fixture identity and score expectations cannot
+drift silently.
 
 ## Repository layout
 
 ```text
 .
-├── backend/                 FastAPI, domain models, auth/security, Alembic, tests
+├── backend/                 FastAPI, domain models, intelligence, fixtures, Alembic, tests
+│   ├── app/services/        Database-backed use-case and scenario orchestration
+│   ├── risk_engine/         Pure rules, anomaly, correlation, fusion, explanation, benchmark
+│   └── data/                Versioned baseline manifest and 48 benchmark fixtures
 ├── frontend/                React, strict TypeScript, service-status shell
+├── docs/                    Intelligence, synthetic-data, and benchmark implementation notes
 ├── .github/workflows/       CI quality gates
 ├── docker-compose.yml       Local frontend, backend, and PostgreSQL topology
 ├── Makefile                 Development and verification commands
@@ -205,9 +247,14 @@ GitHub Actions verifies:
 - full fresh upgrade plus safe downgrade/re-upgrade;
 - Argon2id hashing, JWT validation, login and `/api/auth/me`;
 - server-side analyst/admin role separation and security audit creation;
+- deterministic data generation, UUID stability, atomic reset, and scenario idempotency;
+- every rule, anomaly cap, correlation boundary/exclusion, interaction, threshold, and rounding edge;
+- exact locked scenario scores and persisted explanations/contributions;
+- repeatable evaluation of the versioned 48-case benchmark;
+- channel-to-crypto-asset linkage without fraud-score coupling;
 - valid Docker Compose configuration.
 
-## Milestone 2 API and security boundary
+## Implemented API and security boundary
 
 Implemented endpoints:
 
@@ -217,19 +264,56 @@ Implemented endpoints:
 - `GET /health`;
 - `GET /ready`.
 
-The PostgreSQL schema contains every entity and enum in `DATA_SCHEMA.md`, but this milestone adds no
-business behavior for incidents, transactions, scenarios, risk contributions, or quantum readiness.
-Audit rows are append-oriented in the application and protected by PostgreSQL from update, delete, and
-truncate operations.
+The PostgreSQL schema contains every entity and enum in `DATA_SCHEMA.md`. Audit rows are
+append-oriented in the application and protected by PostgreSQL from update, delete, and truncate
+operations. Milestone 3 intentionally exposes intelligence only through services and local CLI entry
+points; it adds no public scenario, incident, dashboard, benchmark, or quantum API.
+
+## Milestone 3 intelligence contract
+
+- simulation epoch: `2026-07-14T09:00:00Z`;
+- simulation and model seed: `26026`;
+- background window: `[2026-06-30T09:00:00Z, 2026-07-14T09:00:00Z)`;
+- baseline counts: 12 customers, 12 accounts, 16 devices, 180 transactions, 240 cyber events, and
+  15 incidents;
+- post-scenario incident count: 18;
+- correlation window: inclusive 30 minutes before a transaction, with exact customer/account/session
+  identity matching and device matching when present;
+- authoritative formula: `0.45 × cyber + 0.45 × transaction + bonus`, clamped to 0–100 and rounded
+  once with `ROUND_HALF_UP`;
+- maximum anomaly contribution: 10 points per stream;
+- maximum documented correlation bonus: 18 points.
+
+Detailed rules and limitations are in `docs/RISK_SCORING.md`; dataset construction is in
+`docs/SYNTHETIC_DATA.md`; computed benchmark outcomes are in `docs/BENCHMARK.md`.
+
+## benchmark-v1 reporting
+
+`benchmark-v1 — mixed synthetic security benchmark` reports the isolated cyber rule score,
+isolated transaction rule score, and fused hybrid contextual score at three separate operating points:
+
+- 40+ escalation or step-up;
+- 60+ operational hold or intervention;
+- 80+ critical-only.
+
+The 60+ result is primary only for statements about holds or operational intervention. On the complete
+mixed fixture, fused recall at 60+ is 0.3333 versus 0.4444 for each isolated rule comparator. The exact
+unfavorable result is retained.
+
+The fixture contains no legitimate case with unusual evidence in both domains, includes seven
+single-domain attacks outside RiskWeave's primary use case, and uses isolated and fused score scales
+that are not calibrated identically. It does not establish universal false-positive reduction.
+
+> RiskWeave demonstrates context-aware avoidance of an unnecessary intervention in the deterministic legitimate-new-device scenario. Broader false-positive reduction has not yet been established by benchmark-v1.
+
+A separately versioned, prospectively designed `benchmark-v2` remains future work; it is not created
+in Milestone 4.
 
 ## Deferred boundary
 
 The following are explicitly deferred until their approved milestones:
 
-- risk and anomaly scoring;
-- deterministic synthetic banking fixtures;
-- correlation and incident workflows;
-- benchmark evaluation;
+- public incident-management, dashboard, scenario, benchmark, and quantum-readiness APIs;
 - business screens, metrics, charts, and finished visual design.
 
 This is a synthetic-data prototype, not a production banking control. Later benchmark outcomes must be

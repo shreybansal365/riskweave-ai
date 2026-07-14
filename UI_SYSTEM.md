@@ -100,6 +100,12 @@ The benchmark table must state:
 
 > Prototype evaluation on deterministic synthetic data; not evidence of real-world banking accuracy.
 
+It must identify `benchmark-v1 — mixed synthetic security benchmark`, label the three comparators
+exactly, distinguish 40+ escalation, 60+ operational intervention, and 80+ critical-only results, and
+show cohort-level context. The 60+ result is primary only when the interface describes transaction
+holds or intervention. Benchmark surfaces must expose the known composition and calibration
+limitations rather than implying universal false-positive reduction.
+
 ## Incident Queue
 
 Required columns:

@@ -14,7 +14,7 @@ def test_ready_reports_current_database_revision(client: TestClient) -> None:
         "status": "ready",
         "service": "RiskWeave API",
         "checks": {"database": "reachable", "migrations": "current"},
-        "revision": "0002_domain_security",
+        "revision": "0003_intelligence_support",
     }
 
 

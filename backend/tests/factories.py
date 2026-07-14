@@ -112,10 +112,14 @@ def create_domain_graph(session: OrmSession, password_service: PasswordService) 
         typical_login_end_hour=22,
         usual_cities=["Pune"],
         known_channels=[TransactionChannelCode.MOBILE_BANKING.value],
+        known_device_ids=[],
+        known_beneficiary_ids=[],
+        usual_destination_risks=[RiskLevel.LOW.value],
         median_transaction_amount_minor=75_000,
         transaction_amount_mad_minor=10_000,
         average_daily_transaction_count=Decimal("2.50"),
         typical_beneficiary_age_days=Decimal("180.00"),
+        typical_transaction_velocity_30m=Decimal("1.00"),
         model_version="schema-test-v1",
     )
     beneficiary = Beneficiary(
@@ -208,10 +212,17 @@ def create_domain_graph(session: OrmSession, password_service: PasswordService) 
         cyber_score=10,
         transaction_score=10,
         correlation_bonus=0,
+        raw_fused_score=Decimal("9.00"),
         fused_score=9,
         severity=Severity.LOW,
         recommended_action=RecommendedAction.ALLOW,
         status=IncidentStatus.OPEN,
+        summary="Low contextual risk from synthetic schema-test contributions.",
+        signal_narrative=[],
+        decision_explanation="Backend fusion produced 9.",
+        action_explanation="Permit the synthetic transaction.",
+        engine_version="schema-test-v1",
+        model_version="schema-test-v1",
     )
     session.add(incident)
     session.flush()
@@ -224,6 +235,8 @@ def create_domain_graph(session: OrmSession, password_service: PasswordService) 
         points=10,
         explanation="Synthetic known-device login for persistence testing.",
         source_event_id=cyber_event.cyber_event_id,
+        source_transaction_id=transaction.transaction_id,
+        source_baseline_id=baseline.baseline_id,
         display_order=0,
     )
     analyst_action = AnalystAction(

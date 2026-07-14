@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Literal, Self
 from urllib.parse import urlsplit
@@ -22,7 +23,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "RiskWeave API"
-    app_version: str = "0.2.0"
+    app_version: str = "0.3.0"
     app_env: AppEnvironment = "development"
     log_level: LogLevel = "INFO"
     api_host: str = "0.0.0.0"
@@ -42,6 +43,9 @@ class Settings(BaseSettings):
     demo_analyst_password: SecretStr | None = None
     auth_failure_limit: int = Field(default=5, ge=1, le=20)
     auth_failure_window_seconds: int = Field(default=60, ge=10, le=900)
+    demo_seed: int = 26026
+    model_random_seed: int = 26026
+    simulation_epoch: datetime = datetime(2026, 7, 14, 9, 0, tzinfo=UTC)
 
     @field_validator("database_url", mode="before")
     @classmethod
@@ -65,7 +69,18 @@ class Settings(BaseSettings):
         _ = self.cors_origin_list
         if self.app_env == "production" and self.jwt_secret is None:
             raise ValueError("JWT_SECRET is required when APP_ENV=production")
+        if self.demo_seed != 26026 or self.model_random_seed != 26026:
+            raise ValueError("RiskWeave demo and model seeds are locked to 26026")
+        if self.simulation_epoch != datetime(2026, 7, 14, 9, 0, tzinfo=UTC):
+            raise ValueError("SIMULATION_EPOCH is locked to 2026-07-14T09:00:00Z")
         return self
+
+    @field_validator("simulation_epoch")
+    @classmethod
+    def require_utc_simulation_epoch(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() != UTC.utcoffset(value):
+            raise ValueError("SIMULATION_EPOCH must be timezone-aware UTC")
+        return value.astimezone(UTC)
 
     @field_validator("jwt_secret")
     @classmethod

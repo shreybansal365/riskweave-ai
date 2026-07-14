@@ -42,11 +42,23 @@ def test_fresh_upgrade_and_safe_downgrade_reupgrade(postgres_engine: Engine) -> 
 
         inspector = inspect(postgres_engine)
         assert set(inspector.get_table_names()) >= EXPECTED_DOMAIN_TABLES
+        assert "raw_fused_score" in {
+            column["name"] for column in inspector.get_columns("incidents")
+        }
         with postgres_engine.connect() as connection:
             revision = connection.execute(
                 text("SELECT version_num FROM alembic_version")
             ).scalar_one()
-            assert revision == "0002_domain_security"
+            assert revision == "0003_intelligence_support"
+
+        command.downgrade(config, "0002_domain_security")
+        assert "raw_fused_score" not in {
+            column["name"] for column in inspect(postgres_engine).get_columns("incidents")
+        }
+        command.upgrade(config, "head")
+        assert "raw_fused_score" in {
+            column["name"] for column in inspect(postgres_engine).get_columns("incidents")
+        }
 
         command.downgrade(config, "0001_foundation")
         downgraded_tables = set(inspect(postgres_engine).get_table_names())

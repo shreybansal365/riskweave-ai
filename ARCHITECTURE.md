@@ -29,7 +29,7 @@ flowchart LR
     J --> K[FastAPI]
     K --> L[React Analyst Workspace]
     M[Deterministic Scenario Simulator] --> N
-    T[48-Case Synthetic Benchmark] --> F
+    T[benchmark-v1 Mixed Synthetic Security Benchmark] --> F
     T --> G
     T --> H
     Q[Crypto Asset Inventory] --> R[Channel-linked Quantum Readiness]
@@ -44,15 +44,19 @@ Quantum readiness is returned alongside channel context but never feeds the frau
 riskweave-ai/
 ├── frontend/
 ├── backend/
-├── risk_engine/
-├── simulator/
-├── data/
-│   ├── seeds/
-│   ├── schemas/
-│   └── benchmark/
+│   ├── app/
+│   │   ├── cli/
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   └── synthetic/
+│   ├── risk_engine/
+│   ├── data/
+│   │   ├── seeds/
+│   │   └── benchmark/
+│   ├── alembic/
+│   └── tests/
 ├── docs/
-├── scripts/
-├── tests/
 ├── AGENTS.md
 ├── PROJECT_DECISIONS.md
 ├── SPEC.md
@@ -75,9 +79,21 @@ riskweave-ai/
 - Route handlers authenticate, authorize, validate, and delegate.
 - Application services coordinate transactions and use cases.
 - Repository objects perform database access.
-- `risk_engine` contains scoring, anomaly, correlation, fusion, and explanation logic and has no frontend dependency.
+- `backend/risk_engine` contains scoring, anomaly, correlation, fusion, explanation, and benchmark logic and has no frontend dependency.
 - The frontend treats scores, severity, recommendations, and benchmark results as server-owned values.
 - Scenario and benchmark fixtures are versioned data, not hard-coded component values.
+
+## Benchmark reporting boundary
+
+`benchmark-v1 — mixed synthetic security benchmark` evaluates the same 48 fixed cases with three explicitly named comparators:
+
+- isolated cyber rule score;
+- isolated transaction rule score;
+- fused hybrid contextual score.
+
+Reports expose 40+ escalation/step-up, 60+ operational hold/intervention, and 80+ critical-only operating points. The 60+ result is primary only for descriptions of held transactions or operational intervention. Cohort metrics separate normal legitimate, legitimate unusual cyber, legitimate unusual transaction, cross-domain attack, cyber-only attack, and transaction-only attack cases.
+
+The benchmark reporting layer does not alter fixtures, labels, engine weights, thresholds, scenario values, or contribution logic. A future prospectively designed `benchmark-v2` remains a separate roadmap item.
 
 ## Data flow
 
@@ -132,11 +148,18 @@ transaction_time - 30 minutes <= event_time <= transaction_time
 
 The event must match `customer_id`, `account_id`, and `session_id`. `device_id` is also checked when present. Future, mismatched, and out-of-window events are excluded. A correlation bonus requires every signal named by a documented cross-domain interaction rule and is capped at 18. A bonus is never added or tuned merely to reach a preferred score, severity, or action.
 
-## API outline
+## API boundary
+
+Implemented through Milestone 3:
 
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `GET /api/auth/admin-check` (Milestone 2 RBAC verification surface)
+- `GET /health`
+- `GET /ready`
+
+Planned for later approved milestones:
+
 - `GET /api/dashboard/summary`
 - `GET /api/dashboard/trends`
 - `GET /api/incidents`
@@ -153,5 +176,6 @@ The event must match `customer_id`, `account_id`, and `session_id`. `device_id` 
 - `GET /api/benchmark/summary`
 - `GET /api/system/status` (admin only)
 - `GET /api/audit-events` (admin only)
-- `GET /health`
-- `GET /ready`
+
+Milestone 3 scenario, reset, and benchmark operations are service/CLI-only. No public business route is
+added ahead of Milestone 4.

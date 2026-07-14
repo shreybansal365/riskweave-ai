@@ -43,7 +43,7 @@ describe("RiskWeave foundation shell", () => {
           jsonResponse({
             status: "ok",
             service: "RiskWeave API",
-            version: "0.2.0",
+            version: "0.3.0",
           }),
         );
       }
@@ -52,7 +52,7 @@ describe("RiskWeave foundation shell", () => {
           status: "ready",
           service: "RiskWeave API",
           checks: { database: "reachable", migrations: "current" },
-          revision: "0002_domain_security",
+          revision: "0003_intelligence_support",
         }),
       );
     });
@@ -63,7 +63,7 @@ describe("RiskWeave foundation shell", () => {
     expect(
       screen.getByRole("heading", { name: "Services, visibly connected." }),
     ).toBeVisible();
-    expect(await screen.findByText("RiskWeave API v0.2.0 is responding.")).toBeVisible();
+    expect(await screen.findByText("RiskWeave API v0.3.0 is responding.")).toBeVisible();
     expect(screen.getByText("PostgreSQL reachable; migrations current.")).toBeVisible();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
@@ -76,7 +76,7 @@ describe("RiskWeave foundation shell", () => {
           jsonResponse({
             status: "ok",
             service: "RiskWeave API",
-            version: "0.2.0",
+            version: "0.3.0",
           }),
         );
       }
@@ -106,7 +106,7 @@ describe("RiskWeave foundation shell", () => {
   liveServiceTest("renders status from the running backend and PostgreSQL", async () => {
     renderApp();
 
-    expect(await screen.findByText("RiskWeave API v0.2.0 is responding.")).toBeVisible();
+    expect(await screen.findByText("RiskWeave API v0.3.0 is responding.")).toBeVisible();
     expect(
       await screen.findByText("PostgreSQL reachable; migrations current."),
     ).toBeVisible();

@@ -98,15 +98,23 @@
 
 ## Synthetic benchmark
 
+- [ ] The fixed fixture is identified as `benchmark-v1 — mixed synthetic security benchmark`.
 - [ ] Benchmark contains exactly 48 fixed labeled cases in the approved class distribution.
-- [ ] Isolated cyber rules, isolated transaction rules, and fused decisions use the same case fixtures.
+- [ ] The comparators are labeled `isolated cyber rule score`, `isolated transaction rule score`, and `fused hybrid contextual score`.
+- [ ] All comparators use the same cases and labels while their input and calibration differences are disclosed.
 - [ ] Benchmark outputs are calculated from engine results, not hard-coded.
 - [ ] Benchmark labels and fixtures are not constructed or altered to guarantee that the fused method wins.
-- [ ] Confusion-matrix counts reconcile to 48 for each decision mode.
-- [ ] Derived precision and recall match the counts where defined.
+- [ ] 40+ escalation, 60+ operational intervention, and 80+ critical-only results are reported separately.
+- [ ] 60+ is primary only when describing transaction holds or operational intervention.
+- [ ] Confusion-matrix counts reconcile to 48 for every comparator and operating point.
+- [ ] Derived precision, recall, and F1 match the counts where defined.
+- [ ] Cohort reporting includes normal legitimate, legitimate unusual cyber, legitimate unusual transaction, cross-domain attack, cyber-only attack, and transaction-only attack cases.
+- [ ] The complete mixed-fixture 60+ result retains fused TP 6, FP 0, TN 30, FN 12 without retuning.
+- [ ] Benchmark limitations disclose absent legitimate cross-domain hard negatives, seven single-domain attacks, score-scale mismatch, and no established universal false-positive reduction.
 - [ ] Same seed and fixtures produce identical results.
 - [ ] Every benchmark API and UI surface labels results as prototype outcomes on synthetic data.
 - [ ] Documentation makes no real-world accuracy or false-positive guarantee.
+- [ ] `benchmark-v2` is documented as a prospective, separately versioned future item and is not created in Milestone 4.
 
 ## Frontend
 

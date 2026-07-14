@@ -1,0 +1,17 @@
+{
+  "dataset_version": "baseline-v1",
+  "simulation_seed": 26026,
+  "simulation_epoch": "2026-07-14T09:00:00Z",
+  "window_start": "2026-06-30T09:00:00Z",
+  "window_end_exclusive": "2026-07-14T09:00:00Z",
+  "counts": {
+    "customers": 12,
+    "accounts": 12,
+    "devices": 16,
+    "transactions": 180,
+    "cyber_events": 240,
+    "incidents": 15,
+    "scenario_runs": 3
+  },
+  "data_classification": "deterministic synthetic prototype data only"
+}

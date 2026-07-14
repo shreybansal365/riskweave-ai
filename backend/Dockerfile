@@ -16,6 +16,8 @@ RUN python -m pip install --require-hashes --requirement requirements.txt
 COPY pyproject.toml alembic.ini ./
 COPY alembic ./alembic
 COPY app ./app
+COPY risk_engine ./risk_engine
+COPY data ./data
 
 USER riskweave
 

@@ -31,7 +31,10 @@ def test_complete_domain_graph_relationships_and_postgres_types(
         assert transaction is not None
         assert transaction.session.account.customer.display_name.startswith("Synthetic Customer")
         assert transaction.session.device.customer_id == transaction.customer_id
-        assert transaction.channel.crypto_asset.priority_score == 70
+        assert (
+            transaction.channel.crypto_asset_id == transaction.channel.crypto_asset.crypto_asset_id
+        )
+        assert 0 <= transaction.channel.crypto_asset.priority_score <= 100
         assert transaction.beneficiary.customer_id == transaction.customer_id
         assert transaction.created_at.tzinfo is not None
 

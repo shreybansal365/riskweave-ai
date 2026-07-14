@@ -70,10 +70,16 @@ transaction_time - 30 minutes <= event_time <= transaction_time
 
 ## Locked evaluation decisions
 
-- A 48-case labeled synthetic benchmark compares isolated cyber rules, isolated transaction rules, and fused contextual decisions.
+- `benchmark-v1 — mixed synthetic security benchmark` is a fixed 48-case labeled synthetic fixture.
+- It compares the `isolated cyber rule score`, `isolated transaction rule score`, and `fused hybrid contextual score`.
+- It reports three distinct operating points: 40+ escalation/step-up, 60+ operational hold/intervention, and 80+ critical-only.
+- The 60+ operating point is primary only when describing transaction holds or operational intervention.
+- Results are also reported by normal-legitimate, legitimate-unusual-cyber, legitimate-unusual-transaction, cross-domain-attack, cyber-only-attack, and transaction-only-attack cohorts.
 - Benchmark labels and fixtures are fixed independently of observed results; they must not be constructed or altered to guarantee that the fused method wins.
 - Benchmark results are computed, deterministic, and explicitly labeled as prototype results on synthetic data.
 - No benchmark result may be presented as real-world banking accuracy.
+- `benchmark-v1` does not establish universal false-positive reduction. It contains no legitimate case with unusual evidence in both domains and includes seven single-domain attacks outside the primary product use case.
+- Any future `benchmark-v2` is a new, prospectively designed fixture; it does not replace or rewrite `benchmark-v1`.
 
 ## Locked quantum-readiness decisions
 
