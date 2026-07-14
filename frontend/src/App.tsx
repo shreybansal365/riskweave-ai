@@ -105,7 +105,7 @@ export function App() {
 
       <main>
         <section className="intro" aria-labelledby="page-title">
-          <p className="eyebrow">Milestone 1 · Service foundation</p>
+          <p className="eyebrow">Milestone 2 · Security foundation</p>
           <h1 id="page-title">Services, visibly connected.</h1>
           <p className="intro-copy">
             RiskWeave now has a typed application boundary, a PostgreSQL-backed readiness
@@ -157,7 +157,7 @@ export function App() {
       </main>
 
       <footer>
-        <span>RiskWeave AI · Foundation v0.1.0</span>
+        <span>RiskWeave AI · Foundation v0.2.0</span>
         <span className="api-origin" title={API_BASE_URL}>
           API {API_BASE_URL}
         </span>

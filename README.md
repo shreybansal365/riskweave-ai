@@ -2,7 +2,12 @@
 
 RiskWeave AI is an explainable cyber-transaction intelligence prototype for FinSpark’26 Problem Statement 2. The approved product vision correlates cybersecurity telemetry with transaction behaviour, while keeping every decision deterministic, inspectable, and clearly qualified as a synthetic-data prototype.
 
-Milestone 1 establishes only the application foundation: a typed FastAPI service, PostgreSQL migration and readiness contracts, and a restrained React shell that reports real service connectivity. It intentionally contains no risk scoring, incidents, scenarios, authentication, banking data, charts, or dashboard metrics.
+Milestone 2 establishes the complete PostgreSQL domain schema plus a bounded authentication and
+security foundation: Argon2id demo identities, short-lived JWT access tokens, server-side analyst/admin
+authorization, append-only security audit records, request identifiers, security headers, safe errors,
+and a restrained React shell that reports real service connectivity. It intentionally contains no risk
+scoring, correlation, synthetic banking scenarios, incident-management APIs, business screens, charts,
+or dashboard metrics.
 
 > **Built and maintained by Shrey Bansal.**
 > Developed for the FinSpark’26 Hackathon under Team CyberForge.
@@ -55,7 +60,7 @@ Every dependency is free and open source. JavaScript and Python dependencies are
 
 ## Fresh-clone setup
 
-The default local values are self-contained and require no secret file:
+The services and health checks start without an authentication secret:
 
 ```bash
 docker compose up --build
@@ -74,7 +79,7 @@ Expected foundation responses:
 {
   "status": "ok",
   "service": "RiskWeave API",
-  "version": "0.1.0"
+  "version": "0.2.0"
 }
 ```
 
@@ -86,11 +91,21 @@ Expected foundation responses:
     "database": "reachable",
     "migrations": "current"
   },
-  "revision": "0001_foundation"
+  "revision": "0002_domain_security"
 }
 ```
 
-Copy `.env.example` to `.env` only when you need to override ports or safe local defaults. Never commit `.env`.
+To use the demo authentication flow, copy `.env.example` to `.env`, set a unique JWT secret of at
+least 32 characters, and set both demo passwords. Never commit `.env`.
+
+After the database is migrated, reconcile the deterministic analyst and admin identities:
+
+```bash
+docker compose exec backend python -m app.cli.seed_demo_users
+```
+
+The seed is idempotent: rerunning it preserves the same UUIDv5 identities and does not rehash unchanged
+passwords. Authentication remains fail-closed with a safe `503` response when `JWT_SECRET` is unset.
 
 Stop the stack without deleting PostgreSQL data:
 
@@ -133,31 +148,42 @@ Common repository commands:
 | `make audit` | Audit locked runtime dependencies |
 | `make check` | Run all non-build quality gates |
 | `make build` | Create the frontend production build |
+| `make migrate` | Upgrade PostgreSQL to the latest Alembic revision |
+| `make migration-check` | Verify model metadata has no ungenerated migration operations |
+| `make seed-users` | Idempotently reconcile analyst/admin identities from environment credentials |
 | `make docker-up` | Build and start the complete local stack in the background |
 | `make docker-logs` | Show recent service logs |
 | `make docker-down` | Stop the local stack |
 
 ## Environment contract
 
-Milestone 1 consumes:
+Milestone 2 consumes:
 
 | Variable | Purpose | Safe local default |
 |---|---|---|
 | `APP_NAME` | API display name | `RiskWeave API` |
-| `APP_VERSION` | API version | `0.1.0` |
+| `APP_VERSION` | API version | `0.2.0` |
 | `APP_ENV` | `development`, `test`, or `production` | `development` |
 | `LOG_LEVEL` | Typed Python log level | `INFO` |
 | `DATABASE_URL` | PostgreSQL connection using psycopg | Docker Compose value |
 | `CORS_ORIGINS` | Comma-separated explicit browser origins | local Vite and container origins |
+| `JWT_SECRET` | HS256 signing secret, minimum 32 characters | none; authentication fails closed |
+| `ACCESS_TOKEN_TTL_MINUTES` | Short-lived access token duration, 1–60 minutes | `15` |
+| `AUTH_FAILURE_LIMIT` | Failed attempts allowed in the in-process demo window | `5` |
+| `AUTH_FAILURE_WINDOW_SECONDS` | Prototype login-limiter window | `60` |
+| `DEMO_ADMIN_EMAIL` | Deterministic admin identity | `admin@riskweave.demo` |
+| `DEMO_ADMIN_PASSWORD` | Admin seed password; stored only as Argon2id | none |
+| `DEMO_ANALYST_EMAIL` | Deterministic analyst identity | `analyst@riskweave.demo` |
+| `DEMO_ANALYST_PASSWORD` | Analyst seed password; stored only as Argon2id | none |
 | `VITE_API_BASE_URL` | Browser-visible API origin | `http://localhost:8000` |
 
-The additional variables in `.env.example` are reserved for already approved later milestones and are not consumed by this foundation.
+The simulation and model variables in `.env.example` remain reserved for approved later milestones.
 
 ## Repository layout
 
 ```text
 .
-├── backend/                 FastAPI, settings, PostgreSQL, Alembic, tests
+├── backend/                 FastAPI, domain models, auth/security, Alembic, tests
 ├── frontend/                React, strict TypeScript, service-status shell
 ├── .github/workflows/       CI quality gates
 ├── docker-compose.yml       Local frontend, backend, and PostgreSQL topology
@@ -176,9 +202,27 @@ GitHub Actions verifies:
 - pytest and Vitest;
 - frontend production build;
 - PostgreSQL migration-backed integration readiness;
+- full fresh upgrade plus safe downgrade/re-upgrade;
+- Argon2id hashing, JWT validation, login and `/api/auth/me`;
+- server-side analyst/admin role separation and security audit creation;
 - valid Docker Compose configuration.
 
-## Foundation boundary
+## Milestone 2 API and security boundary
+
+Implemented endpoints:
+
+- `POST /api/auth/login`;
+- `GET /api/auth/me`;
+- `GET /api/auth/admin-check` as the minimal server-side RBAC verification surface;
+- `GET /health`;
+- `GET /ready`.
+
+The PostgreSQL schema contains every entity and enum in `DATA_SCHEMA.md`, but this milestone adds no
+business behavior for incidents, transactions, scenarios, risk contributions, or quantum readiness.
+Audit rows are append-oriented in the application and protected by PostgreSQL from update, delete, and
+truncate operations.
+
+## Deferred boundary
 
 The following are explicitly deferred until their approved milestones:
 
@@ -186,7 +230,10 @@ The following are explicitly deferred until their approved milestones:
 - deterministic synthetic banking fixtures;
 - correlation and incident workflows;
 - benchmark evaluation;
-- analyst/admin authentication;
 - business screens, metrics, charts, and finished visual design.
 
-This is a synthetic-data prototype, not a production banking control. Later benchmark outcomes must be reported exactly as computed and identified as prototype evaluation on deterministic synthetic data; they are not evidence of real-world banking accuracy.
+This is a synthetic-data prototype, not a production banking control. Later benchmark outcomes must be
+reported exactly as computed and identified as prototype evaluation on deterministic synthetic data;
+they are not evidence of real-world banking accuracy. Any production use would require validation on
+representative governed data, model governance, independent security and regulatory review, monitoring,
+operational controls, key management, shared abuse protection, and end-to-end integration testing.

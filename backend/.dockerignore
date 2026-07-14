@@ -1,10 +1,12 @@
 .venv
+.venv-linux
 __pycache__
 .pytest_cache
 .mypy_cache
 .ruff_cache
 .coverage
 htmlcov
+.cache
 tests
 *.pyc
 *.pyo

@@ -34,8 +34,12 @@ Requirements:
 - frontend keeps the active access token in memory, not `localStorage`;
 - no refresh token is required for the prototype;
 - hard refresh may require re-authentication;
-- failed login attempts are rate-limited where practical;
+- failed login attempts are rate-limited by a bounded in-process prototype limiter;
 - authentication success and failure create audit events without recording passwords or tokens.
+
+The in-process limiter is intentionally modest and is not represented as distributed production-grade
+abuse protection. A production deployment would require a shared rate-limit store and operational
+monitoring.
 
 ## API security
 
@@ -78,13 +82,15 @@ Requirements:
 Append-oriented audit events record:
 
 - authentication success and failure;
+- authorization denial;
 - incident creation;
 - score and recommendation generation;
 - analyst action;
 - scenario start, completion, and failure;
 - atomic reset.
 
-The application exposes no API for updating or deleting audit events. Audit details must exclude secrets and raw tokens.
+The application exposes no API for updating or deleting audit events. PostgreSQL also rejects update,
+delete, and truncate operations on the audit table. Audit details must exclude secrets and raw tokens.
 
 ## Scenario and reset safety
 

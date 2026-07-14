@@ -253,7 +253,8 @@ Only one logical result exists per showcase scenario. Re-running a scenario repl
 - `details` — validated, non-secret JSON
 - `created_at`
 
-Audit events are append-oriented. The application exposes no update or delete operation for them.
+Audit events are append-oriented. The application exposes no update or delete operation for them,
+and PostgreSQL rejects update, delete, and truncate operations on the audit table.
 
 ## Complete enum catalogue
 
@@ -430,6 +431,7 @@ Audit events are append-oriented. The application exposes no update or delete op
 
 - `authentication_succeeded`
 - `authentication_failed`
+- `authorization_denied`
 - `incident_created`
 - `score_generated`
 - `recommendation_generated`

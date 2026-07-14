@@ -136,6 +136,7 @@ The event must match `customer_id`, `account_id`, and `session_id`. `device_id` 
 
 - `POST /api/auth/login`
 - `GET /api/auth/me`
+- `GET /api/auth/admin-check` (Milestone 2 RBAC verification surface)
 - `GET /api/dashboard/summary`
 - `GET /api/dashboard/trends`
 - `GET /api/incidents`

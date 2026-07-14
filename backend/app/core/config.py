@@ -4,7 +4,7 @@ from functools import lru_cache
 from typing import Literal, Self
 from urllib.parse import urlsplit
 
-from pydantic import field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 AppEnvironment = Literal["development", "test", "production"]
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "RiskWeave API"
-    app_version: str = "0.1.0"
+    app_version: str = "0.2.0"
     app_env: AppEnvironment = "development"
     log_level: LogLevel = "INFO"
     api_host: str = "0.0.0.0"
@@ -31,6 +31,17 @@ class Settings(BaseSettings):
         "postgresql+psycopg://riskweave:riskweave-local-only@localhost:5432/riskweave"
     )
     cors_origins: str = "http://localhost:5173,http://localhost:4173"
+    jwt_secret: SecretStr | None = None
+    jwt_algorithm: Literal["HS256"] = "HS256"
+    jwt_issuer: str = "riskweave-api"
+    jwt_audience: str = "riskweave-analyst-workspace"
+    access_token_ttl_minutes: int = Field(default=15, ge=1, le=60)
+    demo_admin_email: str = "admin@riskweave.demo"
+    demo_admin_password: SecretStr | None = None
+    demo_analyst_email: str = "analyst@riskweave.demo"
+    demo_analyst_password: SecretStr | None = None
+    auth_failure_limit: int = Field(default=5, ge=1, le=20)
+    auth_failure_window_seconds: int = Field(default=60, ge=10, le=900)
 
     @field_validator("database_url", mode="before")
     @classmethod
@@ -48,11 +59,42 @@ class Settings(BaseSettings):
         return normalized
 
     @model_validator(mode="after")
-    def validate_cors_origins(self) -> Self:
-        """Validate a concrete, wildcard-free browser origin allowlist."""
+    def validate_security_configuration(self) -> Self:
+        """Validate browser origins and production-only secret requirements."""
 
         _ = self.cors_origin_list
+        if self.app_env == "production" and self.jwt_secret is None:
+            raise ValueError("JWT_SECRET is required when APP_ENV=production")
         return self
+
+    @field_validator("jwt_secret")
+    @classmethod
+    def require_strong_jwt_secret(cls, value: SecretStr | None) -> SecretStr | None:
+        if value is not None and len(value.get_secret_value()) < 32:
+            raise ValueError("JWT_SECRET must contain at least 32 characters")
+        return value
+
+    @field_validator("jwt_secret", "demo_admin_password", "demo_analyst_password", mode="before")
+    @classmethod
+    def blank_secret_is_unset(cls, value: object) -> object:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+    @field_validator("demo_admin_password", "demo_analyst_password")
+    @classmethod
+    def require_demo_password_strength(cls, value: SecretStr | None) -> SecretStr | None:
+        if value is not None and len(value.get_secret_value()) < 12:
+            raise ValueError("demo passwords must contain at least 12 characters")
+        return value
+
+    @field_validator("demo_admin_email", "demo_analyst_email")
+    @classmethod
+    def normalize_demo_email(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if len(normalized) > 320 or "@" not in normalized or normalized.startswith("@"):
+            raise ValueError("demo email must be a valid normalized email address")
+        return normalized
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -1,4 +1,4 @@
-.PHONY: setup backend-install frontend-install format format-check lint typecheck test audit check build docker-up docker-down docker-logs
+.PHONY: setup backend-install frontend-install format format-check lint typecheck test audit check build migrate migration-check seed-users docker-up docker-down docker-logs
 
 PYTHON ?= python3.12
 BACKEND_VENV := backend/.venv
@@ -42,6 +42,15 @@ check: format-check lint typecheck test
 
 build:
 	cd frontend && npm run build
+
+migrate:
+	cd backend && ../$(BACKEND_VENV)/bin/alembic upgrade head
+
+migration-check:
+	cd backend && ../$(BACKEND_VENV)/bin/alembic check
+
+seed-users:
+	cd backend && ../$(BACKEND_VENV)/bin/python -m app.cli.seed_demo_users
 
 docker-up:
 	docker compose up --build -d

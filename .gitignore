@@ -32,6 +32,8 @@ pnpm-debug.log*
 # Python environments, caches, and build outputs
 .venv/
 **/.venv/
+.venv-linux/
+**/.venv-linux/
 venv/
 **/venv/
 __pycache__/

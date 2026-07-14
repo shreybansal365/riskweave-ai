@@ -8,5 +8,5 @@ def test_health_is_database_independent(client: TestClient) -> None:
     assert response.json() == {
         "status": "ok",
         "service": "RiskWeave API",
-        "version": "0.1.0",
+        "version": "0.2.0",
     }

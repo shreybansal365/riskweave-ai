@@ -6,7 +6,7 @@ from typing import Literal, Protocol
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
-EXPECTED_ALEMBIC_REVISION = "0001_foundation"
+EXPECTED_ALEMBIC_REVISION = "0002_domain_security"
 
 DatabaseCheck = Literal["reachable", "unavailable"]
 MigrationCheck = Literal["current", "pending", "unknown"]
