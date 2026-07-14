@@ -19,6 +19,10 @@ test.describe("authenticated product journeys", () => {
 
     await navigateWithinAuthenticatedApp(page, "/system-health");
     await expect(page).toHaveURL(/\/overview$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Operational overview" }),
+    ).toBeVisible();
+    await page.waitForLoadState("networkidle");
     await page.reload();
     await expect(page).toHaveURL(/\/login$/);
     await expect(
@@ -49,6 +53,48 @@ test.describe("authenticated product journeys", () => {
     await expect(page).toHaveURL(/\/login$/);
     audit.assertClean();
     audit.stop();
+  });
+
+  test("skip navigation, route focus, and session-expiry notice remain accessible", async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== "chromium", "Focused accessibility semantics run once");
+    await loginThroughUi(page, "analyst");
+
+    const overviewHeading = page.getByRole("heading", {
+      level: 1,
+      name: "Operational overview",
+    });
+    await expect(overviewHeading).toBeFocused();
+
+    const skipLink = page.getByRole("link", { name: "Skip to main content" });
+    await skipLink.focus();
+    await expect(skipLink).toBeVisible();
+    await skipLink.press("Enter");
+    await expect(page.locator("#main-content")).toBeFocused();
+
+    await page.getByRole("link", { name: "Incidents", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Incident queue" }),
+    ).toBeFocused();
+
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.route("**/api/auth/login", async (route) => {
+      const response = await route.fetch();
+      const payload = (await response.json()) as Record<string, unknown>;
+      await route.fulfill({ response, json: { ...payload, expires_in: 2 } });
+    });
+    await loginThroughUi(page, "analyst", "/incidents", {
+      expectPageHeading: false,
+    });
+    await expect(page).toHaveURL(/\/login$/, { timeout: 5_000 });
+    const expiryNotice = page.getByRole("alert");
+    await expect(expiryNotice).toContainText(
+      "Your session expired. Sign in again to return to your work.",
+    );
+    await expect(expiryNotice.getByRole("button", { name: "Dismiss" })).toBeVisible();
+    await assertNoCredentialPersistence(page);
   });
 
   test("incorrect credentials receive a bounded authentication error", async ({

@@ -1,10 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type SyntheticEvent } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from "react";
+import {
+  Link,
+  useBeforeUnload,
+  useBlocker,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 
 import { incidentsApi } from "../api/riskweave";
 import { useAuth } from "../app/use-auth";
-import { ContributionList, IncidentTimeline } from "../components/incident-components";
+import { DecisionWeave } from "../components/DecisionWeave";
+import {
+  ContributionList,
+  DecisiveEvidence,
+  IncidentTimeline,
+} from "../components/incident-components";
 import {
   Badge,
   Button,
@@ -16,10 +27,15 @@ import {
   ScoreDisplay,
   StatusBadge,
 } from "../components/ui";
-import { useToast } from "../components/use-toast";
 import { ApiError } from "../lib/api-client";
-import { formatDateTime, formatDecimal, formatMoney, titleCase } from "../lib/format";
-import type { AnalystActionType, IncidentStatus } from "../types/api";
+import {
+  formatDateTime,
+  formatDecimal,
+  formatMoney,
+  shortIdentifier,
+  titleCase,
+} from "../lib/format";
+import type { AnalystActionType, IncidentStatus, RecommendedAction } from "../types/api";
 
 const actionLabels: Record<AnalystActionType, string> = {
   add_note: "Add analyst note",
@@ -31,6 +47,27 @@ const actionLabels: Record<AnalystActionType, string> = {
   simulate_decline: "Simulate decline",
   close_incident: "Close case",
 };
+
+const recommendedActionLabels: Record<RecommendedAction, string> = {
+  allow: "Allow",
+  allow_and_monitor: "Allow and monitor",
+  step_up_authentication: "Step-up verification",
+  hold_for_review: "Hold for analyst review",
+  hold_and_open_critical_incident: "Hold transaction and open critical incident",
+};
+
+const dispositionActionTypes = new Set<AnalystActionType>([
+  "start_review",
+  "mark_confirmed_fraud",
+  "mark_legitimate",
+  "close_incident",
+]);
+
+const transactionActionTypes = new Set<AnalystActionType>([
+  "simulate_hold",
+  "simulate_release",
+  "simulate_decline",
+]);
 
 const patchTargets: Partial<Record<AnalystActionType, IncidentStatus>> = {
   start_review: "in_review",
@@ -52,11 +89,19 @@ export function IncidentDetailPage() {
   const { incidentId = "" } = useParams();
   const [params] = useSearchParams();
   const { session } = useAuth();
-  const { notify } = useToast();
   const queryClient = useQueryClient();
   const token = session?.token ?? "";
   const [note, setNote] = useState("");
   const [pendingAction, setPendingAction] = useState<AnalystActionType | null>(null);
+  const [workflowFeedback, setWorkflowFeedback] = useState<{
+    tone: "success" | "danger";
+    title: string;
+    message: string;
+  } | null>(null);
+  const workflowFeedbackRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (workflowFeedback !== null) workflowFeedbackRef.current?.focus();
+  }, [workflowFeedback]);
   const incident = useQuery({
     queryKey: ["incidents", "detail", incidentId],
     queryFn: ({ signal }) => incidentsApi.detail(token, incidentId, signal),
@@ -96,19 +141,20 @@ export function IncidentDetailPage() {
         incident.data.updated_at,
       );
     },
-    onSuccess: async (result) => {
+    onSuccess: async (result, variables) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["incidents"] }),
         queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
         queryClient.invalidateQueries({ queryKey: ["customers"] }),
       ]);
-      setNote("");
+      if (variables.action === "add_note") setNote("");
       setPendingAction(null);
-      notify({
-        tone: "success",
+      const feedback = {
+        tone: "success" as const,
         title: result.idempotent_replay ? "Action already recorded" : "Case updated",
         message: `Incident is now ${titleCase(result.status)}; transaction is ${titleCase(result.transaction_status)}.`,
-      });
+      };
+      setWorkflowFeedback(feedback);
     },
     onError: async (error) => {
       const conflict = error instanceof ApiError && error.status === 409;
@@ -116,15 +162,44 @@ export function IncidentDetailPage() {
         await queryClient.invalidateQueries({
           queryKey: ["incidents", "detail", incidentId],
         });
-      notify({
-        tone: "danger",
+      const feedback = {
+        tone: "danger" as const,
         title: conflict ? "Case changed before this action" : "Action was not recorded",
         message:
           error instanceof Error ? error.message : "The service rejected this action.",
-      });
+      };
+      setWorkflowFeedback(feedback);
       setPendingAction(null);
     },
   });
+
+  const hasUnsavedNote = note.trim() !== "";
+  const shouldBlockNavigation = useCallback(
+    ({
+      currentLocation,
+      nextLocation,
+    }: {
+      currentLocation: { pathname: string; search: string };
+      nextLocation: { pathname: string; search: string };
+    }) =>
+      session !== null &&
+      hasUnsavedNote &&
+      `${currentLocation.pathname}${currentLocation.search}` !==
+        `${nextLocation.pathname}${nextLocation.search}`,
+    [hasUnsavedNote, session],
+  );
+  const noteNavigationBlocker = useBlocker(shouldBlockNavigation);
+  useBeforeUnload(
+    useCallback(
+      (event) => {
+        if (!hasUnsavedNote) return;
+        event.preventDefault();
+        Reflect.set(event, "returnValue", "");
+      },
+      [hasUnsavedNote],
+    ),
+    { capture: true },
+  );
 
   if (incident.isPending)
     return <LoadingSkeleton label="Loading investigation workspace" />;
@@ -157,6 +232,44 @@ export function IncidentDetailPage() {
     if (normalized !== "")
       mutation.mutate({ action: "add_note", submittedNote: normalized });
   };
+  const isLegitimateNewDevice = data.scenario_key === "legitimate_new_device";
+  const treatmentLabel = recommendedActionLabels[data.recommended_action];
+  const dispositionActions = data.available_actions.filter((action) =>
+    dispositionActionTypes.has(action),
+  );
+  const transactionActions = data.available_actions.filter((action) =>
+    transactionActionTypes.has(action),
+  );
+  const alignedDispositionAction = isLegitimateNewDevice
+    ? dispositionActions.find((action) => action === "mark_legitimate")
+    : dispositionActions.find((action) => action === "start_review");
+  const otherDispositionActions = dispositionActions.filter(
+    (action) => action !== alignedDispositionAction,
+  );
+  const actionTone = (action: AnalystActionType) => {
+    if (action === alignedDispositionAction) return "primary" as const;
+    if (
+      !isLegitimateNewDevice &&
+      (action === "mark_confirmed_fraud" ||
+        action === "simulate_hold" ||
+        action === "simulate_decline")
+    )
+      return "danger" as const;
+    return "secondary" as const;
+  };
+  const actionButton = (action: AnalystActionType) => (
+    <Button
+      key={action}
+      type="button"
+      tone={actionTone(action)}
+      disabled={mutation.isPending}
+      onClick={() => {
+        runAction(action);
+      }}
+    >
+      {actionLabels[action]}
+    </Button>
+  );
 
   return (
     <>
@@ -182,155 +295,274 @@ export function IncidentDetailPage() {
           </div>
         </div>
         <div className="case-decision">
-          <span>Authoritative fused score</span>
-          <strong>{data.fused_score}</strong>
-          <em>{titleCase(data.recommended_action)}</em>
-          <StatusBadge status={data.transaction.status} />
+          <span>Fused risk</span>
+          <strong className="case-decision__score">
+            {data.fused_score}
+            <small> / 100</small>
+          </strong>
+          <em className="case-decision__treatment">{treatmentLabel}</em>
+          <div className="case-decision__states">
+            <RiskBadge severity={data.severity} />
+            <StatusBadge status={data.transaction.status} />
+          </div>
         </div>
       </header>
 
-      <section className="convergence-panel" aria-labelledby="convergence-title">
-        <header>
+      {workflowFeedback !== null && (
+        <div
+          className={`state-message workflow-feedback${
+            workflowFeedback.tone === "danger" ? " state-message--error" : ""
+          }`}
+          role={workflowFeedback.tone === "danger" ? "alert" : "status"}
+          aria-live={workflowFeedback.tone === "danger" ? "assertive" : "polite"}
+          tabIndex={-1}
+          ref={workflowFeedbackRef}
+          data-workflow-feedback
+        >
+          <strong>{workflowFeedback.title}</strong>
+          <p>{workflowFeedback.message}</p>
+        </div>
+      )}
+
+      <section
+        className="decision-context"
+        aria-labelledby="decision-context-title"
+        data-decision-context
+      >
+        <header className="decision-context__header">
           <div>
-            <p className="panel-eyebrow">Signal convergence</p>
-            <h2 id="convergence-title">Why separate signals became one decision</h2>
+            <p className="panel-eyebrow">Decision context</p>
+            <h2 id="decision-context-title">
+              {formatMoney(data.transaction.amount_minor)} transfer{" "}
+              {titleCase(data.transaction.status)}
+            </h2>
           </div>
-          <span>
-            {data.engine_version} · {data.model_version}
-          </span>
+          <p>{data.action_explanation}</p>
         </header>
-        <div className="convergence-streams">
-          <ScoreDisplay
-            label="Cyber stream"
-            score={data.cyber_score}
-            detail="Backend-owned score"
-            accent="cyber"
-          />
-          <span className="convergence-operator" aria-hidden="true">
-            +
-          </span>
-          <ScoreDisplay
-            label="Transaction stream"
-            score={data.transaction_score}
-            detail="Backend-owned score"
-            accent="transaction"
-          />
-          <span className="convergence-operator" aria-hidden="true">
-            +
-          </span>
-          <ScoreDisplay
-            label="Interaction bonus"
-            score={data.correlation_bonus}
-            detail="Verified cross-domain rules"
-            accent="bonus"
-          />
-          <span className="convergence-arrow" aria-hidden="true">
-            →
-          </span>
-          <ScoreDisplay
-            label="Fused decision"
-            score={data.fused_score}
-            detail={`Raw ${formatDecimal(data.raw_fused_score)} · rounded once`}
-            accent="fused"
-          />
-        </div>
-        <div className="decision-copy">
-          <p>
-            <strong>Decision.</strong> {data.decision_explanation}
-          </p>
-          <p>
-            <strong>Recommended response.</strong> {data.action_explanation}
-          </p>
-        </div>
+        <dl className="decision-context__ledger">
+          <div className="decision-context__primary">
+            <dt>Transfer amount</dt>
+            <dd>{formatMoney(data.transaction.amount_minor)}</dd>
+          </div>
+          <div>
+            <dt>Beneficiary</dt>
+            <dd>{data.transaction.beneficiary_display_name}</dd>
+          </div>
+          <div>
+            <dt>Payment channel</dt>
+            <dd>{data.crypto_readiness.channel_display_name}</dd>
+          </div>
+          <div>
+            <dt>Destination risk</dt>
+            <dd>{titleCase(data.transaction.destination_risk)}</dd>
+          </div>
+          <div>
+            <dt>Transaction state</dt>
+            <dd>
+              <StatusBadge status={data.transaction.status} />
+            </dd>
+          </div>
+          <div>
+            <dt>Customer</dt>
+            <dd>{data.customer.customer_reference}</dd>
+          </div>
+          <div>
+            <dt>Account</dt>
+            <dd>{data.account.account_reference}</dd>
+          </div>
+          <div>
+            <dt>Session origin</dt>
+            <dd>
+              {data.session.city}, {data.session.country} ·{" "}
+              {data.session.masked_ip_address}
+            </dd>
+          </div>
+          <div>
+            <dt>Session</dt>
+            <dd>{shortIdentifier(data.session.session_id)}</dd>
+          </div>
+        </dl>
       </section>
+
+      {isLegitimateNewDevice && (
+        <section
+          className="intervention-avoided"
+          aria-labelledby="intervention-avoided-title"
+          data-scenario-treatment="allow_and_monitor"
+        >
+          <header>
+            <div>
+              <p className="panel-eyebrow">Proportionate decision</p>
+              <h2 id="intervention-avoided-title">Why intervention was avoided</h2>
+            </div>
+            <strong>Current treatment: {treatmentLabel}</strong>
+          </header>
+          <div className="intervention-avoided__evidence">
+            <section>
+              <span>Unusual cyber context</span>
+              <strong>Cyber score {data.cyber_score}</strong>
+              <ul>
+                {data.cyber_contributions.slice(0, 4).map((item) => (
+                  <li key={item.contribution_id}>{item.explanation}</li>
+                ))}
+              </ul>
+            </section>
+            <section>
+              <span>Transaction context</span>
+              <strong>Transaction score {data.transaction_score}</strong>
+              {data.transaction_contributions.length === 0 ? (
+                <p>No persisted transaction contribution raised this stream.</p>
+              ) : (
+                <ul>
+                  {data.transaction_contributions.slice(0, 4).map((item) => (
+                    <li key={item.contribution_id}>{item.explanation}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+          <div className="intervention-avoided__outcome" role="status">
+            <span>Interaction bonus {data.correlation_bonus}</span>
+            <span>Transaction {titleCase(data.transaction.status)} · no hold</span>
+            <span>No step-up authentication</span>
+          </div>
+          <p>{data.decision_explanation}</p>
+        </section>
+      )}
+
+      <DecisionWeave
+        cyberScore={data.cyber_score}
+        transactionScore={data.transaction_score}
+        correlationBonus={data.correlation_bonus}
+        rawFusedScore={data.raw_fused_score}
+        fusedScore={data.fused_score}
+        severity={data.severity}
+        recommendedActionLabel={treatmentLabel}
+        transactionStatus={data.transaction.status}
+        decisionExplanation={data.decision_explanation}
+        cyberEvidence={data.cyber_contributions}
+        transactionEvidence={data.transaction_contributions}
+        interactions={data.interaction_contributions}
+        fusionProjection={data.fusion_projection}
+      />
+
+      <Panel
+        title="Decisive evidence"
+        eyebrow="Highest-impact persisted contributions"
+        className="decisive-evidence-panel"
+      >
+        <DecisiveEvidence
+          cyber={data.cyber_contributions}
+          transaction={data.transaction_contributions}
+          interactions={data.interaction_contributions}
+        />
+      </Panel>
 
       <div className="investigation-layout">
         <Panel
           title="Chronological evidence"
-          eyebrow="Persisted incident timeline"
+          eyebrow="Complete persisted evidence trail"
           className="timeline-panel"
         >
           <IncidentTimeline items={data.timeline} />
         </Panel>
-        <aside className="case-sidebar">
-          <Panel title="Case controls" eyebrow="Valid server-approved actions">
+        <aside className="case-sidebar investigation-action-rail">
+          <Panel
+            title="Investigation disposition"
+            eyebrow="Valid server-approved case actions"
+            className="disposition-panel"
+          >
+            <p className="current-treatment" role="status">
+              <span>Current treatment</span>
+              <strong>{treatmentLabel}</strong>
+            </p>
             <div className="action-panel">
-              {data.available_actions
-                .filter((action) => action !== "add_note")
-                .map((action) => (
-                  <Button
-                    key={action}
-                    type="button"
-                    tone={
-                      action === "mark_confirmed_fraud" || action === "simulate_decline"
-                        ? "danger"
-                        : action === "start_review"
-                          ? "primary"
-                          : "secondary"
-                    }
-                    disabled={mutation.isPending}
-                    onClick={() => {
-                      runAction(action);
-                    }}
-                  >
-                    {actionLabels[action]}
-                  </Button>
-                ))}
-              {data.available_actions.filter((action) => action !== "add_note").length ===
-                0 && (
-                <p className="quiet-copy">No state-changing action is currently valid.</p>
+              {alignedDispositionAction !== undefined &&
+                actionButton(alignedDispositionAction)}
+              {!isLegitimateNewDevice && otherDispositionActions.map(actionButton)}
+              {isLegitimateNewDevice && otherDispositionActions.length > 0 && (
+                <details className="server-approved-actions">
+                  <summary>Other server-approved actions</summary>
+                  <div>{otherDispositionActions.map(actionButton)}</div>
+                </details>
               )}
-              {data.available_actions.includes("add_note") && (
-                <form className="note-form" onSubmit={submitNote}>
-                  <label htmlFor="analyst-note">Analyst note</label>
-                  <textarea
-                    id="analyst-note"
-                    maxLength={2000}
-                    value={note}
-                    onChange={(event) => {
-                      setNote(event.target.value);
-                    }}
-                    placeholder="Record investigation context without sensitive personal data."
-                  />
-                  <div>
-                    <span>{note.length}/2000</span>
-                    <Button
-                      type="submit"
-                      disabled={mutation.isPending || note.trim() === ""}
-                    >
-                      Add note
-                    </Button>
-                  </div>
-                </form>
+              {dispositionActions.length === 0 && (
+                <p className="quiet-copy">No disposition change is currently valid.</p>
               )}
             </div>
           </Panel>
-          <Panel title="Transaction context" eyebrow="Persisted payment state">
-            <dl className="detail-list">
-              <div>
-                <dt>Amount</dt>
-                <dd>{formatMoney(data.transaction.amount_minor)}</dd>
-              </div>
-              <div>
-                <dt>Beneficiary</dt>
-                <dd>{data.transaction.beneficiary_display_name}</dd>
-              </div>
-              <div>
-                <dt>Destination</dt>
-                <dd>{titleCase(data.transaction.destination_risk)}</dd>
-              </div>
-              <div>
-                <dt>Status</dt>
-                <dd>
-                  <StatusBadge status={data.transaction.status} />
-                </dd>
-              </div>
-            </dl>
+          <Panel
+            title="Synthetic transaction response"
+            eyebrow="Validated payment-state simulation"
+            className="transaction-response-panel"
+          >
+            <div className="transaction-response-state">
+              <span>Current synthetic state</span>
+              <StatusBadge status={data.transaction.status} />
+            </div>
+            <div className="action-panel">
+              {transactionActions.map(actionButton)}
+              {transactionActions.length === 0 && (
+                <p className="quiet-copy">
+                  No simulated transaction response is currently valid.
+                </p>
+              )}
+            </div>
+          </Panel>
+          <Panel
+            title="Analyst note"
+            eyebrow="Append-oriented investigation context"
+            className="analyst-note-panel"
+          >
+            {data.available_actions.includes("add_note") ? (
+              <form className="note-form" onSubmit={submitNote}>
+                <label htmlFor="analyst-note">Case note</label>
+                <textarea
+                  id="analyst-note"
+                  maxLength={2000}
+                  value={note}
+                  onChange={(event) => {
+                    setNote(event.target.value);
+                  }}
+                  placeholder="Record investigation context without sensitive personal data."
+                />
+                {hasUnsavedNote && (
+                  <div className="note-draft-warning" role="status">
+                    <span>Unsaved note. Save it or discard it before leaving.</span>
+                    <Button
+                      type="button"
+                      tone="quiet"
+                      disabled={mutation.isPending}
+                      onClick={() => {
+                        setNote("");
+                      }}
+                    >
+                      Discard draft
+                    </Button>
+                  </div>
+                )}
+                <div>
+                  <span>{note.length}/2000</span>
+                  <Button
+                    type="submit"
+                    disabled={mutation.isPending || note.trim() === ""}
+                  >
+                    Add note
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <p className="quiet-copy">Notes are not available for this case state.</p>
+            )}
           </Panel>
         </aside>
       </div>
 
-      <Panel title="Contribution analysis" eyebrow="Grounded and inspectable">
+      <Panel
+        title="Complete contribution ledger"
+        eyebrow="Grounded evidence and provenance"
+        className="contribution-ledger-panel"
+      >
         <div className="contribution-grid">
           <ContributionList
             title="Cyber evidence"
@@ -348,6 +580,23 @@ export function IncidentDetailPage() {
             stream="interaction"
           />
         </div>
+        <details className="investigation-provenance">
+          <summary>Decision provenance</summary>
+          <dl className="detail-list">
+            <div>
+              <dt>Rules engine</dt>
+              <dd>{data.engine_version}</dd>
+            </div>
+            <div>
+              <dt>Behaviour model</dt>
+              <dd>{data.model_version}</dd>
+            </div>
+            <div>
+              <dt>Backend rounding</dt>
+              <dd>{data.fusion_projection.rounding_mode}</dd>
+            </div>
+          </dl>
+        </details>
       </Panel>
 
       <div className="context-grid">
@@ -529,6 +778,22 @@ export function IncidentDetailPage() {
         onConfirm={() => {
           if (pendingAction !== null)
             mutation.mutate({ action: pendingAction, submittedNote: null });
+        }}
+      />
+      <ConfirmationDialog
+        open={noteNavigationBlocker.state === "blocked"}
+        title="Discard unsaved analyst note?"
+        description="This draft has not been appended to the case history. Leaving now will discard it."
+        confirmLabel="Discard note and leave"
+        danger
+        onClose={() => {
+          if (noteNavigationBlocker.state === "blocked") noteNavigationBlocker.reset();
+        }}
+        onConfirm={() => {
+          if (noteNavigationBlocker.state === "blocked") {
+            setNote("");
+            noteNavigationBlocker.proceed();
+          }
         }}
       />
     </>

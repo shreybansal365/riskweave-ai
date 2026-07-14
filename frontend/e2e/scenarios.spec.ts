@@ -18,6 +18,7 @@ const expected = {
     fused: 9,
     severity: "Low",
     status: "Permitted",
+    action: "Allow",
   },
   legitimate_new_device: {
     cyber: 40,
@@ -26,6 +27,7 @@ const expected = {
     fused: 23,
     severity: "Guarded",
     status: "Permitted",
+    action: "Allow And Monitor",
   },
   account_takeover: {
     cyber: 78,
@@ -34,6 +36,7 @@ const expected = {
     fused: 89,
     severity: "Critical",
     status: "Held",
+    action: "Hold And Open Critical Incident",
   },
 } as const;
 
@@ -61,14 +64,15 @@ test.describe("deterministic scenario simulator", () => {
       await expect(card.locator('[data-score-label="Transaction"] strong')).toHaveText(
         values.transaction.toString(),
       );
-      await expect(card.locator('[data-score-label="Bonus"] strong')).toHaveText(
+      await expect(card.locator('[data-score-label="Eligible bonus"] strong')).toHaveText(
         values.bonus.toString(),
       );
-      await expect(card.locator('[data-score-label="Fused"] strong')).toHaveText(
-        values.fused.toString(),
-      );
+      await expect(
+        card.locator('[data-score-label="Authoritative fused decision"] strong'),
+      ).toHaveText(values.fused.toString());
       await expect(card.getByText(values.severity, { exact: true })).toBeVisible();
       await expect(card.getByText(values.status, { exact: true })).toBeVisible();
+      await expect(card.getByText(values.action, { exact: true })).toBeVisible();
 
       const responsePromise = page.waitForResponse(
         (response) =>

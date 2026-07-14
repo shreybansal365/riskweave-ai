@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, type ReactNode } from "react";
 import {
   createBrowserRouter,
   Navigate,
@@ -44,6 +44,47 @@ const EvaluationPage = lazy(() =>
 );
 
 function RouteLoading({ children }: { children: ReactNode }) {
+  const location = useLocation();
+
+  useEffect(() => {
+    const routeName =
+      location.pathname === "/login"
+        ? "Sign in"
+        : location.pathname === "/overview"
+          ? "Operational overview"
+          : location.pathname === "/incidents"
+            ? "Incident queue"
+            : location.pathname.startsWith("/incidents/")
+              ? "Incident investigation"
+              : location.pathname === "/simulator"
+                ? "Scenario simulator"
+                : location.pathname === "/quantum-readiness"
+                  ? "Quantum readiness"
+                  : location.pathname === "/system-health"
+                    ? "System health"
+                    : location.pathname === "/evaluation"
+                      ? "Evaluation"
+                      : "Workspace";
+    document.title = `${routeName} · RiskWeave`;
+
+    const focusHeading = () => {
+      const heading = document.querySelector<HTMLElement>("main h1");
+      if (heading === null) return false;
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+      return true;
+    };
+
+    if (focusHeading()) return undefined;
+    const observer = new MutationObserver(() => {
+      if (focusHeading()) observer.disconnect();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+    };
+  }, [location.pathname]);
+
   return (
     <Suspense fallback={<LoadingSkeleton label="Loading RiskWeave view" />}>
       {children}

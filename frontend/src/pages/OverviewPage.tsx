@@ -18,8 +18,9 @@ import {
   Panel,
   RiskBadge,
   ServiceStatusIndicator,
+  StatusBadge,
 } from "../components/ui";
-import { formatDateTime, formatNumber } from "../lib/format";
+import { formatDateTime, formatMoney, formatNumber, titleCase } from "../lib/format";
 
 export function OverviewPage() {
   const { session } = useAuth();
@@ -59,17 +60,18 @@ export function OverviewPage() {
 
   if (summary.data.visible_incidents === 0 && recent.data.items.length === 0) {
     return (
-      <>
+      <div data-overview-ready="empty">
         <PageHeader
           eyebrow="Contextual risk operations"
           title="Operational overview"
           description="A source-backed view of synthetic incidents, intervention outcomes, and service health across the fixed 14-day evaluation window."
+          variant="briefing"
         />
         <EmptyState
           title="No incidents in the current dataset"
           message="RiskWeave received a valid empty response from the persisted incident sources. Run a deterministic scenario or restore the baseline before investigating cases."
         />
-      </>
+      </div>
     );
   }
 
@@ -89,66 +91,111 @@ export function OverviewPage() {
   );
 
   return (
-    <>
+    <div className="overview-briefing" data-overview-ready="settled">
       <PageHeader
-        eyebrow="Contextual risk operations"
+        eyebrow="Operations briefing"
         title="Operational overview"
-        description="A source-backed view of synthetic incidents, intervention outcomes, and service health across the fixed 14-day evaluation window."
+        description="Cases requiring attention, intervention state, and source-backed evidence across the deterministic 14-day window."
+        variant="briefing"
       />
 
-      <section className="metric-grid" aria-label="Operational metrics">
-        <MetricCard
-          label="Visible incidents"
-          value={formatNumber(summary.data.visible_incidents)}
-          context="Persisted cases in the current dataset"
-        />
+      <section
+        className="metric-grid metric-grid--primary"
+        aria-label="Operational priorities"
+      >
         <MetricCard
           label="High or critical"
           value={criticalHigh}
           context="Cases requiring intervention"
           tone="red"
+          emphasis="primary"
         />
         <MetricCard
           label="Open or in review"
           value={activeCases}
           context="Current analyst workload"
           tone="amber"
+          emphasis="primary"
         />
         <MetricCard
           label="Transactions held"
           value={summary.data.transactions_held}
           context="Persisted transaction state"
           tone="red"
-        />
-        <MetricCard
-          label="Unusual but permitted"
-          value={summary.data.legitimate_unusual_activity_permitted}
-          context="Context avoided unnecessary intervention"
-          tone="green"
-        />
-        <MetricCard
-          label="Confirmed fraud"
-          value={summary.data.confirmed_fraud_cases}
-          context="Analyst-confirmed synthetic cases"
-          tone="teal"
+          emphasis="primary"
         />
       </section>
 
-      <div className="overview-grid overview-grid--wide">
+      <section className="operational-ledger" aria-label="Controlled outcomes">
+        <div>
+          <span>Visible incidents</span>
+          <strong>{formatNumber(summary.data.visible_incidents)}</strong>
+          <small>Persisted cases</small>
+        </div>
+        <div>
+          <span>Unusual but permitted</span>
+          <strong>{summary.data.legitimate_unusual_activity_permitted}</strong>
+          <small>Monitored without intervention</small>
+        </div>
+        <div>
+          <span>Confirmed fraud</span>
+          <strong>{summary.data.confirmed_fraud_cases}</strong>
+          <small>Analyst-confirmed synthetic cases</small>
+        </div>
+      </section>
+
+      <Panel
+        title="Priority investigations"
+        eyebrow="Cases requiring attention"
+        variant="open"
+        className="priority-investigations"
+      >
+        {recent.data.items.length === 0 ? (
+          <EmptyState
+            title="No visible incidents"
+            message="The deterministic dataset currently contains no investigation records."
+          />
+        ) : (
+          <div className="recent-list">
+            {recent.data.items.map((incident) => (
+              <Link to={`/incidents/${incident.incident_id}`} key={incident.incident_id}>
+                <span className="recent-identity">
+                  <strong>{incident.incident_reference}</strong>
+                  <small>
+                    {incident.customer_display_name} · {incident.account_reference}
+                  </small>
+                </span>
+                <span className="recent-transaction">
+                  <strong>{formatMoney(incident.amount_minor, incident.currency)}</strong>
+                  <small>{titleCase(incident.recommended_action)}</small>
+                </span>
+                <span className="recent-meta">
+                  <RiskBadge severity={incident.severity} />
+                  <b>{incident.fused_score}</b>
+                  <StatusBadge status={incident.transaction_status} />
+                  <small>{formatDateTime(incident.created_at)}</small>
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </Panel>
+
+      <div className="overview-grid overview-grid--wide overview-analysis">
         <Panel
-          title="Incident volume"
-          eyebrow="14-day operational cadence"
+          title="Daily incident cadence"
+          eyebrow="14-day UTC window"
           aside={
             <span className="panel-stat">{summary.data.visible_incidents} total</span>
           }
+          variant="ledger"
         >
           <IncidentVolumeChart points={trends.data.points} />
           <p className="chart-summary">
-            Incident volume is shown per UTC day from persisted records, not a client
-            projection.
+            Discrete daily counts from persisted incident records.
           </p>
         </Panel>
-        <Panel title="Severity distribution" eyebrow="Current case mix">
+        <Panel title="Severity distribution" eyebrow="Current case mix" variant="ledger">
           <SeverityDistributionChart counts={summary.data.incidents_by_severity} />
           <p className="chart-summary">
             High and critical cases represent {criticalHigh} of{" "}
@@ -157,15 +204,23 @@ export function OverviewPage() {
         </Panel>
       </div>
 
-      <div className="overview-grid">
-        <Panel title="Risk stream movement" eyebrow="Cyber · transaction · fused">
+      <div className="overview-grid overview-supporting">
+        <Panel
+          title="Daily average risk by stream"
+          eyebrow="Not decision thresholds"
+          variant="ledger"
+        >
           <RiskTrendChart points={trends.data.points} />
           <p className="chart-summary">
-            Daily averages preserve the server’s authoritative cyber, transaction, and
-            fused scores.
+            Daily averages preserve server-owned scores; they are not incident decision
+            thresholds.
           </p>
         </Panel>
-        <Panel title="Transaction actions" eyebrow="Outcome distribution">
+        <Panel
+          title="Transaction actions"
+          eyebrow="All persisted outcomes"
+          variant="ledger"
+        >
           <TransactionActionsChart points={trends.data.points} />
           <p className="chart-summary">
             {totalActions} transaction outcomes are represented across the evaluation
@@ -175,36 +230,7 @@ export function OverviewPage() {
       </div>
 
       <div className="overview-grid overview-grid--lower">
-        <Panel title="Priority investigations" eyebrow="Highest fused score">
-          {recent.data.items.length === 0 ? (
-            <EmptyState
-              title="No visible incidents"
-              message="The deterministic dataset currently contains no investigation records."
-            />
-          ) : (
-            <div className="recent-list">
-              {recent.data.items.map((incident) => (
-                <Link
-                  to={`/incidents/${incident.incident_id}`}
-                  key={incident.incident_id}
-                >
-                  <span>
-                    <strong>{incident.incident_reference}</strong>
-                    <small>
-                      {incident.customer_display_name} · {incident.account_reference}
-                    </small>
-                  </span>
-                  <span className="recent-meta">
-                    <RiskBadge severity={incident.severity} />
-                    <b>{incident.fused_score}</b>
-                    <small>{formatDateTime(incident.created_at)}</small>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </Panel>
-        <Panel title="Source systems" eyebrow="Persisted data coverage">
+        <Panel title="Source systems" eyebrow="Persisted data coverage" variant="open">
           <div className="source-health-list">
             {summary.data.source_systems.map((source) => (
               <article key={source.source}>
@@ -221,8 +247,12 @@ export function OverviewPage() {
             ))}
           </div>
         </Panel>
+        <aside className="overview-method-note">
+          <span>Data boundary</span>
+          <strong>Deterministic synthetic evidence</strong>
+          <p>{summary.data.synthetic_data_notice}</p>
+        </aside>
       </div>
-      <p className="synthetic-notice">{summary.data.synthetic_data_notice}</p>
-    </>
+    </div>
   );
 }

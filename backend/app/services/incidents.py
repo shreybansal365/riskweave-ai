@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import datetime, timedelta
+from decimal import Decimal
 from math import ceil
 from typing import Any, Literal
 from uuid import UUID
@@ -28,6 +29,7 @@ from app.models.enums import (
     IncidentStatus,
     ScenarioKey,
     Severity,
+    TransactionStatus,
 )
 from app.schemas.common import PaginationMeta
 from app.schemas.incidents import (
@@ -36,12 +38,14 @@ from app.schemas.incidents import (
     ContributionResponse,
     CryptoReadinessSummaryResponse,
     CustomerSummaryResponse,
+    FusionProjectionResponse,
     IncidentDetailResponse,
     IncidentListItemResponse,
     IncidentListResponse,
     SessionSummaryResponse,
     TimelineItemResponse,
     TransactionSummaryResponse,
+    WeightedScoreTermResponse,
 )
 from app.services.analyst_workflows import available_actions_for
 from app.services.presentation import masked_ip, masked_uuid
@@ -49,6 +53,7 @@ from app.services.quantum_readiness import (
     FRAUD_RISK_SEPARATION_NOTICE,
     QuantumReadinessService,
 )
+from risk_engine.fusion import CYBER_WEIGHT, TRANSACTION_WEIGHT
 
 IncidentSort = Literal["created_at", "updated_at", "severity", "fused_score", "status"]
 SortDirection = Literal["asc", "desc"]
@@ -84,6 +89,7 @@ class IncidentQueryService:
         sort_direction: SortDirection,
         severity: Severity | None,
         status: IncidentStatus | None,
+        transaction_status: TransactionStatus | None,
         scenario: ScenarioKey | None,
         date_from: datetime | None,
         date_to: datetime | None,
@@ -92,6 +98,7 @@ class IncidentQueryService:
         filters = self._filters(
             severity=severity,
             status=status,
+            transaction_status=transaction_status,
             scenario=scenario,
             date_from=date_from,
             date_to=date_to,
@@ -99,6 +106,7 @@ class IncidentQueryService:
         )
         total = session.scalar(
             select(func.count(Incident.incident_id))
+            .join(Transaction, Transaction.transaction_id == Incident.transaction_id)
             .join(Customer, Customer.customer_id == Incident.customer_id)
             .where(*filters)
         )
@@ -226,6 +234,7 @@ class IncidentQueryService:
             model_version=incident.model_version,
             created_at=incident.created_at,
             updated_at=incident.updated_at,
+            fusion_projection=_fusion_projection(incident),
             customer=CustomerSummaryResponse(
                 customer_id=customer.customer_id,
                 customer_reference=masked_uuid(customer.customer_id, prefix="CUS"),
@@ -311,6 +320,7 @@ class IncidentQueryService:
         *,
         severity: Severity | None,
         status: IncidentStatus | None,
+        transaction_status: TransactionStatus | None,
         scenario: ScenarioKey | None,
         date_from: datetime | None,
         date_to: datetime | None,
@@ -321,6 +331,8 @@ class IncidentQueryService:
             filters.append(Incident.severity == severity)
         if status is not None:
             filters.append(Incident.status == status)
+        if transaction_status is not None:
+            filters.append(Transaction.status == transaction_status)
         if scenario is not None:
             filters.append(Incident.scenario_key == scenario)
         if date_from is not None:
@@ -385,6 +397,29 @@ def _contribution(item: RiskContribution) -> ContributionResponse:
         source_transaction_id=item.source_transaction_id,
         source_baseline_id=item.source_baseline_id,
         display_order=item.display_order,
+    )
+
+
+def _fusion_projection(incident: Incident) -> FusionProjectionResponse:
+    """Project the locked fusion formula from stored backend-owned incident values."""
+
+    quantum = Decimal("0.01")
+    cyber_term = (CYBER_WEIGHT * Decimal(incident.cyber_score)).quantize(quantum)
+    transaction_term = (TRANSACTION_WEIGHT * Decimal(incident.transaction_score)).quantize(quantum)
+    return FusionProjectionResponse(
+        cyber=WeightedScoreTermResponse(
+            score=incident.cyber_score,
+            weight=CYBER_WEIGHT,
+            weighted_term=cyber_term,
+        ),
+        transaction=WeightedScoreTermResponse(
+            score=incident.transaction_score,
+            weight=TRANSACTION_WEIGHT,
+            weighted_term=transaction_term,
+        ),
+        correlation_bonus=incident.correlation_bonus,
+        raw_fused_score=incident.raw_fused_score,
+        rounded_fused_score=incident.fused_score,
     )
 
 

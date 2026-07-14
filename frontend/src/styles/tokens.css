@@ -30,6 +30,16 @@
   --blue-700: #315b86;
   --blue-100: #e4edf7;
 
+  /* Stream and product semantics. */
+  --signal-cyber: var(--cyan-700);
+  --signal-transaction: var(--amber-700);
+  --signal-correlation: var(--teal-700);
+  --risk-critical: var(--red-700);
+  --risk-elevated: var(--amber-700);
+  --outcome-verified: var(--green-700);
+  --migration-priority: #675c8d;
+  --migration-priority-soft: #eeebf5;
+
   --text-primary: var(--slate-900);
   --text-secondary: var(--slate-600);
   --text-muted: var(--slate-500);
@@ -38,11 +48,24 @@
   --border-strong: var(--slate-300);
   --focus: var(--cyan-700);
 
+  --surface-subtle: #f8fafb;
+  --surface-emphasis: #eef3f5;
+  --surface-inverse: var(--navy-900);
+
   --font-sans: Inter, "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --radius-control: 0.32rem;
   --radius-panel: 0.48rem;
   --shadow-float: 0 18px 48px rgb(8 17 31 / 14%);
+
+  --font-size-meta: 0.75rem;
+  --font-size-body: 0.875rem;
+  --font-size-body-strong: 0.9375rem;
+  --font-size-section: 1.0625rem;
+  --font-size-page: clamp(1.75rem, 2.15vw, 2.35rem);
+
+  --line-height-compact: 1.35;
+  --line-height-body: 1.55;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;

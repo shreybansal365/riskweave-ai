@@ -9,8 +9,6 @@ import {
   LoadingSkeleton,
   MetricCard,
   PageHeader,
-  Panel,
-  ScoreDisplay,
 } from "../components/ui";
 import { formatDateTime, titleCase } from "../lib/format";
 
@@ -37,18 +35,21 @@ export function QuantumReadinessPage() {
         }}
       />
     );
+  const topAsset = summary.data.highest_priority_assets.at(0);
   return (
-    <>
+    <div className="quantum-register" data-quantum-ready="settled">
       <PageHeader
-        eyebrow="Cryptographic migration posture"
+        eyebrow="Resilience register"
         title="Quantum readiness"
-        description="Prioritize transaction-channel cryptographic assets for migration based on sensitivity, confidentiality lifetime, algorithm family, and current PQC readiness."
+        description="A channel-linked migration register for long-lived sensitive data and post-quantum readiness."
+        variant="register"
       />
       <div className="separation-banner">
-        <strong>Separate control plane.</strong> Quantum-exposure readiness is assessed
-        independently and never modifies an incident’s fraud-risk score.
+        <span>Separate control plane</span>
+        <strong>Cryptographic migration priority — not transaction fraud risk.</strong>
+        <p>{summary.data.fraud_risk_separation_notice}</p>
       </div>
-      <section className="metric-grid metric-grid--four">
+      <section className="quantum-summary-ledger" aria-label="Readiness summary">
         <MetricCard
           label="Tracked assets"
           value={summary.data.total_assets}
@@ -70,52 +71,29 @@ export function QuantumReadinessPage() {
           label="Urgent priority"
           value={summary.data.readiness_priority_counts.urgent}
           context="Migration attention required"
-          tone="red"
         />
       </section>
-      <div className="quantum-summary-grid">
-        <Panel
-          title="Migration-priority distribution"
-          eyebrow="Transparent readiness service"
-        >
-          <div className="priority-bars">
-            {Object.entries(summary.data.readiness_priority_counts).map(
-              ([level, count]) => (
-                <div key={level}>
-                  <span>{titleCase(level)}</span>
-                  <div>
-                    <i
-                      style={{
-                        width: `${String(summary.data.total_assets === 0 ? 0 : (count / summary.data.total_assets) * 100)}%`,
-                      }}
-                    />
-                  </div>
-                  <strong>{count}</strong>
-                </div>
-              ),
-            )}
+      {topAsset !== undefined && (
+        <section className="migration-focus" aria-labelledby="migration-focus-title">
+          <div className="migration-priority-index">
+            <span>Migration priority index</span>
+            <strong>{topAsset.readiness_priority_score}</strong>
+            <small>{titleCase(topAsset.readiness_priority_level)}</small>
           </div>
-        </Panel>
-        <Panel title="Highest-priority assets" eyebrow="Explainable migration queue">
-          <div className="priority-list">
-            {summary.data.highest_priority_assets.map((asset) => (
-              <article key={asset.crypto_asset_id}>
-                <ScoreDisplay
-                  label={titleCase(asset.readiness_priority_level)}
-                  score={asset.readiness_priority_score}
-                />
-                <span>
-                  <strong>{asset.name}</strong>
-                  <small>
-                    {titleCase(asset.algorithm_family)} · {asset.confidentiality_years}y
-                    confidentiality
-                  </small>
-                </span>
-              </article>
+          <div>
+            <p className="panel-eyebrow">Next migration decision</p>
+            <h2 id="migration-focus-title">{topAsset.name}</h2>
+            <p>
+              {`${titleCase(topAsset.algorithm_family)} protects data with a ${topAsset.confidentiality_years.toString()}-year confidentiality lifetime across ${topAsset.linked_channels.map((channel) => channel.display_name).join(", ")}.`}
+            </p>
+          </div>
+          <ul>
+            {topAsset.migration_priority_reasons.map((reason) => (
+              <li key={reason}>{reason}</li>
             ))}
-          </div>
-        </Panel>
-      </div>
+          </ul>
+        </section>
+      )}
       <section className="queue-panel" aria-labelledby="asset-inventory-title">
         <header>
           <div>
@@ -124,7 +102,10 @@ export function QuantumReadinessPage() {
           </div>
           <Badge value="Synthetic readiness data" tone="blue" />
         </header>
-        <EnterpriseTable label="Quantum readiness asset inventory">
+        <EnterpriseTable
+          label="Quantum readiness asset inventory"
+          className="asset-register-table"
+        >
           <thead>
             <tr>
               <th>Asset</th>
@@ -144,10 +125,10 @@ export function QuantumReadinessPage() {
                 key={asset.crypto_asset_id}
                 data-crypto-asset-id={asset.crypto_asset_id}
               >
-                <td>
+                <th scope="row">
                   <strong>{asset.name}</strong>
                   <small>Assessed {formatDateTime(asset.assessed_at)}</small>
-                </td>
+                </th>
                 <td>{titleCase(asset.algorithm_family)}</td>
                 <td>
                   <Badge
@@ -169,10 +150,10 @@ export function QuantumReadinessPage() {
                 </td>
                 <td>{titleCase(asset.migration_status)}</td>
                 <td>
-                  <ScoreDisplay
-                    label={titleCase(asset.readiness_priority_level)}
-                    score={asset.readiness_priority_score}
-                  />
+                  <span className="migration-index-cell">
+                    <strong>{asset.readiness_priority_score}</strong>
+                    <small>{titleCase(asset.readiness_priority_level)}</small>
+                  </span>
                 </td>
                 <td>
                   <ul className="reason-list">
@@ -186,8 +167,8 @@ export function QuantumReadinessPage() {
           </tbody>
         </EnterpriseTable>
       </section>
-      <div className="disclaimer-block">
-        <strong>What this screen does not claim</strong>
+      <div className="disclaimer-block disclaimer-block--migration">
+        <strong>Assessment boundary</strong>
         <p>{assets.data.active_attack_detection_disclaimer}</p>
         <p>{summary.data.fraud_risk_separation_notice}</p>
         <p>
@@ -195,6 +176,6 @@ export function QuantumReadinessPage() {
           sensitive data; it is not evidence that an active attacker has been detected.
         </p>
       </div>
-    </>
+    </div>
   );
 }

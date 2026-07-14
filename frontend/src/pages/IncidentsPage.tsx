@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, type KeyboardEvent, type SyntheticEvent } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { incidentsApi, type IncidentQuery } from "../api/riskweave";
 import { useAuth } from "../app/use-auth";
@@ -14,7 +14,7 @@ import {
   RiskBadge,
   StatusBadge,
 } from "../components/ui";
-import { formatDateTime, titleCase } from "../lib/format";
+import { formatDateTime, formatMoney, titleCase } from "../lib/format";
 
 function positiveInteger(value: string | null, fallback: number): number {
   const parsed = Number.parseInt(value ?? "", 10);
@@ -39,6 +39,7 @@ export function IncidentsPage() {
     sortDirection: (params.get("sort_direction") as "asc" | "desc" | null) ?? "desc",
     severity: params.get("severity") ?? undefined,
     status: params.get("status") ?? undefined,
+    transactionStatus: params.get("transaction_status") ?? undefined,
     scenario: params.get("scenario") ?? undefined,
     dateFrom: dayBoundary(params.get("date_from")),
     dateTo: dayBoundary(params.get("date_to"), true),
@@ -49,6 +50,15 @@ export function IncidentsPage() {
     queryKey: ["incidents", "list", query],
     queryFn: ({ signal }) => incidentsApi.list(token, query, signal),
   });
+  const activeFilterCount = [
+    query.severity,
+    query.status,
+    query.transactionStatus,
+    query.scenario,
+    query.dateFrom,
+    query.dateTo,
+    query.search,
+  ].filter((value) => value !== undefined).length;
 
   const update = (changes: Record<string, string | null>) => {
     const next = new URLSearchParams(params);
@@ -78,9 +88,10 @@ export function IncidentsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Investigation operations"
+        eyebrow="Work queue"
         title="Incident queue"
-        description="Filter and triage persisted incidents without recreating risk decisions in the browser."
+        description="Compare payment state, cross-domain evidence, and case treatment across persisted investigations."
+        variant="queue"
       />
       <form className="filter-bar" onSubmit={submitSearch} aria-label="Incident filters">
         <label className="search-control" htmlFor="incident-search">
@@ -114,9 +125,10 @@ export function IncidentsPage() {
           </select>
         </label>
         <label htmlFor="status-filter">
-          <span>Status</span>
+          <span>Case status</span>
           <select
             id="status-filter"
+            aria-label="Status"
             value={params.get("status") ?? ""}
             onChange={(event) => {
               update({ status: event.target.value || null });
@@ -132,43 +144,74 @@ export function IncidentsPage() {
             ))}
           </select>
         </label>
-        <label htmlFor="scenario-filter">
-          <span>Scenario</span>
+        <label htmlFor="transaction-status-filter">
+          <span>Transaction state</span>
           <select
-            id="scenario-filter"
-            value={params.get("scenario") ?? ""}
+            id="transaction-status-filter"
+            value={params.get("transaction_status") ?? ""}
             onChange={(event) => {
-              update({ scenario: event.target.value || null });
+              update({ transaction_status: event.target.value || null });
             }}
           >
-            <option value="">All sources</option>
-            <option value="normal_activity">Normal activity</option>
-            <option value="legitimate_new_device">Legitimate new device</option>
-            <option value="account_takeover">Account takeover</option>
+            <option value="">All transaction states</option>
+            {(
+              [
+                "pending",
+                "permitted",
+                "held",
+                "released",
+                "declined",
+                "cancelled",
+              ] as const
+            ).map((value) => (
+              <option key={value} value={value}>
+                {titleCase(value)}
+              </option>
+            ))}
           </select>
         </label>
-        <label htmlFor="date-from-filter">
-          <span>From</span>
-          <input
-            id="date-from-filter"
-            type="date"
-            value={params.get("date_from") ?? ""}
-            onChange={(event) => {
-              update({ date_from: event.target.value || null });
-            }}
-          />
-        </label>
-        <label htmlFor="date-to-filter">
-          <span>To</span>
-          <input
-            id="date-to-filter"
-            type="date"
-            value={params.get("date_to") ?? ""}
-            onChange={(event) => {
-              update({ date_to: event.target.value || null });
-            }}
-          />
-        </label>
+        <details className="advanced-filters">
+          <summary>Advanced filters</summary>
+          <div>
+            <label htmlFor="scenario-filter">
+              <span>Scenario source</span>
+              <select
+                id="scenario-filter"
+                value={params.get("scenario") ?? ""}
+                onChange={(event) => {
+                  update({ scenario: event.target.value || null });
+                }}
+              >
+                <option value="">All sources</option>
+                <option value="normal_activity">Normal activity</option>
+                <option value="legitimate_new_device">Legitimate new device</option>
+                <option value="account_takeover">Account takeover</option>
+              </select>
+            </label>
+            <label htmlFor="date-from-filter">
+              <span>Observed from</span>
+              <input
+                id="date-from-filter"
+                type="date"
+                value={params.get("date_from") ?? ""}
+                onChange={(event) => {
+                  update({ date_from: event.target.value || null });
+                }}
+              />
+            </label>
+            <label htmlFor="date-to-filter">
+              <span>Observed to</span>
+              <input
+                id="date-to-filter"
+                type="date"
+                value={params.get("date_to") ?? ""}
+                onChange={(event) => {
+                  update({ date_to: event.target.value || null });
+                }}
+              />
+            </label>
+          </div>
+        </details>
         <div className="filter-actions">
           <Button type="submit" tone="primary">
             Apply search
@@ -185,6 +228,14 @@ export function IncidentsPage() {
           </Button>
         </div>
       </form>
+      <div className="filter-summary" role="status" aria-live="polite">
+        <span>
+          {activeFilterCount === 0
+            ? "Complete persisted queue"
+            : `${activeFilterCount.toString()} active ${activeFilterCount === 1 ? "filter" : "filters"}`}
+        </span>
+        <small>URL state is preserved when an investigation is opened.</small>
+      </div>
 
       {incidents.isPending ? (
         <LoadingSkeleton label="Loading incident queue" />
@@ -238,18 +289,21 @@ export function IncidentsPage() {
               </select>
             </label>
           </header>
-          <EnterpriseTable label="Incident queue results">
+          <EnterpriseTable
+            label="Incident queue results"
+            className="incident-table-scroll"
+          >
             <thead>
               <tr>
                 <th>Incident</th>
+                <th>Decision</th>
                 <th>Customer / account</th>
+                <th>Amount</th>
                 <th>Observed</th>
-                <th>Cyber</th>
-                <th>Transaction</th>
-                <th>Fused</th>
-                <th>Severity</th>
+                <th>Risk composition</th>
                 <th>Recommended action</th>
-                <th>Status</th>
+                <th>Transaction state</th>
+                <th>Case status</th>
               </tr>
             </thead>
             <tbody>
@@ -267,26 +321,50 @@ export function IncidentsPage() {
                   }}
                   aria-label={`Open ${incident.incident_reference}`}
                 >
-                  <td>
-                    <strong>{incident.incident_reference}</strong>
+                  <th scope="row" className="queue-identity">
+                    <Link
+                      to={`/incidents/${incident.incident_id}${params.toString() === "" ? "" : `?return=${encodeURIComponent(params.toString())}`}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                      }}
+                    >
+                      {incident.incident_reference}
+                    </Link>
                     <small>
                       {incident.scenario_key === null
                         ? "Background"
                         : titleCase(incident.scenario_key)}
                     </small>
+                  </th>
+                  <td>
+                    <span className="queue-decision">
+                      <RiskBadge severity={incident.severity} />
+                      <strong>{incident.fused_score}</strong>
+                    </span>
                   </td>
                   <td>
                     <strong>{incident.customer_display_name}</strong>
                     <small>{incident.account_reference}</small>
                   </td>
+                  <td className="money-cell">
+                    {formatMoney(incident.amount_minor, incident.currency)}
+                  </td>
                   <td>{formatDateTime(incident.created_at)}</td>
-                  <td className="score-cell">{incident.cyber_score}</td>
-                  <td className="score-cell">{incident.transaction_score}</td>
-                  <td className="score-cell score-cell--fused">{incident.fused_score}</td>
                   <td>
-                    <RiskBadge severity={incident.severity} />
+                    <span
+                      className="risk-composition-cell"
+                      aria-label={`Cyber ${incident.cyber_score.toString()}, transaction ${incident.transaction_score.toString()}, correlation bonus ${incident.correlation_bonus.toString()}, fused ${incident.fused_score.toString()}`}
+                    >
+                      <span>C{incident.cyber_score}</span>
+                      <span>T{incident.transaction_score}</span>
+                      <span>+{incident.correlation_bonus}</span>
+                      <strong>{incident.fused_score}</strong>
+                    </span>
                   </td>
                   <td>{titleCase(incident.recommended_action)}</td>
+                  <td>
+                    <StatusBadge status={incident.transaction_status} />
+                  </td>
                   <td>
                     <StatusBadge status={incident.status} />
                   </td>

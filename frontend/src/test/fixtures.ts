@@ -13,6 +13,8 @@ import type {
   QuantumAssets,
   QuantumSummary,
   ScenarioCatalog,
+  SystemContext,
+  SystemIntegrity,
 } from "../types/api";
 
 export const analystUser: AuthenticatedUser = {
@@ -54,6 +56,14 @@ export const incidentDetail: IncidentDetail = {
   model_version: "riskweave-iforest-v1",
   created_at: "2026-07-14T09:30:00Z",
   updated_at: "2026-07-14T09:30:00Z",
+  fusion_projection: {
+    cyber: { score: 78, weight: "0.45", weighted_term: "35.10" },
+    transaction: { score: 79, weight: "0.45", weighted_term: "35.55" },
+    correlation_bonus: 18,
+    raw_fused_score: "88.65",
+    rounded_fused_score: 89,
+    rounding_mode: "ROUND_HALF_UP",
+  },
   customer: {
     customer_id: "44444444-4444-5444-8444-444444444444",
     customer_reference: "CUS-••••-44444444",
@@ -402,13 +412,13 @@ export const quantumAssets: QuantumAssets = {
   items: [
     {
       crypto_asset_id: "bbbbbbbb-bbbb-5bbb-8bbb-bbbbbbbbbbbb",
-      name: "Web session key exchange",
+      name: "Synthetic Legacy RSA Gateway",
       algorithm_family: "rsa",
       data_sensitivity: "critical",
       confidentiality_years: 12,
       pqc_ready: false,
       migration_status: "planned",
-      readiness_priority_score: 86,
+      readiness_priority_score: 88,
       readiness_priority_level: "urgent",
       migration_priority_reasons: [
         "Long confidentiality lifetime and legacy public-key algorithm.",
@@ -425,14 +435,39 @@ export const quantumAssets: QuantumAssets = {
       fraud_risk_separation_notice:
         "Quantum readiness is separate from fraud-risk scoring.",
     },
+    {
+      crypto_asset_id: "cccccccc-cccc-5ccc-8ccc-cccccccccccc",
+      name: "Synthetic Hybrid Mobile Gateway",
+      algorithm_family: "hybrid",
+      data_sensitivity: "high",
+      confidentiality_years: 7,
+      pqc_ready: true,
+      migration_status: "pqc_ready",
+      readiness_priority_score: 22,
+      readiness_priority_level: "low",
+      migration_priority_reasons: [
+        "The synthetic mobile channel is marked hybrid and migration-ready.",
+      ],
+      assessed_at: "2026-07-14T09:00:00Z",
+      linked_channels: [
+        {
+          channel_id: "dddddddd-dddd-5ddd-8ddd-dddddddddddd",
+          channel_code: "mobile_banking",
+          display_name: "Mobile banking",
+          active: true,
+        },
+      ],
+      fraud_risk_separation_notice:
+        "Quantum readiness is separate from fraud-risk scoring.",
+    },
   ],
 };
 export const quantumSummary: QuantumSummary = {
-  total_assets: 1,
-  linked_transaction_channels: 1,
-  pqc_ready_assets: 0,
-  migration_status_counts: { planned: 1 },
-  readiness_priority_counts: { low: 0, medium: 0, high: 0, urgent: 1 },
+  total_assets: 2,
+  linked_transaction_channels: 2,
+  pqc_ready_assets: 1,
+  migration_status_counts: { planned: 1, pqc_ready: 1 },
+  readiness_priority_counts: { low: 1, medium: 0, high: 0, urgent: 1 },
   highest_priority_assets: quantumAssets.items,
   fraud_risk_separation_notice:
     quantumAssets.items[0]?.fraud_risk_separation_notice ?? "",
@@ -497,6 +532,69 @@ export const benchmarkSummary: BenchmarkSummary = {
     "Prototype evaluation on deterministic synthetic data only; no real-world accuracy claim is made.",
 };
 
+export const systemIntegrity: SystemIntegrity = {
+  service: "RiskWeave API",
+  version: "0.5.0",
+  runtime: {
+    configured_environment: "development",
+    deployment_mode: "local_demo",
+    environment_label: "Local deterministic demo",
+    api_origin: "http://localhost:8000",
+    api_origin_scope: "loopback",
+  },
+  readiness: {
+    database: "reachable",
+    migrations: "current",
+    revision: "0003_intelligence_support",
+  },
+  dataset: {
+    version: "baseline-v1",
+    simulation_epoch: "2026-07-14T09:00:00Z",
+    generator_seed: 26026,
+    model_seed: 26026,
+    expected_baseline_counts: { incidents: 15, transactions: 180, cyber_events: 240 },
+    current_counts: { incidents: 18, transactions: 183, cyber_events: 251 },
+    current_fingerprint: "showcase-fingerprint",
+    latest_reset_fingerprint: "baseline-fingerprint",
+    exact_baseline_restored: false,
+  },
+  scenarios: scenarioCatalog.items.map((scenario) => ({
+    scenario_key: scenario.scenario_key,
+    status: scenario.status,
+    seed: 26026,
+    simulation_epoch: scenario.simulation_epoch,
+    result_incident_id: scenario.result_incident_id,
+    started_at: scenario.started_at,
+    completed_at: scenario.completed_at,
+  })),
+  benchmark: {
+    fixture_version: "benchmark-v1",
+    benchmark_name: "benchmark-v1 — mixed synthetic security benchmark",
+    case_count: 48,
+  },
+  audit: {
+    latest_reset: {
+      audit_event_id: "edededed-eded-5ded-8ded-edededededed",
+      event_type: "scenario_reset",
+      created_at: "2026-07-14T09:00:00Z",
+    },
+    latest_event: {
+      audit_event_id: "efefefef-efef-5fef-8fef-efefefefefef",
+      event_type: "scenario_completed",
+      created_at: "2026-07-14T09:30:00Z",
+    },
+  },
+};
+
+export const systemContext: SystemContext = {
+  environment_label: "Local deterministic demo",
+  deployment_mode: "local_demo",
+  dataset_version: "baseline-v1",
+  simulation_epoch: "2026-07-14T09:00:00Z",
+  dataset_state: "showcase_active",
+  dataset_state_label: "Showcase scenarios active",
+};
+
 function response(
   body: unknown,
   status = 200,
@@ -545,6 +643,8 @@ export function installApiMock(
           checks: { database: "reachable", migrations: "current" },
           revision: "0003_intelligence_support",
         });
+      if (url.pathname === "/api/system/context") return response(systemContext);
+      if (url.pathname === "/api/system/integrity") return response(systemIntegrity);
       if (url.pathname === "/api/auth/login") {
         if (options.loginNetworkFailure === true)
           throw new TypeError("synthetic network failure");

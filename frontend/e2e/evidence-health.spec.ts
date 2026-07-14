@@ -5,6 +5,8 @@ import {
   getBenchmarkSummary,
   getQuantumAssets,
   getQuantumSummary,
+  getSystemContext,
+  getSystemIntegrity,
   loginThroughUi,
   navigateWithinAuthenticatedApp,
   prepareShowcaseDataset,
@@ -59,7 +61,14 @@ test.describe("quantum readiness, evaluation, and system health", () => {
     expect(assets.items.map((asset) => asset.readiness_priority_score).sort()).toEqual([
       22, 88,
     ]);
-    await expect(page.getByText(summary.fraud_risk_separation_notice)).toBeVisible();
+    await expect(
+      page.getByText(summary.fraud_risk_separation_notice).first(),
+    ).toBeVisible();
+    const separation = page.locator(".separation-banner");
+    await expect(separation).toContainText(
+      "Cryptographic migration priority — not transaction fraud risk.",
+    );
+    await expect(page.locator("[data-risk-severity]")).toHaveCount(0);
     const copy = (await page.locator("body").innerText()).toLowerCase();
     for (const prohibited of [
       "active quantum attack detected",
@@ -116,6 +125,17 @@ test.describe("quantum readiness, evaluation, and system health", () => {
       await expect(page.getByText(limitation)).toBeVisible();
     }
     await expect(page.getByText(`“${boundedStatement}”`)).toBeVisible();
+    const calibration = page.locator(".calibration-warning");
+    await expect(calibration).toContainText(
+      "The score scales are not identically calibrated.",
+    );
+    await expect(calibration).toContainText("Isolated comparators use rule-only scores");
+    const interventionPoint = benchmark.operating_points.intervention_60;
+    expect(interventionPoint).toBeDefined();
+    const interventionPanel = page
+      .getByRole("heading", { name: interventionPoint?.label ?? "" })
+      .locator("xpath=ancestor::section[1]");
+    await expect(interventionPanel).toContainText("Primary for operational holds");
     const fused60 =
       benchmark.operating_points.intervention_60?.fused_hybrid_contextual_score;
     expect(fused60).toMatchObject({
@@ -131,12 +151,30 @@ test.describe("quantum readiness, evaluation, and system health", () => {
   test("administrator health view reconciles liveness, readiness, and source data", async ({
     page,
   }) => {
+    const token = await apiLogin(page.request, "admin");
     const [healthResponse, readyResponse] = await Promise.all([
       page.request.get(`${e2eEnvironment.apiUrl}/health`),
       page.request.get(`${e2eEnvironment.apiUrl}/ready`),
     ]);
-    const health = (await healthResponse.json()) as HealthResponse;
-    const ready = (await readyResponse.json()) as ReadinessResponse;
+    const [health, ready, context, integrity] = await Promise.all([
+      healthResponse.json() as Promise<HealthResponse>,
+      readyResponse.json() as Promise<ReadinessResponse>,
+      getSystemContext(page.request, token),
+      getSystemIntegrity(page.request, token),
+    ]);
+    expect(Object.keys(integrity).sort()).toEqual([
+      "audit",
+      "benchmark",
+      "dataset",
+      "readiness",
+      "runtime",
+      "scenarios",
+      "service",
+      "version",
+    ]);
+    expect(JSON.stringify({ context, integrity }).toLowerCase()).not.toMatch(
+      /password|access_token|signing_key|jwt_secret|credentials/,
+    );
     const audit = beginBrowserAudit(page);
     await loginThroughUi(page, "admin", "/system-health");
     await expect(page.getByText(health.service, { exact: true })).toBeVisible();
@@ -145,6 +183,25 @@ test.describe("quantum readiness, evaluation, and system health", () => {
       page.getByText(ready.revision ?? "Not reported", { exact: true }),
     ).toBeVisible();
     await expect(page.getByText("RiskWeave interface loaded")).toBeVisible();
+    const environmentLedger = page.locator(
+      'section[aria-label="Authoritative environment context"]',
+    );
+    await expect(environmentLedger).toContainText(integrity.runtime.environment_label);
+    await expect(environmentLedger).toContainText(integrity.runtime.api_origin);
+    await expect(environmentLedger).toContainText(integrity.dataset.version);
+    await expect(environmentLedger).toContainText(
+      integrity.dataset.exact_baseline_restored
+        ? "Exact baseline verified"
+        : "Showcase or modified state",
+    );
+    const shellContext = page.locator(".shell-context");
+    await expect(shellContext).toContainText(context.environment_label);
+    await expect(shellContext).toContainText(context.dataset_state_label);
+    if (
+      ["127.0.0.1", "localhost"].includes(new URL(integrity.runtime.api_origin).hostname)
+    ) {
+      await expect(page.getByText("Production", { exact: true })).toHaveCount(0);
+    }
     await expect(page.getByText("Last successful complete refresh")).toBeVisible();
     await page.getByRole("button", { name: "Retry all checks" }).click();
     await expect(page.getByText("Responding", { exact: true })).toBeVisible();
@@ -181,7 +238,7 @@ test.describe("quantum readiness, evaluation, and system health", () => {
         body: JSON.stringify({
           status: "not_ready",
           service: "RiskWeave API",
-          checks: { database: "unreachable", migrations: "unknown" },
+          checks: { database: "unavailable", migrations: "unknown" },
           revision: null,
         }),
       }),
@@ -191,7 +248,7 @@ test.describe("quantum readiness, evaluation, and system health", () => {
       page.getByRole("heading", { name: "Backend is waking or unavailable" }),
     ).toBeVisible();
     await expect(page.getByText("Unavailable", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("Unreachable", { exact: true })).toBeVisible();
+    await expect(page.locator(".health-card").nth(2)).toContainText("Unavailable");
     await expect(page.getByText("Ready", { exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Retry", exact: true })).toBeVisible();
   });

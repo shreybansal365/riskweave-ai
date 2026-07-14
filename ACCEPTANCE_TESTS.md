@@ -215,6 +215,45 @@
 - [ ] Browser matrix, test identities, reset behavior, artifacts, responsive results, accessibility,
   visual baselines, and acceptance evidence are documented.
 
+## Milestone 7B visual redesign and Decision Weave
+
+- [ ] Milestone 7A is committed before redesign work begins.
+- [ ] Incident detail exposes backend-authored cyber and transaction weights and weighted terms;
+  frontend source contains no scoring constant or independent score calculation.
+- [ ] Decision Weave distinguishes source scores, weighted terms, eligible interaction bonus, raw
+  fused score, rounded score, severity, recommendation, and transaction state without false arithmetic.
+- [ ] Decision Weave interaction knots pair only persisted genuine interactions with their source
+  cyber and transaction evidence.
+- [ ] Decision Weave has a plain-language alternative and meaningful DOM order at 1440, 1280, and
+  1024 px.
+- [ ] Decision Context answers what happened, how risky it is, why, transaction treatment, and the
+  next valid analyst action in the investigation first fold.
+- [ ] Scenario B emphasizes mitigating context, zero interaction bonus, Guarded, Allow and monitor,
+  Permitted, no hold, and no step-up; no frontend-only workflow action is introduced.
+- [ ] Incident Queue displays amount/currency, cyber score, transaction score, bonus, fused score,
+  severity, transaction status, recommendation, and case status.
+- [ ] Incident Queue transaction-status filtering is API-backed, typed, URL-persistent, and tested.
+- [ ] Transaction-action visualization and its accessible summary include every backend category,
+  including Cancelled, and reconcile exactly to the total.
+- [ ] System Health and shell use an authenticated backend integrity/context projection for truthful
+  environment, simulation, dataset, scenario, benchmark, migration, reset, and audit context.
+- [ ] No secret, credential, token, connection string, or sensitive environment value appears in the
+  integrity/context response or frontend.
+- [ ] Operational text is at least 14 px, secondary metadata at least 12 px, and 11 px text is limited
+  to nonessential monospace identifiers.
+- [ ] The Simulator reads as a progressive three-state decision story rather than a pricing-card grid.
+- [ ] Quantum migration priority uses distinct terminology and presentation and remains separate from
+  fraud risk.
+- [ ] Evaluation leads with the bounded statement, retains unfavorable 60+ results, and keeps the
+  unequal-calibration limitation adjacent to compact comparator views.
+- [ ] Skip navigation, route titles, route-heading focus, dialog/mutation focus, session-expiry
+  announcement, and unsaved-note protection work.
+- [ ] Production-CSS contrast, 200% zoom, reduced motion, keyboard access, table overflow, and
+  viewport-bounded dialogs pass.
+- [ ] Milestone 7B visual baselines cover all nine required screens at 1440×900, 1280×720, and
+  1024×768 without incomplete shells, errors, clipping, false arithmetic, or contradictory context.
+- [ ] Milestone 6 baselines remain unchanged as historical evidence.
+
 ## Documentation
 
 - [ ] README covers problem, solution, setup, demo, architecture, risk model, benchmark, security, synthetic data, and limitations.

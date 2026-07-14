@@ -10,8 +10,10 @@ export interface AuthSession {
 
 export interface AuthContextValue {
   session: AuthSession | null;
+  sessionNotice: string | null;
   login: (email: string, password: string, signal?: AbortSignal) => Promise<void>;
   logout: () => void;
+  clearSessionNotice: () => void;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

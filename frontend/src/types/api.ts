@@ -104,6 +104,21 @@ export interface IncidentScore {
   fused_score: number;
 }
 
+export interface WeightedScoreTerm {
+  score: number;
+  weight: string;
+  weighted_term: string;
+}
+
+export interface FusionProjection {
+  cyber: WeightedScoreTerm;
+  transaction: WeightedScoreTerm;
+  correlation_bonus: number;
+  raw_fused_score: string;
+  rounded_fused_score: number;
+  rounding_mode: "ROUND_HALF_UP";
+}
+
 export interface IncidentListItem extends IncidentScore {
   incident_id: string;
   incident_reference: string;
@@ -188,6 +203,7 @@ export interface IncidentDetail extends IncidentScore {
   model_version: string;
   created_at: string;
   updated_at: string;
+  fusion_projection: FusionProjection;
   customer: {
     customer_id: string;
     customer_reference: string;
@@ -432,4 +448,67 @@ export interface BenchmarkSummary {
   limitations: string[];
   context_aware_scenario_statement: string;
   disclaimer: string;
+}
+
+export interface SystemIntegrity {
+  service: string;
+  version: string;
+  runtime: {
+    configured_environment: "development" | "test" | "production";
+    deployment_mode: "local_demo" | "test" | "deployed_demo";
+    environment_label: string;
+    api_origin: string;
+    api_origin_scope: "loopback" | "network";
+  };
+  readiness: {
+    database: "reachable" | "unavailable";
+    migrations: "current" | "pending" | "unknown";
+    revision: string | null;
+  };
+  dataset: {
+    version: string;
+    simulation_epoch: string;
+    generator_seed: number;
+    model_seed: number;
+    expected_baseline_counts: Record<string, number>;
+    current_counts: Record<string, number>;
+    current_fingerprint: string;
+    latest_reset_fingerprint: string | null;
+    exact_baseline_restored: boolean;
+  };
+  scenarios: {
+    scenario_key: ScenarioKey;
+    status: "not_run" | "running" | "completed" | "failed";
+    seed: number;
+    simulation_epoch: string;
+    result_incident_id: string | null;
+    started_at: string;
+    completed_at: string | null;
+  }[];
+  benchmark: {
+    fixture_version: string;
+    benchmark_name: string;
+    case_count: number;
+  };
+  audit: {
+    latest_reset: {
+      audit_event_id: string;
+      event_type: string;
+      created_at: string;
+    } | null;
+    latest_event: {
+      audit_event_id: string;
+      event_type: string;
+      created_at: string;
+    } | null;
+  };
+}
+
+export interface SystemContext {
+  environment_label: string;
+  deployment_mode: "local_demo" | "test" | "deployed_demo";
+  dataset_version: string;
+  simulation_epoch: string;
+  dataset_state: "baseline_restored" | "showcase_active" | "modified" | "uninitialized";
+  dataset_state_label: string;
 }

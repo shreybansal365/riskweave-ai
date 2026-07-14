@@ -30,6 +30,7 @@ test.describe("accessibility and desktop viewport verification", () => {
       "/overview",
       "/incidents",
       `/incidents/${showcase.scenarios.account_takeover.incident_id}`,
+      `/incidents/${showcase.scenarios.legitimate_new_device.incident_id}`,
       "/simulator",
       "/quantum-readiness",
       "/system-health",
@@ -128,5 +129,64 @@ test.describe("accessibility and desktop viewport verification", () => {
       expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(viewport.height);
       await page.keyboard.press("Escape");
     }
+  });
+
+  test("1024px preserves Decision Weave semantics, triage overflow, and action access", async ({
+    page,
+    request,
+    browserName,
+  }) => {
+    test.skip(browserName !== "chromium", "Breakpoint semantics run once in Chromium");
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const showcase = await prepareShowcaseDataset(request);
+    await loginThroughUi(
+      page,
+      "admin",
+      `/incidents/${showcase.scenarios.account_takeover.incident_id}`,
+    );
+
+    const weave = page.locator("[data-decision-weave]");
+    await expect(weave).toBeVisible();
+    expect(
+      await weave
+        .locator("[data-weave-step]")
+        .evaluateAll((steps) =>
+          steps.map((step) => step.getAttribute("data-weave-step")),
+        ),
+    ).toEqual([
+      "cyber-evidence",
+      "cyber-term",
+      "interactions",
+      "transaction-term",
+      "transaction-evidence",
+      "decision",
+    ]);
+    for (const step of await weave.locator("[data-weave-step]").all()) {
+      await expect(step).toBeVisible();
+    }
+    const contextBox = await page.locator("[data-decision-context]").boundingBox();
+    const weaveBox = await weave.boundingBox();
+    expect(contextBox).not.toBeNull();
+    expect(weaveBox).not.toBeNull();
+    expect(contextBox?.y ?? 0).toBeLessThan(weaveBox?.y ?? 0);
+    await expect(page.locator(".investigation-action-rail")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Mark in review" })).toBeVisible();
+    await expectNoBodyOverflow(page);
+
+    await navigateWithinAuthenticatedApp(page, "/incidents");
+    const tableRegion = page.getByRole("region", { name: "Incident queue results" });
+    await expect(tableRegion).toBeVisible();
+    await expect(
+      page.getByText("Scroll horizontally to review every field", { exact: true }),
+    ).toBeVisible();
+    const overflow = await tableRegion.evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+      overflowX: getComputedStyle(element).overflowX,
+    }));
+    expect(overflow.scrollWidth).toBeGreaterThan(overflow.clientWidth);
+    expect(["auto", "scroll"]).toContain(overflow.overflowX);
+    await expectNoBodyOverflow(page);
   });
 });

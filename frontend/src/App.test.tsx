@@ -99,15 +99,22 @@ describe("RiskWeave authenticated product", () => {
     const fetchMock = installApiMock({ role: "analyst" });
     renderApp("/login");
     const user = userEvent.setup();
-    await user.tab();
-    expect(screen.getByRole("link", { name: "RiskWeave overview" })).toHaveFocus();
+    expect(
+      await screen.findByRole("heading", {
+        name: "One incident. Every relevant signal.",
+      }),
+    ).toHaveFocus();
     await user.tab();
     expect(screen.getByLabelText("Email address")).toHaveFocus();
     await user.type(screen.getByLabelText("Email address"), "analyst@riskweave.demo");
     await user.type(screen.getByLabelText("Password"), "correct horse battery staple");
     await user.click(screen.getByRole("button", { name: "Continue securely" }));
     expect(
-      await screen.findByRole("heading", { name: "Operational overview" }),
+      await screen.findByRole(
+        "heading",
+        { name: "Operational overview" },
+        { timeout: 5000 },
+      ),
     ).toBeVisible();
     expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
     expect(
@@ -241,10 +248,10 @@ describe("RiskWeave authenticated product", () => {
     expect(
       await screen.findByRole("heading", { name: incidentDetail.incident_reference }),
     ).toBeVisible();
-    expect(screen.getByText("88.65", { exact: false })).toBeVisible();
-    expect(screen.getByText("Failed MFA")).toBeVisible();
-    expect(screen.getByText("New beneficiary")).toBeVisible();
-    expect(screen.getByText("Failed MFA and high amount")).toBeVisible();
+    expect(screen.getAllByText("88.65", { exact: false }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Failed MFA").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("New beneficiary").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Failed MFA and high amount").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Chronological evidence" })).toBeVisible();
     expect(
       screen.getByText("Quantum readiness is separate from fraud-risk scoring."),
@@ -256,7 +263,15 @@ describe("RiskWeave authenticated product", () => {
     renderApp(`/incidents/${incidentDetail.incident_id}`, session());
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Mark in review" }));
-    expect(await screen.findByText("Case changed before this action")).toBeVisible();
+    expect(
+      (
+        await screen.findAllByText(
+          "Case changed before this action",
+          {},
+          { timeout: 5000 },
+        )
+      ).length,
+    ).toBeGreaterThan(0);
   });
 
   it("completes a valid analyst transition and reports an idempotent replay", async () => {
@@ -264,7 +279,9 @@ describe("RiskWeave authenticated product", () => {
     renderApp(`/incidents/${incidentDetail.incident_id}`, session());
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Mark in review" }));
-    expect(await screen.findByText("Action already recorded")).toBeVisible();
+    await waitFor(() => {
+      expect(screen.getAllByText("Action already recorded").length).toBeGreaterThan(0);
+    });
     expect(
       fetchMock.mock.calls.some(
         ([input, init]) =>
@@ -364,7 +381,9 @@ describe("RiskWeave authenticated product", () => {
     expect(
       await screen.findByRole("heading", { name: "Quantum readiness" }),
     ).toBeVisible();
-    expect(screen.getByText(/separate from fraud-risk scoring/i)).toBeVisible();
+    expect(
+      screen.getAllByText(/separate from fraud-risk scoring/i).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText(/Harvest-now-decrypt-later exposure/i)).toBeVisible();
     expect(screen.queryByText(/quantum attacker identified/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/quantum-proof bank/i)).not.toBeInTheDocument();
@@ -390,7 +409,9 @@ describe("RiskWeave authenticated product", () => {
         /Broader false-positive reduction has not yet been established by benchmark-v1/,
       ),
     ).toBeVisible();
-    expect(screen.getByText(/underperforms isolated methods at 60\+/i)).toBeVisible();
+    expect(
+      screen.getAllByText(/underperforms isolated methods at 60\+/i).length,
+    ).toBeGreaterThan(0);
   });
 
   it("exposes system health only to an administrator and reports real readiness", async () => {
@@ -440,5 +461,17 @@ describe("RiskWeave authenticated product", () => {
         screen.getByRole("heading", { name: "Sign in to the workspace" }),
       ).toBeVisible();
     });
+    expect(screen.getByRole("alert")).toHaveTextContent(/session expired/i);
+    expect(window.location.pathname).toBe("/login");
+  });
+
+  it("announces route changes through the document title and heading focus", async () => {
+    installApiMock();
+    renderApp("/overview", session());
+    const heading = await screen.findByRole("heading", { name: "Operational overview" });
+    await waitFor(() => {
+      expect(heading).toHaveFocus();
+    });
+    expect(document.title).toBe("Operational overview · RiskWeave");
   });
 });

@@ -7,7 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 
 from app.api.dependencies import CurrentUser, DatabaseSession, request_id
-from app.models.enums import IncidentStatus, ScenarioKey, Severity
+from app.models.enums import IncidentStatus, ScenarioKey, Severity, TransactionStatus
 from app.schemas.incidents import (
     AnalystActionRequest,
     IncidentDetailResponse,
@@ -37,6 +37,7 @@ def list_incidents(
     sort_direction: Literal["asc", "desc"] = "desc",
     severity: Severity | None = None,
     status_filter: Annotated[IncidentStatus | None, Query(alias="status")] = None,
+    transaction_status: TransactionStatus | None = None,
     scenario: ScenarioKey | None = None,
     date_from: datetime | None = None,
     date_to: datetime | None = None,
@@ -56,6 +57,7 @@ def list_incidents(
         sort_direction=sort_direction,
         severity=severity,
         status=status_filter,
+        transaction_status=transaction_status,
         scenario=scenario,
         date_from=date_from,
         date_to=date_to,

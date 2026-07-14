@@ -14,14 +14,17 @@ export function PageHeader({
   title,
   description,
   actions,
+  variant = "default",
 }: {
   eyebrow: string;
   title: string;
   description: string;
   actions?: ReactNode;
+  variant?:
+    "default" | "briefing" | "queue" | "stage" | "register" | "report" | "diagnostic";
 }) {
   return (
-    <header className="page-header">
+    <header className={`page-header page-header--${variant}`}>
       <div>
         <p className="eyebrow">{eyebrow}</p>
         <h1>{title}</h1>
@@ -94,14 +97,19 @@ export function MetricCard({
   value,
   context,
   tone = "neutral",
+  emphasis = "secondary",
 }: {
   label: string;
   value: string | number;
   context: string;
   tone?: BadgeTone;
+  emphasis?: "primary" | "secondary";
 }) {
   return (
-    <article className={`metric-card metric-card--${tone}`} data-metric-label={label}>
+    <article
+      className={`metric-card metric-card--${tone} metric-card--${emphasis}`}
+      data-metric-label={label}
+    >
       <span>{label}</span>
       <strong>{value}</strong>
       <p>{context}</p>
@@ -115,15 +123,17 @@ export function Panel({
   aside,
   children,
   className = "",
+  variant = "contained",
 }: {
   title: string;
   eyebrow?: string;
   aside?: ReactNode;
   children: ReactNode;
   className?: string;
+  variant?: "contained" | "open" | "ledger" | "evidence";
 }) {
   return (
-    <section className={`panel ${className}`.trim()}>
+    <section className={`panel panel--${variant} ${className}`.trim()}>
       <header className="panel-header">
         <div>
           {eyebrow !== undefined && <p className="panel-eyebrow">{eyebrow}</p>}
@@ -238,13 +248,23 @@ export function AccessibleTooltip({
 export function EnterpriseTable({
   label,
   children,
+  className = "",
 }: {
   label: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="table-scroll" role="region" aria-label={label} tabIndex={0}>
-      <table className="enterprise-table">{children}</table>
+    <div className={`table-frame ${className}`.trim()}>
+      <p className="table-overflow-hint" aria-hidden="true">
+        Scroll horizontally to review every field
+      </p>
+      <div className="table-scroll" role="region" aria-label={label} tabIndex={0}>
+        <table className="enterprise-table">
+          <caption className="sr-only">{label}</caption>
+          {children}
+        </table>
+      </div>
     </div>
   );
 }

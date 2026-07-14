@@ -13,28 +13,48 @@ export function AuthProvider({
   initialSession?: AuthSession | null;
 }) {
   const [session, setSession] = useState<AuthSession | null>(initialSession);
+  const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
+  const endSession = useCallback(
+    (notice: string | null) => {
+      setSession(null);
+      setSessionNotice(notice);
+      queryClient.clear();
+    },
+    [queryClient],
+  );
+
   const logout = useCallback(() => {
-    setSession(null);
-    queryClient.clear();
-  }, [queryClient]);
+    endSession(null);
+  }, [endSession]);
+
+  const clearSessionNotice = useCallback(() => {
+    setSessionNotice(null);
+  }, []);
 
   useEffect(() => {
-    configureUnauthorizedHandler(logout);
+    configureUnauthorizedHandler(() => {
+      endSession("Your session expired. Sign in again to return to your work.");
+    });
     return () => {
       configureUnauthorizedHandler(undefined);
     };
-  }, [logout]);
+  }, [endSession]);
 
   useEffect(() => {
     if (session === null) return undefined;
     const remaining = session.expiresAt - Date.now();
-    const timer = window.setTimeout(logout, Math.max(0, remaining));
+    const timer = window.setTimeout(
+      () => {
+        endSession("Your session expired. Sign in again to return to your work.");
+      },
+      Math.max(0, remaining),
+    );
     return () => {
       window.clearTimeout(timer);
     };
-  }, [logout, session]);
+  }, [endSession, session]);
 
   const login = useCallback(
     async (email: string, password: string, signal?: AbortSignal) => {
@@ -45,11 +65,15 @@ export function AuthProvider({
         user,
         expiresAt: Date.now() + result.expires_in * 1000,
       });
+      setSessionNotice(null);
       queryClient.clear();
     },
     [queryClient],
   );
 
-  const value = useMemo(() => ({ session, login, logout }), [session, login, logout]);
+  const value = useMemo(
+    () => ({ session, sessionNotice, login, logout, clearSessionNotice }),
+    [session, sessionNotice, login, logout, clearSessionNotice],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

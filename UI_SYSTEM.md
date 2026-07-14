@@ -49,6 +49,10 @@ Implement semantic tokens such as `surface`, `text-primary`, `risk-critical`, an
 - Use tabular numerals for scores, amounts, and timestamps.
 - Maintain a compact enterprise hierarchy rather than oversized marketing typography.
 - Default body text must remain readable at 14–16 px.
+- Operational body text is at least 14 px; secondary metadata is at least 12 px.
+- Eleven-pixel text is reserved for nonessential monospace identifiers and may not carry a decision,
+  action, amount, status, explanation, or navigation label.
+- Use tabular numerals for scores, weighted terms, amounts, and timestamps.
 
 ### Spacing, shape, and elevation
 
@@ -67,6 +71,18 @@ Implement semantic tokens such as `surface`, `text-primary`, `risk-critical`, an
 - Main workspace optimized for 1440×900 and fully usable at 1280×720.
 - Primary actions remain visible without horizontal scrolling at both required sizes.
 - Customer and transaction context may use a secondary rail or drawer, but critical evidence stays in the main reading flow.
+- The shell groups operational routes separately from resilience/evidence routes.
+- Environment, simulation epoch/state, and dataset state are backend-authoritative context. The
+  frontend build mode may not invent or relabel them.
+
+### Editorial hierarchy
+
+- Level 1: decision-critical state—fused decision, transaction treatment, recommended action, and
+  urgent analyst work.
+- Level 2: investigation evidence—cyber, transaction, interaction, chronology, and customer context.
+- Level 3: supporting context—provenance, benchmark method, system metadata, and migration detail.
+- Do not express every level as an equal white card. Use open sections, compact ledgers, and bounded
+  action/evidence panels according to meaning.
 
 ## Primary screens
 
@@ -125,6 +141,10 @@ Required columns:
 
 Filters must support severity, transaction status, incident status, scenario/background origin, and search. Rows link directly to the correct investigation URL.
 
+The transaction-status filter is server-backed. Wide tables use a labeled horizontal-scroll region,
+sticky headers, and a sticky incident-identity or risk column where useful. Required triage fields are
+not deleted at 1024 px and text is not compressed below the approved type scale.
+
 ## Hero screen: Investigation Workspace
 
 Must include:
@@ -145,6 +165,26 @@ Must include:
 
 The key visual shows separate cyber and transaction evidence converging into one decision. Cyber, transaction, anomaly, and correlation contributions must remain visually distinguishable.
 
+### Decision Weave
+
+The investigation signature is a server-authoritative Decision Weave:
+
+1. prioritized cyber evidence;
+2. prioritized transaction evidence;
+3. genuine interaction knots paired to their source evidence;
+4. one decision node containing source scores, weighted terms when returned by the backend,
+   correlation bonus, raw fused score, rounded score, severity, recommendation, and transaction state.
+
+The component must not imply that raw cyber and transaction scores are directly added. Explicit
+weights and weighted terms may be displayed only when supplied by the backend; the frontend contains
+no scoring constant or independent calculation. DOM order and an adjacent text alternative preserve
+the same meaning at 1440, 1280, and 1024 px. Connections are evidence-bearing rather than decorative
+and are never distinguished by colour alone.
+
+The first fold also contains a compact Decision Context ledger answering what happened, how risky it
+is, why, what happened to the transaction, and what the analyst can do next. Case disposition,
+analyst notes, and simulated payment response are separate control groups.
+
 Scenario B must visibly read:
 
 - `Guarded`;
@@ -152,6 +192,10 @@ Scenario B must visibly read:
 - `Transaction permitted`;
 - no hold;
 - no step-up authentication.
+
+It must also explain why intervention was avoided, show that no genuine cross-domain interaction was
+satisfied, and present `Allow and monitor` as authoritative treatment rather than as an invented
+analyst workflow action.
 
 ## Scenario Simulator
 
@@ -206,6 +250,8 @@ Admin-only operational view:
 - scenario state;
 - benchmark fixture version;
 - latest reset and audit-event status.
+- truthful environment/deployment context and safe API origin;
+- baseline and active incident counts plus dataset fingerprint or verified integrity state.
 
 Do not expose secrets, plaintext credentials, connection strings, or raw tokens.
 
@@ -259,6 +305,12 @@ Honor reduced-motion preferences. Motion must not hide or delay essential inform
 - Semantic headings, labels, tables, and status announcements.
 - Keyboard access for filters, dialogs, tables, scenario controls, and analyst actions.
 - Automated accessibility checks on Overview, Queue, Investigation, and Simulator.
+- Deliberate 1024×768 composition: Decision Weave retains semantic order, Simulator reflows before
+  cards become narrow, the investigation action rail stacks, tables expose deliberate overflow, and
+  dialogs remain viewport-bounded with internally scrollable content.
+- Skip-to-main-content, route-specific document titles, heading focus after navigation, row-header
+  semantics, focus restoration, session-expiry announcement, and unsaved-note protection.
+- Production-CSS contrast and 200% zoom verification supplement automated axe checks.
 
 ## Required UI states
 

@@ -39,10 +39,10 @@ function OperatingPointTable({ point }: { point: BenchmarkOperatingPoint }) {
       <thead>
         <tr>
           <th>Comparator</th>
-          <th>TP</th>
-          <th>FP</th>
-          <th>TN</th>
-          <th>FN</th>
+          <th>True positive</th>
+          <th>False positive</th>
+          <th>True negative</th>
+          <th>False negative</th>
           <th>Precision</th>
           <th>Recall</th>
           <th>F1</th>
@@ -51,9 +51,9 @@ function OperatingPointTable({ point }: { point: BenchmarkOperatingPoint }) {
       <tbody>
         {(Object.keys(methodNames) as (keyof typeof methodNames)[]).map((key) => (
           <tr key={key} data-benchmark-comparator={key}>
-            <td>
+            <th scope="row">
               <strong>{methodNames[key]}</strong>
-            </td>
+            </th>
             <MetricCells metrics={point[key]} />
           </tr>
         ))}
@@ -77,13 +77,17 @@ export function EvaluationPage() {
       />
     );
   const data = benchmark.data;
-  const ordered = ["escalation_40", "intervention_60", "critical_80"];
+  const ordered = ["intervention_60", "escalation_40", "critical_80"];
+  const interventionLimitation = data.limitations.find((limitation) =>
+    limitation.toLowerCase().includes("underperforms isolated methods at 60+"),
+  );
   return (
     <>
       <PageHeader
-        eyebrow="Transparent prototype evidence"
+        eyebrow="Evidence report"
         title="Evaluation"
-        description="A qualified view of benchmark-v1 across three operating points, with unfavorable results and scope limitations retained."
+        description="What benchmark-v1 establishes, what it does not establish, and how each comparator behaves across three operating points."
+        variant="report"
       />
       <div
         className="evaluation-disclaimer"
@@ -96,19 +100,41 @@ export function EvaluationPage() {
         </div>
         <span>{data.total_cases} deterministic cases</span>
       </div>
-      <Panel
-        title="Comparator definitions"
-        eyebrow="Not identically calibrated score scales"
-      >
-        <div className="definition-grid">
-          {Object.entries(data.comparator_definitions).map(([name, definition]) => (
-            <article key={name}>
-              <code>{name}</code>
-              <strong>{methodNames[name as keyof typeof methodNames]}</strong>
-              <p>{definition}</p>
-            </article>
-          ))}
-        </div>
+      <div className="evaluation-verdict-grid">
+        <section
+          className="evaluation-verdict"
+          aria-labelledby="evaluation-verdict-title"
+        >
+          <p className="panel-eyebrow">Bounded conclusion</p>
+          <h2 id="evaluation-verdict-title">What has been demonstrated</h2>
+          <blockquote>“{data.context_aware_scenario_statement}”</blockquote>
+        </section>
+        <aside className="calibration-warning">
+          <span>Comparison boundary</span>
+          <strong>The score scales are not identically calibrated.</strong>
+          <p>
+            Isolated comparators use rule-only scores. The fused comparator uses the
+            hybrid contextual score, so threshold comparisons do not measure correlation
+            alone.
+          </p>
+          {interventionLimitation !== undefined && (
+            <p className="calibration-warning__result">{interventionLimitation}</p>
+          )}
+          <p className="calibration-warning__result">
+            At 80+, neither isolated rule-only score reaches the threshold in this
+            fixture. That operating point is structurally uninformative for those
+            comparators and is not evidence of fused superiority.
+          </p>
+        </aside>
+      </div>
+      <Panel title="Known limitations" eyebrow="Retained without spin" variant="open">
+        <ul className="limitations-list limitations-list--columns">
+          {data.limitations
+            .filter((limitation) => limitation !== interventionLimitation)
+            .map((limitation) => (
+              <li key={limitation}>{limitation}</li>
+            ))}
+        </ul>
       </Panel>
       <div className="operating-points">
         {ordered.map((key) => {
@@ -126,11 +152,48 @@ export function EvaluationPage() {
               aside={<span className="threshold-chip">Score ≥ {point.threshold}</span>}
             >
               <p className="operating-definition">{point.positive_definition}</p>
+              <p className="operating-calibration-note">
+                Isolated rule scores and the fused hybrid contextual score are not
+                calibrated identically.
+              </p>
               <OperatingPointTable point={point} />
             </Panel>
           );
         })}
       </div>
+      <Panel
+        title="Comparator definitions"
+        eyebrow="Read the methods before the metrics"
+        variant="ledger"
+      >
+        <div className="definition-grid">
+          {Object.entries(data.comparator_definitions).map(([name, definition]) => (
+            <article key={name}>
+              <strong>{methodNames[name as keyof typeof methodNames]}</strong>
+              <p>{definition}</p>
+              <code>{name}</code>
+            </article>
+          ))}
+        </div>
+        <dl className="metric-glossary">
+          <div>
+            <dt>True positive</dt>
+            <dd>An attack correctly escalated at this threshold.</dd>
+          </div>
+          <div>
+            <dt>False positive</dt>
+            <dd>Legitimate activity incorrectly escalated.</dd>
+          </div>
+          <div>
+            <dt>False negative</dt>
+            <dd>An attack not escalated at this threshold.</dd>
+          </div>
+          <div>
+            <dt>F1</dt>
+            <dd>Balance of precision and recall when defined.</dd>
+          </div>
+        </dl>
+      </Panel>
       <Panel title="Cohort breakdown" eyebrow="Case composition matters">
         <EnterpriseTable label="Benchmark cohort composition">
           <thead>
@@ -151,9 +214,9 @@ export function EvaluationPage() {
                 cohort.operating_points["intervention_60"]?.fused_hybrid_contextual_score;
               return (
                 <tr key={name}>
-                  <td>
+                  <th scope="row">
                     <strong>{titleCase(name)}</strong>
-                  </td>
+                  </th>
                   <td>{cohort.case_count}</td>
                   <td>{cohort.label_distribution["legitimate"] ?? 0}</td>
                   <td>{cohort.label_distribution["attack"] ?? 0}</td>
@@ -167,18 +230,6 @@ export function EvaluationPage() {
           </tbody>
         </EnterpriseTable>
       </Panel>
-      <div className="evidence-grid">
-        <Panel title="What has been demonstrated" eyebrow="Bounded conclusion">
-          <blockquote>“{data.context_aware_scenario_statement}”</blockquote>
-        </Panel>
-        <Panel title="Known limitations" eyebrow="Retained without spin">
-          <ul className="limitations-list">
-            {data.limitations.map((limitation) => (
-              <li key={limitation}>{limitation}</li>
-            ))}
-          </ul>
-        </Panel>
-      </div>
     </>
   );
 }

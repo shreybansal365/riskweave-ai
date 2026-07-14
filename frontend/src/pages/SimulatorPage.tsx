@@ -16,7 +16,7 @@ import {
 } from "../components/ui";
 import { useToast } from "../components/use-toast";
 import { formatDecimal, titleCase } from "../lib/format";
-import type { ScenarioExecution, ScenarioKey } from "../types/api";
+import type { ScenarioExecution, ScenarioKey, ScenarioReset } from "../types/api";
 
 export function SimulatorPage() {
   const { session } = useAuth();
@@ -28,6 +28,7 @@ export function SimulatorPage() {
     {},
   );
   const [confirmReset, setConfirmReset] = useState(false);
+  const [resetResult, setResetResult] = useState<ScenarioReset | null>(null);
   const catalog = useQuery({
     queryKey: ["scenarios", "catalog"],
     queryFn: ({ signal }) => scenariosApi.catalog(token, signal),
@@ -35,6 +36,7 @@ export function SimulatorPage() {
   const run = useMutation({
     mutationFn: (key: ScenarioKey) => scenariosApi.run(token, key),
     onSuccess: async (result) => {
+      setResetResult(null);
       setResults((current) => ({ ...current, [result.scenario_key]: result }));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["scenarios"] }),
@@ -62,6 +64,7 @@ export function SimulatorPage() {
     mutationFn: () => scenariosApi.reset(token),
     onSuccess: async (result) => {
       setResults({});
+      setResetResult(result);
       setConfirmReset(false);
       await queryClient.invalidateQueries();
       notify({
@@ -94,19 +97,21 @@ export function SimulatorPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Deterministic demonstration"
+        eyebrow="Controlled demonstration"
         title="Scenario simulator"
-        description="Replay three fixed synthetic journeys against the same backend intelligence services used by persisted incidents."
+        description="Compare a normal payment, an isolated cyber anomaly, and a correlated account takeover through the same deterministic services."
+        variant="stage"
         actions={
           isAdmin ? (
             <Button
-              tone="danger"
+              tone="secondary"
               type="button"
+              aria-label="Restore exact baseline"
               onClick={() => {
                 setConfirmReset(true);
               }}
             >
-              Restore exact baseline
+              Reset demonstration data
             </Button>
           ) : undefined
         }
@@ -118,98 +123,138 @@ export function SimulatorPage() {
         </div>
       )}
       <p className="synthetic-notice">{catalog.data.synthetic_data_notice}</p>
-      <div className="scenario-grid">
+      {resetResult !== null && (
+        <div
+          className={`reset-result${resetResult.exact_baseline_restored ? " reset-result--verified" : " reset-result--attention"}`}
+          role="status"
+        >
+          <span>
+            {resetResult.exact_baseline_restored
+              ? "Baseline verified"
+              : "Reset needs attention"}
+          </span>
+          <strong>{resetResult.dataset_version}</strong>
+          <p>
+            {resetResult.exact_baseline_restored
+              ? "The deterministic manifest was restored exactly."
+              : "The API did not verify exact baseline restoration."}
+            <br />
+            Fingerprint: <code>{resetResult.fingerprint}</code>
+            <span aria-hidden="true"> · </span>
+            Baseline incidents: {resetResult.counts["incidents"] ?? 0}
+            <span aria-hidden="true"> · </span>
+            {resetResult.elapsed_seconds.toFixed(3)} seconds.
+          </p>
+        </div>
+      )}
+      <ol
+        className="scenario-stage scenario-grid"
+        aria-label="Deterministic scenario progression"
+      >
         {catalog.data.items.map((scenario, index) => {
           const result = results[scenario.scenario_key];
           const authoritative = result ?? scenario.expected_outcome;
+          const isRunning = run.isPending && run.variables === scenario.scenario_key;
           return (
-            <article
-              className={`scenario-card scenario-card--${scenario.scenario_key}`}
-              key={scenario.scenario_key}
-              data-scenario-key={scenario.scenario_key}
-            >
-              <header>
-                <span className="scenario-index">0{index + 1}</span>
-                <div>
-                  <p>{titleCase(scenario.status)}</p>
-                  <h2>{scenario.title}</h2>
-                </div>
-                <RiskBadge severity={authoritative.severity} />
-              </header>
-              <p className="scenario-purpose">{scenario.purpose}</p>
-              <ul className="signal-list">
-                {scenario.important_signals.map((signal) => (
-                  <li key={signal}>{signal}</li>
-                ))}
-              </ul>
-              <div className="scenario-scores">
-                <ScoreDisplay
-                  label="Cyber"
-                  score={authoritative.cyber_score}
-                  accent="cyber"
-                />
-                <ScoreDisplay
-                  label="Transaction"
-                  score={authoritative.transaction_score}
-                  accent="transaction"
-                />
-                <ScoreDisplay
-                  label="Bonus"
-                  score={authoritative.correlation_bonus}
-                  accent="bonus"
-                />
-                <ScoreDisplay
-                  label="Fused"
-                  score={authoritative.fused_score}
-                  detail={`Raw ${formatDecimal(authoritative.raw_fused_score)}`}
-                  accent="fused"
-                />
-              </div>
-              <div className="expected-outcome">
-                <span>
-                  <small>Expected action</small>
-                  <strong>{titleCase(authoritative.recommended_action)}</strong>
-                </span>
-                <StatusBadge status={authoritative.transaction_status} />
-              </div>
-              {result !== undefined && (
-                <div className="scenario-result">
-                  <span>
-                    {result.idempotent
-                      ? "Existing deterministic result reused"
-                      : "New deterministic incident persisted"}
-                  </span>
-                  <Link to={`/incidents/${result.incident_id}`}>
-                    Open investigation →
-                  </Link>
-                </div>
-              )}
-              {result === undefined && scenario.result_incident_id !== null && (
-                <div className="scenario-result">
-                  <span>Completed result available</span>
-                  <Link to={`/incidents/${scenario.result_incident_id}`}>
-                    Open investigation →
-                  </Link>
-                </div>
-              )}
-              <Button
-                tone="primary"
-                type="button"
-                disabled={!isAdmin || run.isPending}
-                onClick={() => {
-                  run.mutate(scenario.scenario_key);
-                }}
+            <li className="scenario-step" key={scenario.scenario_key}>
+              <article
+                className={`scenario-card scenario-card--${scenario.scenario_key}`}
+                data-scenario-key={scenario.scenario_key}
+                aria-busy={isRunning}
               >
-                {run.isPending && run.variables === scenario.scenario_key
-                  ? "Executing…"
-                  : scenario.status === "completed"
-                    ? "Replay idempotently"
-                    : "Run scenario"}
-              </Button>
-            </article>
+                <header>
+                  <span className="scenario-index">Journey 0{index + 1}</span>
+                  <div>
+                    <p>{titleCase(scenario.status)}</p>
+                    <h2>{scenario.title}</h2>
+                  </div>
+                  <RiskBadge severity={authoritative.severity} />
+                </header>
+                <p className="scenario-purpose">{scenario.purpose}</p>
+                <section className="scenario-evidence" aria-label="Important evidence">
+                  <h3>Important evidence</h3>
+                  <ul className="signal-list">
+                    {scenario.important_signals.map((signal) => (
+                      <li key={signal}>{signal}</li>
+                    ))}
+                  </ul>
+                </section>
+                <div className="scenario-decision-ledger">
+                  <div className="scenario-stream-scores">
+                    <ScoreDisplay
+                      label="Cyber"
+                      score={authoritative.cyber_score}
+                      accent="cyber"
+                    />
+                    <ScoreDisplay
+                      label="Transaction"
+                      score={authoritative.transaction_score}
+                      accent="transaction"
+                    />
+                    <ScoreDisplay
+                      label="Eligible bonus"
+                      score={authoritative.correlation_bonus}
+                      accent="bonus"
+                    />
+                  </div>
+                  <ScoreDisplay
+                    label="Authoritative fused decision"
+                    score={authoritative.fused_score}
+                    detail={`Raw ${formatDecimal(authoritative.raw_fused_score)}`}
+                    accent="fused"
+                  />
+                </div>
+                <div className="expected-outcome">
+                  <span>
+                    <small>Backend decision</small>
+                    <strong>{titleCase(authoritative.recommended_action)}</strong>
+                  </span>
+                  <StatusBadge status={authoritative.transaction_status} />
+                </div>
+                {result !== undefined && (
+                  <div className="scenario-result" role="status">
+                    <span>
+                      {result.idempotent
+                        ? "Existing deterministic result reused"
+                        : "New deterministic incident persisted"}
+                    </span>
+                    <Link to={`/incidents/${result.incident_id}`}>
+                      Open investigation →
+                    </Link>
+                  </div>
+                )}
+                {result === undefined && scenario.result_incident_id !== null && (
+                  <div className="scenario-result">
+                    <span>Completed result available</span>
+                    <Link to={`/incidents/${scenario.result_incident_id}`}>
+                      Open investigation →
+                    </Link>
+                  </div>
+                )}
+                <Button
+                  tone="primary"
+                  type="button"
+                  aria-label={
+                    scenario.status === "completed"
+                      ? "Replay idempotently"
+                      : "Run scenario"
+                  }
+                  disabled={!isAdmin || run.isPending}
+                  onClick={() => {
+                    run.mutate(scenario.scenario_key);
+                  }}
+                >
+                  {isRunning
+                    ? "Executing…"
+                    : scenario.status === "completed"
+                      ? "Replay same scenario"
+                      : "Run scenario"}
+                </Button>
+              </article>
+            </li>
           );
         })}
-      </div>
+      </ol>
       <ConfirmationDialog
         open={confirmReset}
         title="Restore the exact baseline dataset?"

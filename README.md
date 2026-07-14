@@ -2,12 +2,19 @@
 
 RiskWeave AI is an explainable cyber-transaction intelligence prototype for FinSpark’26 Problem Statement 2. The approved product vision correlates cybersecurity telemetry with transaction behaviour, while keeping every decision deterministic, inspectable, and clearly qualified as a synthetic-data prototype.
 
-Milestone 6 verifies the complete authenticated product against the local Docker stack through a
-deterministic Playwright matrix. Analyst/admin journeys, API-to-render consistency, stale workflow
-conflicts, exact scenario/reset behavior, accessibility, required viewports, browser console/network
-hygiene, and nine review baselines now have automated evidence. The browser still presents API-owned
-values and server-approved workflow actions; it contains no scoring formula, threshold engine,
-scenario logic, or fabricated banking metric.
+Milestone 6 established the historical composed-product verification baseline against the local
+Docker stack: analyst/admin journeys, API-to-render consistency, stale workflow conflicts, exact
+scenario/reset behavior, accessibility, required viewports, console/network hygiene, and nine
+1440×900 review captures.
+
+Milestone 7B builds on that verified foundation with an editorial banking-operations hierarchy, a
+server-authoritative Decision Weave, a denser triage queue, truthful authenticated environment and
+dataset context, and deliberately separate fraud-risk and quantum-migration surfaces. The browser
+still contains no scoring formula, threshold engine, scenario logic, or fabricated banking metric.
+The Milestone 7B Chromium and WebKit contracts passed, and the reviewed three-viewport matrix now
+contains 27 captures in `docs/visual-baselines/milestone-7b/`. Native Firefox cannot launch its
+software renderer reliably on this macOS host, so its supported 7B contract passed in the
+version-matched official Playwright Linux image.
 
 > **Built and maintained by Shrey Bansal.**
 > Developed for the FinSpark’26 Hackathon under Team CyberForge.
@@ -54,6 +61,12 @@ Cyber events + transaction ───────> identity/time correlation
 ```
 
 The frontend displays backend-owned status. It does not recreate backend readiness logic, and no frontend scoring logic exists.
+
+Incident detail now includes a read-only `fusion_projection`. It supplies the stream weights,
+weighted terms, interaction bonus, persisted raw value, rounded result, and rounding mode used by the
+Decision Weave. The UI renders that projection but never derives it. Authenticated shell context comes
+from `/api/system/context`; the deeper dataset, scenario, benchmark, migration, reset, and audit
+integrity projection comes from the admin-only `/api/system/integrity` endpoint.
 
 ## Prerequisites
 
@@ -128,11 +141,11 @@ in application memory; a hard refresh intentionally requires a new sign-in.
 | Route | Purpose | Access |
 |---|---|---|
 | `/overview` | Source-backed metrics, 14-day trends, priority cases, source health | analyst, admin |
-| `/incidents` | Server-filtered and URL-preserved investigation queue | analyst, admin |
-| `/incidents/:incidentId` | Evidence convergence, timeline, context, and analyst workflow | analyst, admin |
+| `/incidents` | Server-filtered, URL-preserved triage queue including transaction-state filtering | analyst, admin |
+| `/incidents/:incidentId` | Decision Context, Decision Weave, evidence chronology, context, and analyst workflow | analyst, admin |
 | `/simulator` | Scenario state and authoritative expected outcomes | read: analyst/admin; run/reset: admin |
 | `/quantum-readiness` | Channel-linked crypto migration posture | analyst, admin |
-| `/system-health` | Liveness, readiness, migration, and source diagnostics | admin |
+| `/system-health` | Liveness, readiness, migration, deterministic integrity, and source diagnostics | admin |
 | `/evaluation` | Qualified benchmark-v1 evidence at 40+, 60+, and 80+ | analyst, admin |
 
 Frontend architecture, API-client ownership, authentication flow, and route behavior are documented in
@@ -199,7 +212,7 @@ Common repository commands:
 | `make test-e2e-chromium` | Run the standard composed-product browser suite |
 | `make test-e2e` | Run the complete locally supported browser matrix |
 | `make test-e2e-headed` | Run Chromium visibly for local investigation |
-| `make test-e2e-visual` | Capture the nine deterministic 1440×900 review baselines |
+| `make test-e2e-visual` | Regenerate the Milestone 7B nine-screen matrix at 1440×900, 1280×720, and 1024×768 |
 | `make audit` | Audit locked runtime dependencies |
 | `make check` | Run all non-build quality gates |
 | `make build` | Create the frontend production build |
@@ -302,6 +315,14 @@ fallback for this macOS automation host, and CI behavior are documented in
 `docs/END_TO_END_TESTING.md`. The milestone evidence is summarized in
 `docs/MILESTONE_6_ACCEPTANCE.md`.
 
+Those statements describe the retained Milestone 6 evidence. Milestone 7B adds regression coverage
+for the server-authored Decision Weave, transaction-status filtering, authenticated context/integrity
+projections, route and mutation focus, session-expiry messaging, persistent toasts, unsaved-note
+protection, production-CSS contrast, and the 1440/1280/1024 composition matrix. Chromium passed all
+35 executable functional tests; Firefox and WebKit each passed all 22 applicable tests; the separate
+visual-capture test passed and produced 27 reviewed PNGs. See `docs/MILESTONE_7B_ACCEPTANCE.md` for
+the complete evidence and the explicit native-Firefox host limitation.
+
 ## Implemented API and security boundary
 
 Implemented endpoints:
@@ -323,6 +344,8 @@ Implemented endpoints:
 - `GET /api/quantum/assets`;
 - `GET /api/quantum/summary`;
 - `GET /api/benchmark/summary`;
+- `GET /api/system/context`;
+- `GET /api/system/integrity` (admin only);
 - `GET /health`;
 - `GET /ready`.
 
@@ -377,10 +400,11 @@ in Milestone 6.
 
 ## Deferred boundary
 
-Milestone 6 provides a cross-browser verified functional product, but deliberately does not claim
-final visual masterpiece or production status. The following remain outside this milestone:
+Milestone 7B implements the audited visual hierarchy and product contract but deliberately does not
+claim production status or completed browser/visual evidence before the updated verification run. The
+following remain outside this milestone:
 
-- Milestone 7 multi-pass visual critique, brand refinement, and final animation/responsive polish;
+- final post-verification presentation adjustments and any later animation refinement;
 - cloud deployment;
 - final GitHub presentation treatment, final screenshots, PPT, and demo video;
 - prospectively designed benchmark-v2.

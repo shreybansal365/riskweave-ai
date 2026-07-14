@@ -31,27 +31,46 @@ export function SystemHealthPage() {
     queryFn: ({ signal }) => dashboardApi.summary(token, signal),
     retry: 1,
   });
+  const integrity = useQuery({
+    queryKey: ["system", "integrity"],
+    queryFn: ({ signal }) => systemApi.integrity(token, signal),
+    retry: 1,
+  });
   const lastRefresh =
-    health.isSuccess && ready.isSuccess && sources.isSuccess
+    health.isSuccess && ready.isSuccess && sources.isSuccess && integrity.isSuccess
       ? new Date(
-          Math.min(health.dataUpdatedAt, ready.dataUpdatedAt, sources.dataUpdatedAt),
+          Math.min(
+            health.dataUpdatedAt,
+            ready.dataUpdatedAt,
+            sources.dataUpdatedAt,
+            integrity.dataUpdatedAt,
+          ),
         ).toISOString()
       : null;
   const retry = () => {
     void health.refetch();
     void ready.refetch();
     void sources.refetch();
+    void integrity.refetch();
   };
-  if (health.isPending && ready.isPending && sources.isPending)
+  if (health.isPending && ready.isPending && sources.isPending && integrity.isPending)
     return <LoadingSkeleton label="Checking service health" />;
   const backendAvailable = health.isSuccess;
   const databaseReady = ready.isSuccess && ready.data.status === "ready";
   return (
-    <>
+    <div
+      className="system-health-ledger"
+      data-system-ready={
+        health.isSuccess && ready.isSuccess && sources.isSuccess && integrity.isSuccess
+          ? "settled"
+          : undefined
+      }
+    >
       <PageHeader
-        eyebrow="Administrator diagnostics"
+        eyebrow="Administration"
         title="System health"
-        description="Live liveness, readiness, migration, and persisted source status without fabricated green checks."
+        description="Service readiness, deterministic dataset integrity, and recovery context from authenticated backend state."
+        variant="diagnostic"
         actions={
           <Button type="button" onClick={retry}>
             Retry all checks
@@ -71,7 +90,7 @@ export function SystemHealthPage() {
           <span>
             <small>Frontend runtime</small>
             <strong>RiskWeave interface loaded</strong>
-            <p>{import.meta.env.MODE} environment</p>
+            <p>Browser client available</p>
           </span>
         </article>
         <article className="health-card">
@@ -129,7 +148,133 @@ export function SystemHealthPage() {
           </span>
         </article>
       </div>
-      <Panel title="Source-system coverage" eyebrow="Persisted deterministic dataset">
+      {integrity.isError ? (
+        <ErrorState
+          title="Integrity context is unavailable"
+          message="Service checks remain visible, but the authenticated deterministic-integrity projection did not answer."
+          onRetry={() => void integrity.refetch()}
+        />
+      ) : integrity.isPending ? (
+        <LoadingSkeleton label="Loading deterministic integrity context" />
+      ) : (
+        <>
+          <section
+            className="environment-ledger"
+            aria-label="Authoritative environment context"
+          >
+            <div>
+              <span>Environment</span>
+              <strong>{integrity.data.runtime.environment_label}</strong>
+              <small>{titleCase(integrity.data.runtime.deployment_mode)}</small>
+            </div>
+            <div>
+              <span>API origin</span>
+              <strong>{integrity.data.runtime.api_origin}</strong>
+              <small>{titleCase(integrity.data.runtime.api_origin_scope)}</small>
+            </div>
+            <div>
+              <span>Dataset</span>
+              <strong>{integrity.data.dataset.version}</strong>
+              <small>
+                {integrity.data.dataset.exact_baseline_restored
+                  ? "Exact baseline verified"
+                  : "Showcase or modified state"}
+              </small>
+            </div>
+            <div>
+              <span>Simulation epoch</span>
+              <strong>{formatDateTime(integrity.data.dataset.simulation_epoch)}</strong>
+              <small>
+                Seed: {integrity.data.dataset.generator_seed}; model:{" "}
+                {integrity.data.dataset.model_seed}
+              </small>
+            </div>
+          </section>
+          <div className="integrity-grid">
+            <Panel
+              title="Dataset integrity"
+              eyebrow="Current versus baseline manifest"
+              variant="ledger"
+            >
+              <div className="integrity-counts">
+                {Object.entries(integrity.data.dataset.current_counts).map(
+                  ([entity, count]) => (
+                    <div key={entity}>
+                      <span>{titleCase(entity)}</span>
+                      <strong>{formatNumber(count)}</strong>
+                      <small>
+                        Expected:{" "}
+                        {formatNumber(
+                          integrity.data.dataset.expected_baseline_counts[entity] ?? 0,
+                        )}
+                      </small>
+                    </div>
+                  ),
+                )}
+              </div>
+              <dl className="integrity-meta">
+                <div>
+                  <dt>Current fingerprint</dt>
+                  <dd>{integrity.data.dataset.current_fingerprint}</dd>
+                </div>
+                <div>
+                  <dt>Latest reset fingerprint</dt>
+                  <dd>
+                    {integrity.data.dataset.latest_reset_fingerprint ??
+                      "No reset recorded"}
+                  </dd>
+                </div>
+              </dl>
+            </Panel>
+            <Panel
+              title="Scenario state"
+              eyebrow="Persisted deterministic runs"
+              variant="ledger"
+            >
+              <div className="scenario-health-list">
+                {integrity.data.scenarios.map((scenario) => (
+                  <article key={scenario.scenario_key}>
+                    <span>
+                      <strong>{titleCase(scenario.scenario_key)}</strong>
+                      <small>{titleCase(scenario.status)}</small>
+                    </span>
+                    <b>
+                      {scenario.result_incident_id === null
+                        ? "No result"
+                        : "Result linked"}
+                    </b>
+                  </article>
+                ))}
+              </div>
+              <div className="integrity-evidence">
+                <span>
+                  <small>Benchmark fixture</small>
+                  <strong>{integrity.data.benchmark.fixture_version}</strong>
+                  <em>{integrity.data.benchmark.case_count} cases</em>
+                </span>
+                <span>
+                  <small>Latest audit event</small>
+                  <strong>
+                    {integrity.data.audit.latest_event === null
+                      ? "No event reported"
+                      : titleCase(integrity.data.audit.latest_event.event_type)}
+                  </strong>
+                  <em>
+                    {integrity.data.audit.latest_event === null
+                      ? "—"
+                      : formatDateTime(integrity.data.audit.latest_event.created_at)}
+                  </em>
+                </span>
+              </div>
+            </Panel>
+          </div>
+        </>
+      )}
+      <Panel
+        title="Source-system coverage"
+        eyebrow="Persisted deterministic dataset"
+        variant="open"
+      >
         {sources.isError ? (
           <ErrorState
             message="Authenticated source-health data is unavailable."
@@ -162,7 +307,7 @@ export function SystemHealthPage() {
         </div>
         <div>
           <dt>Environment label</dt>
-          <dd>{import.meta.env.MODE}</dd>
+          <dd>{integrity.data?.runtime.environment_label ?? "Not reported"}</dd>
         </div>
         <div>
           <dt>Last successful complete refresh</dt>
@@ -171,6 +316,6 @@ export function SystemHealthPage() {
           </dd>
         </div>
       </dl>
-    </>
+    </div>
   );
 }

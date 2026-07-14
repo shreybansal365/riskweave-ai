@@ -17,6 +17,8 @@ import type {
   ScenarioExecution,
   ScenarioKey,
   ScenarioReset,
+  SystemContext,
+  SystemIntegrity,
 } from "../../src/types/api";
 import { e2eEnvironment, type DemoRole } from "./environment";
 
@@ -114,6 +116,12 @@ export const getQuantumSummary = (request: APIRequestContext, token: string) =>
 
 export const getBenchmarkSummary = (request: APIRequestContext, token: string) =>
   apiGet<BenchmarkSummary>(request, token, "/api/benchmark/summary");
+
+export const getSystemIntegrity = (request: APIRequestContext, token: string) =>
+  apiGet<SystemIntegrity>(request, token, "/api/system/integrity");
+
+export const getSystemContext = (request: APIRequestContext, token: string) =>
+  apiGet<SystemContext>(request, token, "/api/system/context");
 
 export async function loginThroughUi(
   page: Page,

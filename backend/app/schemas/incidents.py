@@ -27,6 +27,25 @@ class IncidentScoreResponse(ApiModel):
     fused_score: int = Field(ge=0, le=100)
 
 
+class WeightedScoreTermResponse(ApiModel):
+    """One server-authored term in the weighted fusion projection."""
+
+    score: int = Field(ge=0, le=100)
+    weight: Decimal = Field(ge=0, le=1)
+    weighted_term: Decimal = Field(ge=0, le=100)
+
+
+class FusionProjectionResponse(ApiModel):
+    """Read-only explanation of persisted fusion inputs and output."""
+
+    cyber: WeightedScoreTermResponse
+    transaction: WeightedScoreTermResponse
+    correlation_bonus: int = Field(ge=0, le=18)
+    raw_fused_score: Decimal = Field(ge=0, le=100)
+    rounded_fused_score: int = Field(ge=0, le=100)
+    rounding_mode: Literal["ROUND_HALF_UP"] = "ROUND_HALF_UP"
+
+
 class IncidentListItemResponse(IncidentScoreResponse):
     incident_id: UUID
     incident_reference: str
@@ -163,6 +182,7 @@ class IncidentDetailResponse(IncidentScoreResponse):
     model_version: str
     created_at: datetime
     updated_at: datetime
+    fusion_projection: FusionProjectionResponse
     customer: CustomerSummaryResponse
     account: AccountSummaryResponse
     session: SessionSummaryResponse

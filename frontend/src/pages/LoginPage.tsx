@@ -19,7 +19,7 @@ function loginFailure(error: unknown): string {
 }
 
 export function LoginPage() {
-  const { session, login } = useAuth();
+  const { session, sessionNotice, login, clearSessionNotice } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
@@ -36,6 +36,7 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
+      clearSessionNotice();
       void navigate(returnTo, { replace: true });
     } catch (caught) {
       setPassword("");
@@ -50,17 +51,16 @@ export function LoginPage() {
       <section className="login-context" aria-labelledby="login-context-title">
         <Brand />
         <div>
-          <p className="eyebrow">Secure analyst access</p>
+          <p className="eyebrow">Contextual risk operations</p>
           <h1 id="login-context-title">One incident. Every relevant signal.</h1>
           <p>
             RiskWeave correlates cyber telemetry with transaction behaviour so analysts
-            can investigate the complete synthetic case—not disconnected alerts.
+            can investigate one explainable case instead of disconnected alerts.
           </p>
         </div>
-        <div className="login-principles" aria-label="Product principles">
-          <span>Explainable decisions</span>
-          <span>Server-authoritative scoring</span>
-          <span>Synthetic data only</span>
+        <div className="login-environment">
+          <span>Protected demonstration workspace</span>
+          <strong>Deterministic synthetic banking data</strong>
         </div>
       </section>
 
@@ -71,6 +71,14 @@ export function LoginPage() {
           <p className="login-help">
             Use a seeded analyst or administrator account configured on the backend.
           </p>
+          {sessionNotice !== null && (
+            <div className="session-alert" role="alert">
+              <span>{sessionNotice}</span>
+              <button type="button" onClick={clearSessionNotice}>
+                Dismiss
+              </button>
+            </div>
+          )}
           <label>
             Email address
             <input
@@ -105,8 +113,8 @@ export function LoginPage() {
             {submitting ? "Verifying access…" : "Continue securely"}
           </button>
           <p className="session-note">
-            Access tokens remain in memory and are cleared on sign out or expiry. A page
-            refresh requires authentication again.
+            This prototype keeps access tokens in memory. A page refresh requires
+            authentication again.
           </p>
         </form>
       </section>

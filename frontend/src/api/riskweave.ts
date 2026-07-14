@@ -19,6 +19,8 @@ import type {
   ScenarioExecution,
   ScenarioKey,
   ScenarioReset,
+  SystemContext,
+  SystemIntegrity,
 } from "../types/api";
 
 export interface IncidentQuery {
@@ -28,6 +30,7 @@ export interface IncidentQuery {
   sortDirection?: "asc" | "desc";
   severity?: string | undefined;
   status?: string | undefined;
+  transactionStatus?: string | undefined;
   scenario?: string | undefined;
   dateFrom?: string | undefined;
   dateTo?: string | undefined;
@@ -47,6 +50,10 @@ export const systemApi = {
   health: (signal?: AbortSignal) => apiRequest<HealthResponse>("/health", { signal }),
   readiness: (signal?: AbortSignal) =>
     apiRequest<ReadinessResponse>("/ready", { signal, acceptedStatuses: [200, 503] }),
+  context: (token: string, signal?: AbortSignal) =>
+    apiRequest<SystemContext>("/api/system/context", { token, signal }),
+  integrity: (token: string, signal?: AbortSignal) =>
+    apiRequest<SystemIntegrity>("/api/system/integrity", { token, signal }),
 };
 
 export const authApi = {
@@ -77,6 +84,7 @@ export const incidentsApi = {
         sort_direction: query.sortDirection,
         severity: query.severity,
         status: query.status,
+        transaction_status: query.transactionStatus,
         scenario: query.scenario,
         date_from: query.dateFrom,
         date_to: query.dateTo,

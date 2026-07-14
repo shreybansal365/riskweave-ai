@@ -99,6 +99,17 @@ def test_incident_list_pagination_sort_filters_search_and_validation(
     no_scenario = postgres_client.get("/api/incidents?scenario=account_takeover", headers=headers)
     assert no_scenario.status_code == 200
     assert no_scenario.json()["pagination"]["total_items"] == 0
+    permitted = postgres_client.get(
+        "/api/incidents?transaction_status=permitted",
+        headers=headers,
+    )
+    assert permitted.status_code == 200
+    assert permitted.json()["pagination"]["total_items"] > 0
+    assert all(item["transaction_status"] == "permitted" for item in permitted.json()["items"])
+    held = postgres_client.get("/api/incidents?transaction_status=held", headers=headers)
+    assert held.status_code == 200
+    assert held.json()["pagination"]["total_items"] > 0
+    assert all(item["transaction_status"] == "held" for item in held.json()["items"])
 
     first = payload["items"][0]
     searched = postgres_client.get(
@@ -140,6 +151,13 @@ def test_incident_list_pagination_sort_filters_search_and_validation(
         == 422
     )
     assert postgres_client.get("/api/incidents?page_size=101", headers=headers).status_code == 422
+    assert (
+        postgres_client.get(
+            "/api/incidents?transaction_status=not-a-status",
+            headers=headers,
+        ).status_code
+        == 422
+    )
 
 
 @pytest.mark.integration
@@ -159,6 +177,14 @@ def test_incident_detail_is_chronological_grounded_and_consistent(
     assert payload["incident_id"] == str(incident_id)
     assert payload["raw_fused_score"] == "9.00"
     assert payload["fused_score"] == 9
+    assert payload["fusion_projection"] == {
+        "cyber": {"score": 10, "weight": "0.45", "weighted_term": "4.50"},
+        "transaction": {"score": 10, "weight": "0.45", "weighted_term": "4.50"},
+        "correlation_bonus": 0,
+        "raw_fused_score": "9.00",
+        "rounded_fused_score": 9,
+        "rounding_mode": "ROUND_HALF_UP",
+    }
     assert payload["customer"]["customer_reference"].startswith("CUS-••••-")
     assert "xxx.xxx" in payload["session"]["masked_ip_address"]
     assert payload["crypto_readiness"]["fraud_risk_separation_notice"]
@@ -506,6 +532,35 @@ def test_scenario_api_is_admin_only_idempotent_and_exactly_resettable(
     assert second.status_code == 200
     assert second.json()["incident_id"] == first.json()["incident_id"]
     assert second.json()["idempotent"] is True
+    attack_detail = postgres_client.get(
+        f"/api/incidents/{first.json()['incident_id']}", headers=analyst_headers
+    )
+    assert attack_detail.status_code == 200
+    assert attack_detail.json()["fusion_projection"] == {
+        "cyber": {"score": 78, "weight": "0.45", "weighted_term": "35.10"},
+        "transaction": {"score": 79, "weight": "0.45", "weighted_term": "35.55"},
+        "correlation_bonus": 18,
+        "raw_fused_score": "88.65",
+        "rounded_fused_score": 89,
+        "rounding_mode": "ROUND_HALF_UP",
+    }
+    legitimate = postgres_client.post(
+        "/api/scenarios/legitimate_new_device/run",
+        headers={**admin_headers, "X-Request-ID": "admin-scenario-legitimate"},
+    )
+    assert legitimate.status_code == 200
+    legitimate_detail = postgres_client.get(
+        f"/api/incidents/{legitimate.json()['incident_id']}", headers=analyst_headers
+    )
+    assert legitimate_detail.status_code == 200
+    assert legitimate_detail.json()["fusion_projection"] == {
+        "cyber": {"score": 40, "weight": "0.45", "weighted_term": "18.00"},
+        "transaction": {"score": 10, "weight": "0.45", "weighted_term": "4.50"},
+        "correlation_bonus": 0,
+        "raw_fused_score": "22.50",
+        "rounded_fused_score": 23,
+        "rounding_mode": "ROUND_HALF_UP",
+    }
     scenario_filter = postgres_client.get(
         "/api/incidents?scenario=account_takeover", headers=analyst_headers
     )
@@ -617,6 +672,8 @@ def test_business_routes_reject_unauthenticated_access_and_support_empty_inciden
         "/api/quantum/assets",
         "/api/quantum/summary",
         "/api/benchmark/summary",
+        "/api/system/context",
+        "/api/system/integrity",
     )
     for path in protected_paths:
         response = postgres_client.get(path)
@@ -640,7 +697,8 @@ def test_openapi_contains_complete_milestone_four_surface(
 ) -> None:
     response = postgres_client.get("/openapi.json")
     assert response.status_code == 200
-    paths: dict[str, Any] = response.json()["paths"]
+    document = response.json()
+    paths: dict[str, Any] = document["paths"]
     required = {
         "/api/incidents",
         "/api/incidents/{incident_id}",
@@ -655,7 +713,120 @@ def test_openapi_contains_complete_milestone_four_surface(
         "/api/quantum/assets",
         "/api/quantum/summary",
         "/api/benchmark/summary",
+        "/api/system/context",
+        "/api/system/integrity",
     }
     assert required <= set(paths)
     assert "patch" in paths["/api/incidents/{incident_id}"]
     assert "post" in paths["/api/incidents/{incident_id}/actions"]
+    incident_parameters = {
+        parameter["name"] for parameter in paths["/api/incidents"]["get"]["parameters"]
+    }
+    assert "transaction_status" in incident_parameters
+    incident_detail_schema = document["components"]["schemas"]["IncidentDetailResponse"]
+    assert "fusion_projection" in incident_detail_schema["required"]
+    assert paths["/api/system/context"]["get"]["security"] == [{"HTTPBearer": []}]
+    assert paths["/api/system/integrity"]["get"]["security"] == [{"HTTPBearer": []}]
+
+
+@pytest.mark.integration
+def test_system_integrity_is_admin_only_safe_and_backend_authoritative(
+    postgres_client: TestClient,
+    postgres_settings: Settings,
+    postgres_session_factory: SessionFactory,
+    password_service: PasswordService,
+) -> None:
+    baseline_fingerprint = _prepare(postgres_session_factory, postgres_settings, password_service)
+    analyst_headers = _login(postgres_client, postgres_settings, "analyst")
+    admin_headers = _login(postgres_client, postgres_settings, "admin")
+
+    assert postgres_client.get("/api/system/integrity").status_code == 401
+    denied = postgres_client.get(
+        "/api/system/integrity",
+        headers={**analyst_headers, "X-Request-ID": "analyst-integrity-denied"},
+    )
+    assert denied.status_code == 403
+
+    context = postgres_client.get("/api/system/context", headers=analyst_headers)
+    assert context.status_code == 200
+    assert context.json() == {
+        "environment_label": "Deterministic test environment",
+        "deployment_mode": "test",
+        "dataset_version": "baseline-v1",
+        "simulation_epoch": "2026-07-14T09:00:00Z",
+        "dataset_state": "baseline_restored",
+        "dataset_state_label": "Baseline dataset restored",
+    }
+
+    response = postgres_client.get("/api/system/integrity", headers=admin_headers)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["runtime"] == {
+        "configured_environment": "test",
+        "deployment_mode": "test",
+        "environment_label": "Deterministic test environment",
+        "api_origin": "http://testserver",
+        "api_origin_scope": "loopback",
+    }
+    assert payload["readiness"] == {
+        "database": "reachable",
+        "migrations": "current",
+        "revision": "0003_intelligence_support",
+    }
+    assert payload["dataset"]["version"] == "baseline-v1"
+    assert payload["dataset"]["generator_seed"] == 26026
+    assert payload["dataset"]["model_seed"] == 26026
+    assert payload["dataset"]["simulation_epoch"] == "2026-07-14T09:00:00Z"
+    assert payload["dataset"]["expected_baseline_counts"] == {
+        "customers": 12,
+        "accounts": 12,
+        "devices": 16,
+        "transactions": 180,
+        "cyber_events": 240,
+        "incidents": 15,
+        "scenario_runs": 3,
+    }
+    assert payload["dataset"]["current_counts"] == payload["dataset"]["expected_baseline_counts"]
+    assert payload["dataset"]["current_fingerprint"] == baseline_fingerprint
+    assert payload["dataset"]["latest_reset_fingerprint"] == baseline_fingerprint
+    assert payload["dataset"]["exact_baseline_restored"] is True
+    assert len(payload["scenarios"]) == 3
+    assert all(item["status"] == "not_run" for item in payload["scenarios"])
+    assert payload["benchmark"] == {
+        "fixture_version": "benchmark-v1",
+        "benchmark_name": "benchmark-v1 — mixed synthetic security benchmark",
+        "case_count": 48,
+    }
+    assert payload["audit"]["latest_reset"]["event_type"] == "scenario_reset"
+    assert payload["audit"]["latest_event"] is not None
+    serialized = response.text.lower()
+    assert "password" not in serialized
+    assert "jwt_secret" not in serialized
+    assert "database_url" not in serialized
+
+    run = postgres_client.post(
+        "/api/scenarios/account_takeover/run",
+        headers={**admin_headers, "X-Request-ID": "integrity-scenario-run"},
+    )
+    assert run.status_code == 200
+    changed = postgres_client.get("/api/system/integrity", headers=admin_headers)
+    assert changed.status_code == 200
+    changed_payload = changed.json()
+    assert changed_payload["dataset"]["exact_baseline_restored"] is False
+    assert changed_payload["dataset"]["current_counts"]["incidents"] == 16
+    scenario = next(
+        item for item in changed_payload["scenarios"] if item["scenario_key"] == "account_takeover"
+    )
+    assert scenario["status"] == "completed"
+    assert scenario["result_incident_id"] == run.json()["incident_id"]
+    changed_context = postgres_client.get("/api/system/context", headers=analyst_headers)
+    assert changed_context.status_code == 200
+    assert changed_context.json()["dataset_state"] == "showcase_active"
+    assert changed_context.json()["dataset_state_label"] == "Showcase scenarios active"
+
+    with postgres_session_factory() as session:
+        denial = session.scalar(
+            select(AuditEvent).where(AuditEvent.request_id == "analyst-integrity-denied")
+        )
+        assert denial is not None
+        assert denial.event_type == AuditEventType.AUTHORIZATION_DENIED

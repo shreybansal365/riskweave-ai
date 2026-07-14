@@ -1,77 +1,181 @@
 # RiskWeave implemented design system
 
-## Character
+## Product character
 
-The Milestone 5 interface is a premium banking command centre: calm, exact, purposeful, and compact.
-It avoids template-dashboard composition and makes the investigation workspace the visual centre of
-the product.
+RiskWeave is a premium banking-security command centre: calm, exact, operational, and editorially
+controlled. It does not imitate a generic admin template or theatrical cybersecurity dashboard. The
+visual system prioritizes an analyst's decision, then the evidence supporting it, then provenance and
+supporting context.
 
-## Foundations
+Milestone 7B gives the product a restrained signature: separate cyber and transaction evidence pass
+through documented cross-domain interactions and become one explainable, backend-authoritative
+decision. That signature is strongest in the investigation workspace and remains secondary elsewhere.
 
-Semantic tokens live in `frontend/src/styles/tokens.css`. They define deep navy structure, clean white
-work surfaces, slate text and borders, teal/cyan correlation accents, amber escalation, critical red,
-and verified green. Raw colors are centralized rather than chosen ad hoc by page components.
+## Editorial hierarchy
 
-The spacing scale follows 4, 8, 12, 16, 20, 24, 32, and 40 pixels. Controls use restrained radii;
-pill treatment is reserved for compact status badges. Borders and surface contrast provide most
-hierarchy. Shadows are limited to dialogs, toasts, and sticky layers.
+The interface uses three explicit information levels:
+
+1. **Decision-critical state** — fused decision, transaction treatment, recommended response, and
+   urgent analyst work.
+2. **Investigation evidence** — cyber, transaction, interaction, chronology, and bounded
+   customer/account context.
+3. **Supporting context** — provenance, system metadata, benchmark method, and migration detail.
+
+Every level must not become an equal white card. Decision-critical areas may use inverse or emphasized
+surfaces; evidence uses compact ledgers and open sections; provenance belongs behind progressive
+disclosure where it is not needed for immediate triage.
+
+## Foundations and semantic tokens
+
+Tokens live in `frontend/src/styles/tokens.css`. Components consume semantic roles rather than
+scattering colors or inventing page-specific risk meanings.
+
+Core surface and text roles include:
+
+- `--canvas`, `--surface`, `--surface-subtle`, `--surface-emphasis`, and `--surface-inverse`;
+- `--text-primary`, `--text-secondary`, `--text-muted`, and `--text-inverse`;
+- `--border`, `--border-strong`, and `--focus`.
+
+Evidence and outcome roles include:
+
+- `--signal-cyber` for cyber evidence;
+- `--signal-transaction` for transaction evidence;
+- `--signal-correlation` for eligible cross-domain interaction;
+- `--risk-critical` and `--risk-elevated` for fraud-risk state;
+- `--outcome-verified` for legitimate or released outcomes;
+- `--migration-priority` and `--migration-priority-soft` for cryptographic migration posture.
+
+Quantum migration priority deliberately has its own semantic color family. It must never borrow a
+fraud severity treatment or imply that migration priority contributed to an incident score.
+
+The spacing scale is based on 4 px. Controls use a restrained radius; panels use a slightly larger
+but still compact radius. Borders and surface contrast establish hierarchy before shadows. Shadows
+are reserved for dialogs, toasts, sticky layers, and actively elevated investigation surfaces.
+
+Operational body text is at least 14 px and secondary metadata is at least 12 px. Eleven-pixel text is
+limited to nonessential monospace identifiers. Tabular numerals are used for scores, weighted terms,
+amounts, timestamps, and benchmark metrics.
+
+## Surface grammar
+
+Reusable `Panel` variants express meaning rather than decoration:
+
+- `contained` — bounded task or control surface;
+- `open` — editorial section that should not resemble another equal card;
+- `ledger` — compact quantitative or evidence register;
+- `evidence` — investigation evidence with stronger provenance cues.
+
+Page headers also use route-specific variants (`briefing`, `queue`, `stage`, `register`, `report`, and
+`diagnostic`) so the overview, queue, simulator, migration register, evaluation report, and system
+diagnostic do not share a template-like composition.
 
 ## Reusable components
 
 Implemented primitives include:
 
-- application shell and role-aware navigation item;
-- page and panel headers;
-- risk and status badges with text labels;
-- authoritative score display;
-- metric card;
-- enterprise table wrapper;
-- filter bar composition;
-- contribution groups;
-- incident timeline and event items;
-- analyst action panel and note form;
-- confirmation dialog;
-- loading, empty, degraded, and error states;
-- service-status indicator;
-- accessible tooltip;
-- accessible toast notification.
+- role-aware application shell and grouped navigation;
+- route-specific page and panel headers;
+- risk and status badges that always include text;
+- authoritative score and operational metric displays;
+- enterprise table frame with labelled horizontal overflow;
+- filter-bar composition with URL-backed state;
+- Decision Weave, decisive-evidence ranking, contribution ledger, and evidence-lane timeline;
+- separate disposition, transaction-response, and analyst-note panels;
+- confirmation dialog with focus trapping and restoration;
+- loading, empty, degraded, error, and service-status states;
+- accessible tooltips and dismissible notifications.
 
-No complete dashboard theme or component-library skin is used. Recharts supplies chart geometry, but
-RiskWeave owns the chart questions, surrounding copy, palette, density, and interaction treatment.
+No complete dashboard theme is used. Recharts provides chart geometry only; RiskWeave owns each
+chart's question, copy, palette, density, textual summary, and surrounding hierarchy.
 
-## Evidence convergence
+## Decision Weave contract
 
-The investigation workspace visually moves from the cyber stream, transaction stream, and genuine
-interaction bonus toward the backend's fused decision. It displays persisted raw and rounded values
-without recalculating them. Chronology, grouped contributions, customer baseline, analyst history,
-transaction state, and secondary crypto-readiness context remain in the same investigation flow.
+The hero investigation component has meaningful DOM order:
+
+1. cyber evidence;
+2. backend-authored cyber weighted term;
+3. eligible cross-domain interactions;
+4. backend-authored transaction weighted term;
+5. transaction evidence;
+6. authoritative decision.
+
+`fusion_projection` supplies the score, decimal weight, and weighted term for both streams, plus the
+interaction bonus, raw fused value, rounded fused result, and `ROUND_HALF_UP` mode. The frontend does
+not contain `0.45`, calculate a weighted term, apply a threshold, or infer an action.
+
+Interaction knots pair only persisted interaction contributions with their documented cyber and
+transaction source evidence. When no eligible rule exists, the component says so explicitly and
+shows a zero bonus rather than drawing a decorative connection. An adjacent text alternative states
+the same meaning without depending on layout or color.
+
+The first fold pairs the Decision Weave with:
+
+- a case header containing fused risk, severity, case state, transaction state, and treatment;
+- a Decision Context ledger containing amount, beneficiary, channel, destination risk, customer,
+  account, and session origin;
+- ranked decisive evidence;
+- the next server-approved workflow controls.
+
+Scenario B remains visibly `Guarded`, `Allow and monitor`, and `Permitted`, with no hold, no step-up,
+and no eligible interaction bonus. `Allow and monitor` is treatment, not an invented analyst action.
+
+## Route-specific composition
+
+- **Login** — split product-context and restrained authentication surfaces; no marketing hero.
+- **Overview** — three urgent metrics, a controlled-outcome ledger, priority cases, then analytical
+  trends and source coverage.
+- **Incident queue** — filter/search workbench followed by one dense server-backed triage register.
+- **Investigation** — decision first, evidence second, context and provenance third, with a bounded
+  action rail.
+- **Simulator** — a progressive three-stage story from normal to guarded to critical, not pricing
+  cards.
+- **Quantum Readiness** — migration register and prioritized asset, with explicit fraud separation.
+- **System Health** — diagnostic ledger using authenticated integrity evidence, not guessed green
+  states.
+- **Evaluation** — bounded conclusion and calibration warning before compact comparator evidence.
 
 ## Accessibility and interaction
 
-- semantic headings, landmarks, forms, and tables;
-- visible focus on links, controls, rows, and tooltips;
-- text plus color for severity and state;
-- keyboard-openable queue rows;
-- explicit labels for filters and notes;
-- modal semantics, Escape handling, initial focus, focus trapping/restoration, and disabled busy
-  states;
-- polite status announcements for toasts;
-- reduced-motion support;
-- textual summaries adjacent to charts;
-- no optimistic final workflow state before backend confirmation.
+- the skip link targets the main workspace;
+- document titles and the primary heading update with route changes;
+- route navigation moves focus to the destination heading or main content;
+- queue rows have row-header semantics and keyboard activation;
+- dialogs trap focus, support Escape, and restore focus to the trigger;
+- successful workflow mutations focus a confirmation; stale `409` conflicts focus an alert;
+- session expiry clears memory auth and presents an explicit sign-in notice;
+- danger toasts receive focus and persist until dismissed; timed informational toasts pause on hover
+  or focus;
+- an unsaved analyst note blocks in-app departure and invokes the browser unload warning;
+- text accompanies every severity, state, chart, and evidence encoding;
+- reduced-motion preferences disable nonessential movement.
 
-Milestone 5 includes keyboard-flow coverage and serious/critical axe-core checks on both the login and
-authenticated investigation surfaces. Milestone 6 retains the broader multi-screen visual
-accessibility critique rather than basic dialog correctness.
+The Milestone 6 axe and keyboard results remain historical evidence. Production-CSS contrast, 200%
+zoom, the updated mutation/session flows, and all Milestone 7B viewports must be rerun before the
+redesign is accepted.
 
 ## Responsive boundary
 
-The primary target is 1440×900. The layout remains usable at 1280×720 through a narrower rail,
-denser filters, bounded tables, and stacked secondary grids. Below tablet widths, navigation becomes a
-horizontal product strip and multi-column investigation sections stack safely. A dedicated mobile
-application is outside scope.
+The product has deliberate desktop compositions at:
+
+- **1440×900** — full navigation rail, multi-column operational layouts, complete Decision Weave, and
+  sticky action/context relationships where useful;
+- **1280×720** — denser gutters and supporting grids, with every primary action and decision field
+  still visible;
+- **1024×768** — stacked investigation/action regions, preserved Decision Weave semantic order,
+  deliberate table overflow, simulator reflow, and viewport-bounded dialogs.
+
+This is not a mobile-first redesign. Enterprise tables may scroll horizontally inside a labelled
+region; required triage columns are not silently deleted or compressed below the type contract.
+
+## Visual-review evidence
+
+Milestone 6 captures in `docs/visual-baselines/milestone-6/` are immutable historical inputs. The
+Milestone 7B capture test targets nine screens at all three required viewports and writes to
+`docs/visual-baselines/milestone-7b/`. Those new files are **planned/pending** until the explicit visual
+capture command succeeds; their directory must not be cited as completed evidence beforehand.
 
 ## Explicitly rejected patterns
 
-The UI contains no marketing gradient, glass card field, neon hacker styling, glowing shield, fake
-map, random AI badge, giant rounded card, decorative metric, or generic admin-dashboard theme.
+The interface must not use marketing gradients, glass-card fields, neon hacker styling, glowing
+shields, fake maps, random AI badges, oversized rounded cards, repetitive decorative icons,
+meaningless charts, unsupported success metrics, or a stock admin-dashboard composition.

@@ -10,6 +10,7 @@ import {
   prepareShowcaseDataset,
 } from "./support/api";
 import { beginBrowserAudit } from "./support/browser-audit";
+import { formatMoney } from "../src/lib/format";
 
 test.describe("overview and incident queue", () => {
   test.beforeEach(async ({ request }) => {
@@ -35,26 +36,33 @@ test.describe("overview and incident queue", () => {
     const criticalHigh =
       summary.incidents_by_severity.critical + summary.incidents_by_severity.high;
     const active = summary.open_incidents + summary.in_review_incidents;
-    const expectedMetrics: Record<string, number> = {
-      "Visible incidents": summary.visible_incidents,
+    const primaryMetrics: Record<string, number> = {
       "High or critical": criticalHigh,
       "Open or in review": active,
       "Transactions held": summary.transactions_held,
-      "Unusual but permitted": summary.legitimate_unusual_activity_permitted,
-      "Confirmed fraud": summary.confirmed_fraud_cases,
     };
-    for (const [label, value] of Object.entries(expectedMetrics)) {
+    for (const [label, value] of Object.entries(primaryMetrics)) {
       await expect(page.locator(`[data-metric-label="${label}"] strong`)).toHaveText(
         value.toString(),
       );
     }
+    const supportingMetrics: Record<string, number> = {
+      "Visible incidents": summary.visible_incidents,
+      "Unusual but permitted": summary.legitimate_unusual_activity_permitted,
+      "Confirmed fraud": summary.confirmed_fraud_cases,
+    };
+    for (const [label, value] of Object.entries(supportingMetrics)) {
+      const item = page.locator(".operational-ledger > div").filter({ hasText: label });
+      await expect(item.locator("strong")).toHaveText(value.toString());
+    }
 
     expect(trends.points).toHaveLength(14);
-    await expect(
-      page.getByRole("img", { name: /Fourteen-day incident volume/ }),
-    ).toHaveAttribute(
-      "aria-label",
-      new RegExp(trends.points[0]?.incident_volume.toString() ?? ""),
+    const incidentVolumeChart = page.getByRole("img", {
+      name: "Incident volume by UTC day",
+    });
+    await expect(incidentVolumeChart).toBeVisible();
+    await expect(incidentVolumeChart.locator(".sr-only")).toContainText(
+      `: ${trends.points[0]?.incident_volume.toString() ?? ""}`,
     );
     await expect(
       page.getByRole("img", { name: /Incident severity distribution/ }),
@@ -62,6 +70,45 @@ test.describe("overview and incident queue", () => {
       "aria-label",
       new RegExp(`Critical ${summary.incidents_by_severity.critical.toString()}`),
     );
+    const transactionTotals = trends.points.reduce(
+      (total, point) => ({
+        permitted: total.permitted + point.transaction_actions.permitted,
+        held: total.held + point.transaction_actions.held,
+        released: total.released + point.transaction_actions.released,
+        declined: total.declined + point.transaction_actions.declined,
+        pending: total.pending + point.transaction_actions.pending,
+        cancelled: total.cancelled + point.transaction_actions.cancelled,
+      }),
+      { permitted: 0, held: 0, released: 0, declined: 0, pending: 0, cancelled: 0 },
+    );
+    const totalTransactionActions = Object.values(transactionTotals).reduce(
+      (sum, value) => sum + value,
+      0,
+    );
+    const transactionActionChart = page.getByRole("img", {
+      name: /Transaction action distribution/,
+    });
+    await expect(transactionActionChart).toHaveAttribute(
+      "aria-label",
+      new RegExp(`Cancelled ${transactionTotals.cancelled.toString()}\\.`),
+    );
+    for (const category of [
+      "Allowed",
+      "Held",
+      "Released",
+      "Declined",
+      "Pending",
+      "Cancelled",
+    ]) {
+      await expect(
+        transactionActionChart.getByText(category, { exact: true }),
+      ).toBeVisible();
+    }
+    await expect(
+      page.getByText(
+        `${totalTransactionActions.toString()} transaction outcomes are represented across the evaluation window.`,
+      ),
+    ).toBeVisible();
     const firstRecent = recent.items[0];
     expect(firstRecent).toBeDefined();
     await expect(
@@ -164,10 +211,33 @@ test.describe("overview and incident queue", () => {
       token,
       "?page=1&page_size=5&sort_by=created_at&sort_direction=desc",
     );
-    const renderedFirstPage = await page
-      .locator("tbody tr[data-incident-id]")
-      .evaluateAll((rows) => rows.map((row) => row.getAttribute("data-incident-id")));
+    const firstPageRows = page.locator("tbody tr[data-incident-id]");
+    await expect(firstPageRows).toHaveCount(firstPage.items.length);
+    const renderedFirstPage = await firstPageRows.evaluateAll((rows) =>
+      rows.map((row) => row.getAttribute("data-incident-id")),
+    );
     expect(renderedFirstPage).toEqual(firstPage.items.map((item) => item.incident_id));
+    const authoritativeFirst = firstPage.items[0];
+    expect(authoritativeFirst).toBeDefined();
+    const firstRow = page.locator(
+      `tbody tr[data-incident-id="${authoritativeFirst?.incident_id ?? ""}"]`,
+    );
+    await expect(firstRow).toContainText(
+      formatMoney(
+        authoritativeFirst?.amount_minor ?? 0,
+        authoritativeFirst?.currency ?? "INR",
+      ),
+    );
+    await expect(firstRow.locator(".risk-composition-cell")).toHaveAttribute(
+      "aria-label",
+      `Cyber ${authoritativeFirst?.cyber_score.toString() ?? ""}, transaction ${authoritativeFirst?.transaction_score.toString() ?? ""}, correlation bonus ${authoritativeFirst?.correlation_bonus.toString() ?? ""}, fused ${authoritativeFirst?.fused_score.toString() ?? ""}`,
+    );
+    await expect(
+      firstRow.locator(`[data-status="${authoritativeFirst?.transaction_status ?? ""}"]`),
+    ).toBeVisible();
+    for (const heading of ["Amount", "Risk composition", "Transaction state"]) {
+      await expect(page.getByRole("columnheader", { name: heading })).toBeVisible();
+    }
     await page.getByRole("button", { name: "Next" }).click();
     await expect(page).toHaveURL(/page=2/);
     await expect(page.getByText("Page 2 of 4")).toBeVisible();
@@ -181,6 +251,26 @@ test.describe("overview and incident queue", () => {
 
     await page.locator("#status-filter").selectOption("open");
     await expect(page).toHaveURL(/status=open/);
+    await page.locator("#transaction-status-filter").selectOption("held");
+    await expect(page).toHaveURL(/transaction_status=held/);
+    const heldFromApi = await getIncidents(
+      page.request,
+      token,
+      "?page=1&page_size=5&sort_by=created_at&sort_direction=desc&severity=critical&status=open&transaction_status=held",
+    );
+    expect(heldFromApi.items.length).toBeGreaterThan(0);
+    const heldRows = page.locator("tbody tr[data-incident-id]");
+    await expect(heldRows).toHaveCount(heldFromApi.items.length);
+    const heldCount = await heldRows.count();
+    expect(
+      await heldRows.evaluateAll((rows) =>
+        rows.map((row) => row.getAttribute("data-incident-id")),
+      ),
+    ).toEqual(heldFromApi.items.map((item) => item.incident_id));
+    for (let index = 0; index < heldCount; index += 1) {
+      await expect(heldRows.nth(index).locator('[data-status="held"]')).toBeVisible();
+    }
+    await page.getByText("Advanced filters", { exact: true }).click();
     await page.locator("#scenario-filter").selectOption("account_takeover");
     await expect(page).toHaveURL(/scenario=account_takeover/);
     await expect(page.locator("tbody tr[data-incident-id]")).toHaveCount(1);
@@ -197,6 +287,7 @@ test.describe("overview and incident queue", () => {
     await page.locator("#scenario-filter").selectOption("");
     await page.locator("#severity-filter").selectOption("");
     await page.locator("#status-filter").selectOption("");
+    await page.locator("#transaction-status-filter").selectOption("");
     await page.getByLabel("Search UUID or customer name").fill(incidentId ?? "");
     await page.getByRole("button", { name: "Apply search" }).click();
     await expect(page).toHaveURL(
@@ -230,8 +321,9 @@ test.describe("overview and incident queue", () => {
   }) => {
     test.skip(browserName !== "chromium", "Controlled empty and failure states run once");
     await loginThroughUi(page, "analyst", "/incidents");
-    await page.getByLabel("From", { exact: true }).fill("2026-07-14");
-    await page.getByLabel("To", { exact: true }).fill("2026-07-14");
+    await page.getByText("Advanced filters", { exact: true }).click();
+    await page.locator("#date-from-filter").fill("2026-07-14");
+    await page.locator("#date-to-filter").fill("2026-07-14");
     await expect(page).toHaveURL(/date_from=2026-07-14/);
     await expect(page).toHaveURL(/date_to=2026-07-14/);
 

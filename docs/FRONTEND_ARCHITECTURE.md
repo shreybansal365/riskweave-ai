@@ -2,29 +2,44 @@
 
 ## Product boundary
 
-Milestone 6 is a React 19 and strict-TypeScript presentation layer over the authenticated FastAPI
-business surface. It does not calculate scores, severities, thresholds, recommended actions,
-scenario expectations, workflow legality, dashboard aggregates, benchmark metrics, or quantum
-readiness. Those values and decisions are returned by the backend.
+The Milestone 7B frontend is a React 19 and strict-TypeScript presentation layer over the
+authenticated FastAPI product surface. It does not calculate scores, weights, weighted terms,
+severities, thresholds, recommended actions, scenario expectations, workflow legality, dashboard
+aggregates, benchmark metrics, dataset state, or quantum readiness. Those values and decisions are
+returned by the backend.
 
-## Route map
+## Route map and composition
 
-| Route | Data sources | Authorization behavior |
+| Route | Data sources | Composition and authorization |
 |---|---|---|
-| `/login` | `POST /api/auth/login`, then `GET /api/auth/me` | public; authenticated users redirect to overview |
-| `/overview` | dashboard summary/trends and incident list | analyst or admin |
-| `/incidents` | paginated incident list | analyst or admin |
-| `/incidents/:incidentId` | incident detail and customer context; mutation routes | analyst or admin |
-| `/simulator` | scenario catalog; run/reset mutation routes | catalog: analyst/admin; mutation controls: admin only |
-| `/quantum-readiness` | quantum summary/assets | analyst or admin |
-| `/system-health` | health, readiness, dashboard source health | admin-only product route |
-| `/evaluation` | benchmark summary | analyst or admin |
+| `/login` | `POST /api/auth/login`, then `GET /api/auth/me` | Public split authentication/context surface; authenticated users redirect to overview |
+| `/overview` | Dashboard summary/trends and priority incident list | Analyst/admin operations briefing: urgent metrics, controlled outcomes, priority cases, then trends |
+| `/incidents` | Paginated incident list | Analyst/admin server-filtered triage register with URL state, including `transaction_status` |
+| `/incidents/:incidentId` | Incident detail, customer context, and mutation routes | Analyst/admin Decision Context, Decision Weave, chronology, controls, context, and provenance |
+| `/simulator` | Scenario catalog and run/reset mutations | Progressive three-state story; catalog for analyst/admin, run/reset controls for admin only |
+| `/quantum-readiness` | Quantum summary/assets | Analyst/admin migration register explicitly separated from fraud scoring |
+| `/system-health` | `/health`, `/ready`, dashboard source health, `/api/system/integrity` | Admin-only diagnostic and deterministic-integrity ledger |
+| `/evaluation` | Benchmark summary | Analyst/admin bounded evidence report with calibration limitations before comparator detail |
 
 The route tree uses protected parent routes, lazy route modules, route loading fallbacks, and bounded
-route failure states. Incident filters are URL query parameters. Direct investigation links preserve
-the queue query in a `return` parameter so navigating back restores the same server-filtered view.
+route failure states. Incident filters remain URL query parameters. Direct investigation links
+preserve the queue query in a `return` parameter so navigating back restores the same server-filtered
+view.
 
-## Authentication workflow
+## Application shell and context
+
+The shell groups Operations, Demonstration, Resilience & evidence, and Administration rather than
+presenting one flat template menu. It requests:
+
+- public `/health` for a small liveness indicator;
+- authenticated `/api/system/context` for the environment label, deployment mode, dataset version,
+  simulation epoch, and classified dataset state.
+
+The shell never infers those values from `import.meta.env.MODE` or turns a missing response into a
+fake healthy state. `/api/system/integrity` is not fetched globally; the admin-only System Health
+route requests that deeper projection when needed.
+
+## Authentication and session workflow
 
 1. The login form validates through the backend.
 2. The returned bearer token is immediately used with `/api/auth/me`; the server's user and role are
@@ -32,13 +47,13 @@ the queue query in a `return` parameter so navigating back restores the same ser
 3. The token, user, and expiry timestamp exist only in React memory.
 4. No token is written to local storage, session storage, a URL, or a cookie.
 5. A timer clears the in-memory session at expiry.
-6. Any authenticated API `401` clears the session and query cache.
-7. Logout clears the session and all TanStack Query data.
+6. Any authenticated API `401` clears the session and TanStack Query cache.
+7. Logout clears the session and all query data.
 8. A hard refresh intentionally requires authentication again.
+9. Expiry and invalid-session redirects preserve a human-readable notice on the login route.
 
-Frontend navigation hides administrator-only capabilities for analysts, but security never depends on
-that presentation choice. FastAPI RBAC remains authoritative for scenario run/reset and every other
-protected operation.
+Frontend navigation hides administrator-only capabilities for analysts, but FastAPI RBAC remains
+authoritative. The browser never treats a hidden control as an authorization boundary.
 
 ## API-client strategy
 
@@ -49,52 +64,86 @@ protected operation.
 - JSON encoding and decoding;
 - request cancellation;
 - accepted response statuses;
-- safe error normalization for 401, 403, 404, 409, 422, 429, and 5xx responses;
+- safe error normalization for `401`, `403`, `404`, `409`, `422`, `429`, and `5xx`;
 - request identifiers and retry-after metadata;
 - centralized unauthorized-session handling.
 
 Presentational components never call `fetch`. TanStack Query owns server state, cancellation, caching,
-and post-mutation invalidation. Types in `src/types/api.ts` mirror the generated OpenAPI schemas and
-are exercised by API-shaped test fixtures. OpenAPI generation remains a backend CI check; automatic
-TypeScript generation is deferred to avoid destabilizing the locked product surface.
+and post-mutation invalidation. Types in `src/types/api.ts` mirror the OpenAPI response contracts and
+are exercised by API-shaped fixtures.
 
-## Server-authoritative workflow support
+Additive Milestone 7B contracts are:
 
-Two additive response fields prevent browser rule duplication:
+- `transaction_status` in the incident list query and every queue URL;
+- `fusion_projection` in incident detail;
+- authenticated `systemApi.context` and admin-only `systemApi.integrity`.
 
-- incident detail returns `available_actions`, generated by the same transition function used for
-  mutations;
-- scenario catalog items return `important_signals` and `expected_outcome`, built from the locked
-  backend scenario expectations and fusion service.
+## Server-authoritative decision and workflow support
 
-The investigation action panel uses PATCH for incident status transitions and POST actions for notes
-and simulated transaction responses. Every mutation carries an idempotency key and the incident's
-`updated_at` concurrency token. A 409 causes an authoritative refetch and a visible conflict message.
+Incident detail contains:
+
+- persisted source scores and contribution records;
+- `fusion_projection`, including backend-authored weights and weighted terms;
+- `available_actions`, generated by the same state-transition service used for mutations.
+
+`DecisionWeave` uses the projection as read-only presentation data. It does not contain a weight,
+multiply scores, add a bonus, round a value, or select a decision. The component orders cyber
+evidence, cyber weighted term, eligible interactions, transaction weighted term, transaction
+evidence, and the final decision semantically. Interaction labels map only documented rules to their
+persisted source contributions.
+
+The investigation action rail keeps case disposition, simulated transaction response, and analyst
+notes as separate tasks. Every mutation carries an idempotency key and the incident's `updated_at`
+concurrency token. A stale `409` causes an authoritative refetch and a focused conflict message.
+Successful mutations focus their confirmation. The frontend does not optimistically assert a final
+case or transaction state.
 
 ## State ownership
 
 - server state: TanStack Query;
-- short-lived auth state: `AuthProvider` memory;
-- queue filters: URL search parameters;
-- transient forms and confirmation state: local component state;
+- short-lived auth state and session notice: `AuthProvider` memory;
+- queue filters, pagination, sorting, and transaction status: URL search parameters;
+- unsaved case-note draft and confirmation state: local investigation state;
+- route title and destination-heading focus: router boundary;
 - notifications: accessible toast provider;
 - no duplicated client-side banking dataset.
 
-## Testing
+An unsaved analyst note blocks in-app route departure with an explicit confirmation and registers a
+browser `beforeunload` warning. Unrelated case mutations preserve the draft; only successful note
+submission clears it.
 
-Vitest and Testing Library cover login success/failure, rate limiting and network failure, logout,
-route protection, role-aware navigation, in-memory expiry, overview loading/data/error behavior,
-server filters and pagination, empty queues, direct and keyboard-opened investigations, authoritative
-scores, contributions, chronology, valid and stale workflow mutations, scenario RBAC, replay and
-reset, quantum language, benchmark qualifications, administrator health, confirmation focus
-management, and axe-core checks on public and authenticated product surfaces.
-`src/test/fixtures.ts` implements a deterministic mock service layer matching the backend response
-schemas. Run `npm run test:coverage` from `frontend/` for the versioned coverage report.
+## Accessibility and notification behavior
 
-The backend PostgreSQL integration suite remains required; frontend tests do not replace it.
+- a skip link targets `#main-content`;
+- each route sets a specific document title and moves focus to its `h1` after lazy rendering;
+- queue rows support keyboard activation and retain row-header semantics;
+- confirmation dialogs trap focus, support Escape, and restore the trigger;
+- danger toasts use an alert, receive focus, and persist until dismissed;
+- timed non-danger toasts pause while hovered or focused;
+- mutation success/conflict feedback receives focus;
+- severity, state, chart, and Decision Weave meaning never depend on color alone;
+- reduced-motion preferences are respected.
 
-Playwright adds composed-product coverage against the Docker application for analyst/admin journeys,
-API-to-render reconciliation, stale concurrency, exact scenarios/reset, console/network hygiene,
-accessibility, required viewports, and deterministic visual-review evidence. Browser setup, the pinned
-matrix, synthetic test-user contract, failure artifacts, and CI policy are documented in
-`END_TO_END_TESTING.md`.
+## Responsive composition
+
+- **1440×900:** full rail and multi-column operational compositions.
+- **1280×720:** reduced gutters and denser supporting grids without hiding primary actions.
+- **1024×768:** Decision Weave retains DOM order, action/context regions stack, tables use labelled
+  horizontal overflow, the simulator reflows, and dialogs remain viewport-bounded.
+
+No mobile-first redesign is implied. Required queue and investigation information is not discarded to
+make a narrow screenshot look simpler.
+
+## Testing and regression evidence
+
+Vitest and Testing Library cover API-backed rendering, role behavior, authoritative decision values,
+Decision Weave ordering/weighted terms, contribution chronology, workflow focus, note preservation,
+dialog behavior, notifications, and error states. The backend PostgreSQL integration suite remains
+required; frontend tests do not replace it.
+
+The Milestone 6 Playwright matrix and `docs/visual-baselines/milestone-6/` remain historical evidence.
+The updated Milestone 7B browser contract adds context/integrity projections, transaction-status URL
+filtering, exact Decision Weave terms, session/focus/toast/note behavior, quantum/fraud separation,
+production-CSS accessibility, and three required viewports. Its results and captures must be described
+as pending until the suites have passed. The planned capture directory is
+`docs/visual-baselines/milestone-7b/`.

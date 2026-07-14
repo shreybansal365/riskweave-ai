@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import {
   apiLogin,
@@ -8,10 +8,6 @@ import {
 } from "./support/api";
 import { beginBrowserAudit } from "./support/browser-audit";
 import { e2eEnvironment } from "./support/environment";
-
-function score(page: Page, label: string) {
-  return page.locator(`[data-score-label="${label}"] strong`);
-}
 
 test.describe("investigation workspace and analyst workflows", () => {
   test("account-takeover investigation renders every authoritative decision input", async ({
@@ -28,27 +24,55 @@ test.describe("investigation workspace and analyst workflows", () => {
     await expect(
       page.locator(`.case-header[data-incident-id="${incidentId}"]`),
     ).toBeVisible();
-    await expect(score(page, "Cyber stream")).toHaveText("78");
-    await expect(score(page, "Transaction stream")).toHaveText("79");
-    await expect(score(page, "Interaction bonus")).toHaveText("18");
-    await expect(score(page, "Fused decision")).toHaveText("89");
-    await expect(page.locator('[data-score-label="Fused decision"] small')).toContainText(
-      "Raw 88.65",
+    const weave = page.locator("[data-decision-weave]");
+    await expect(weave).toBeVisible();
+    await expect(weave.locator('[data-weave-step="cyber-evidence"]')).toContainText("78");
+    await expect(weave.locator('[data-weave-step="transaction-evidence"]')).toContainText(
+      "79",
     );
+    await expect(weave.locator('[data-weave-step="cyber-term"]')).toContainText(
+      `${detail.fusion_projection.cyber.weight} × ${detail.fusion_projection.cyber.score.toString()} = ${detail.fusion_projection.cyber.weighted_term}`,
+    );
+    await expect(weave.locator('[data-weave-step="transaction-term"]')).toContainText(
+      `${detail.fusion_projection.transaction.weight} × ${detail.fusion_projection.transaction.score.toString()} = ${detail.fusion_projection.transaction.weighted_term}`,
+    );
+    await expect(weave.locator('[data-weave-step="interactions"]')).toContainText(
+      `+${detail.fusion_projection.correlation_bonus.toFixed(2)}`,
+    );
+    const decision = weave.locator('[data-weave-step="decision"]');
+    await expect(decision).toContainText("88.65");
+    await expect(decision).toContainText("89");
+    await expect(decision).toContainText("ROUND_HALF_UP");
+    const semanticOrder = await weave
+      .locator("[data-weave-step]")
+      .evaluateAll((steps) => steps.map((step) => step.getAttribute("data-weave-step")));
+    expect(semanticOrder).toEqual([
+      "cyber-evidence",
+      "cyber-term",
+      "interactions",
+      "transaction-term",
+      "transaction-evidence",
+      "decision",
+    ]);
+    const weaveCopy = await weave.innerText();
+    expect(weaveCopy).not.toMatch(/78\s*\+\s*79\s*\+\s*18\s*=\s*89/);
+    expect(weaveCopy).not.toContain("78 + 79 + 18");
     await expect(
-      page.locator('.case-header [data-risk-severity="critical"]'),
+      page.locator('.case-header [data-risk-severity="critical"]').first(),
     ).toBeVisible();
     await expect(page.locator('.case-decision [data-status="held"]')).toBeVisible();
-    await expect(
-      page.getByText("Hold And Open Critical Incident", { exact: true }),
-    ).toBeVisible();
+    await expect(page.locator(".case-decision")).toContainText(
+      "Hold transaction and open critical incident",
+    );
 
     for (const contribution of [
       ...detail.cyber_contributions,
       ...detail.transaction_contributions,
       ...detail.interaction_contributions,
     ]) {
-      const item = page.locator(`[data-contribution-code="${contribution.code}"]`);
+      const item = page.locator(
+        `.contribution-ledger-panel [data-contribution-code="${contribution.code}"]`,
+      );
       await expect(item).toContainText(contribution.label);
       await expect(item).toContainText(`+${contribution.points.toString()}`);
       await expect(item).toContainText(contribution.explanation);
@@ -61,10 +85,12 @@ test.describe("investigation workspace and analyst workflows", () => {
         page.locator(`[data-timeline-code="${item.code}"]`).first(),
       ).toContainText(item.label);
     }
-    await expect(page.getByText(detail.decision_explanation)).toBeVisible();
-    await expect(page.getByText(detail.action_explanation)).toBeVisible();
-    await expect(page.getByText(detail.customer.customer_reference)).toBeVisible();
-    await expect(page.getByText(detail.account.account_reference)).toBeVisible();
+    await expect(page.getByText(detail.decision_explanation).first()).toBeVisible();
+    await expect(page.getByText(detail.action_explanation).first()).toBeVisible();
+    await expect(
+      page.getByText(detail.customer.customer_reference).first(),
+    ).toBeVisible();
+    await expect(page.getByText(detail.account.account_reference).first()).toBeVisible();
     await expect(
       page.getByText(detail.crypto_readiness.fraud_risk_separation_notice),
     ).toBeVisible();
@@ -83,18 +109,44 @@ test.describe("investigation workspace and analyst workflows", () => {
     const audit = beginBrowserAudit(page);
     await loginThroughUi(page, "analyst", `/incidents/${incidentId}`);
 
-    await expect(score(page, "Cyber stream")).toHaveText("40");
-    await expect(score(page, "Transaction stream")).toHaveText("10");
-    await expect(score(page, "Interaction bonus")).toHaveText("0");
-    await expect(score(page, "Fused decision")).toHaveText("23");
-    await expect(page.locator('[data-score-label="Fused decision"] small')).toContainText(
-      "Raw 22.50",
+    const weave = page.locator("[data-decision-weave]");
+    await expect(weave.locator('[data-weave-step="cyber-evidence"]')).toContainText("40");
+    await expect(weave.locator('[data-weave-step="transaction-evidence"]')).toContainText(
+      "10",
     );
+    await expect(weave.locator('[data-weave-step="cyber-term"]')).toContainText(
+      `${detail.fusion_projection.cyber.weight} × ${detail.fusion_projection.cyber.score.toString()} = ${detail.fusion_projection.cyber.weighted_term}`,
+    );
+    await expect(weave.locator('[data-weave-step="transaction-term"]')).toContainText(
+      `${detail.fusion_projection.transaction.weight} × ${detail.fusion_projection.transaction.score.toString()} = ${detail.fusion_projection.transaction.weighted_term}`,
+    );
+    await expect(weave.locator('[data-weave-step="interactions"]')).toContainText(
+      "No eligible cross-domain interaction was recorded",
+    );
+    await expect(weave.locator('[data-weave-step="interactions"]')).toContainText(
+      "+0.00",
+    );
+    const decision = weave.locator('[data-weave-step="decision"]');
+    await expect(decision).toContainText("22.50");
+    await expect(decision).toContainText("23");
     await expect(
-      page.locator('.case-header [data-risk-severity="guarded"]'),
+      page.locator('.case-header [data-risk-severity="guarded"]').first(),
     ).toBeVisible();
-    await expect(page.getByText("Allow And Monitor", { exact: true })).toBeVisible();
+    await expect(page.locator(".case-decision")).toContainText("Allow and monitor");
     await expect(page.locator('.case-decision [data-status="permitted"]')).toBeVisible();
+    const avoided = page.locator('[data-scenario-treatment="allow_and_monitor"]');
+    await expect(avoided).toContainText("Why intervention was avoided");
+    await expect(avoided).toContainText("Current treatment: Allow and monitor");
+    await expect(avoided).toContainText("Interaction bonus 0");
+    await expect(avoided).toContainText("Transaction Permitted · no hold");
+    await expect(avoided).toContainText("No step-up authentication");
+    await expect(
+      page.locator(".disposition-panel").getByRole("button", { name: "Mark legitimate" }),
+    ).toBeVisible();
+    await expect(
+      page.locator(".disposition-panel").getByRole("button", { name: "Confirm fraud" }),
+    ).toBeHidden();
+    await expect(page.getByRole("button", { name: "Allow and monitor" })).toHaveCount(0);
     await expect(page.getByText(detail.action_explanation)).toBeVisible();
     expect(detail.action_explanation.toLowerCase()).toContain("no hold or step-up");
     audit.assertClean();
@@ -111,13 +163,16 @@ test.describe("investigation workspace and analyst workflows", () => {
     await loginThroughUi(page, "analyst", `/incidents/${incidentId}`);
 
     await page.getByRole("button", { name: "Mark in review" }).click();
-    await expect(page.getByText("Case updated")).toBeVisible();
+    const workflowFeedback = page.locator("[data-workflow-feedback]");
+    await expect(workflowFeedback).toContainText("Case updated");
+    await expect(workflowFeedback).toBeFocused();
     await expect(page.locator('.case-header [data-status="in_review"]')).toBeVisible();
 
     const note = "Synthetic E2E review: customer context reconciled with the baseline.";
-    await page.getByLabel("Analyst note").fill(note);
+    await page.getByLabel("Case note").fill(note);
     await page.getByRole("button", { name: "Add note" }).click();
     await expect(page.getByText(note)).toBeVisible();
+    await expect(page.locator("[data-workflow-feedback]")).toBeFocused();
 
     await page.getByRole("button", { name: "Mark legitimate" }).click();
     const dialog = page.getByRole("alertdialog", { name: "Mark legitimate" });
@@ -130,7 +185,10 @@ test.describe("investigation workspace and analyst workflows", () => {
     await closeDialog.getByRole("button", { name: "Close case" }).click();
     await expect(page.locator('.case-header [data-status="closed"]')).toBeVisible();
     await expect(
-      page.getByText("No state-changing action is currently valid."),
+      page.getByText("No disposition change is currently valid."),
+    ).toBeVisible();
+    await expect(
+      page.getByText("No simulated transaction response is currently valid."),
     ).toBeVisible();
 
     const persisted = await getIncident(request, token, incidentId);
@@ -145,6 +203,71 @@ test.describe("investigation workspace and analyst workflows", () => {
     expect(persisted.transaction.status).toBe("permitted");
   });
 
+  test("case disposition, analyst notes, and synthetic payment controls stay separated", async ({
+    page,
+    request,
+  }) => {
+    const showcase = await prepareShowcaseDataset(request);
+    const incidentId = showcase.scenarios.account_takeover.incident_id;
+    await loginThroughUi(page, "analyst", `/incidents/${incidentId}`);
+
+    const disposition = page.locator(".disposition-panel");
+    const transactionResponse = page.locator(".transaction-response-panel");
+    const notePanel = page.locator(".analyst-note-panel");
+    await expect(
+      disposition.getByRole("heading", { name: "Investigation disposition" }),
+    ).toBeVisible();
+    await expect(
+      disposition.getByRole("button", { name: "Mark in review" }),
+    ).toBeVisible();
+    await expect(
+      disposition.getByRole("button", { name: "Simulate release" }),
+    ).toHaveCount(0);
+    await expect(
+      transactionResponse.getByRole("heading", {
+        name: "Synthetic transaction response",
+      }),
+    ).toBeVisible();
+    await expect(
+      transactionResponse.getByRole("button", { name: "Simulate release" }),
+    ).toBeVisible();
+    await expect(
+      transactionResponse.getByRole("button", { name: "Confirm fraud" }),
+    ).toHaveCount(0);
+    await expect(notePanel.getByRole("heading", { name: "Analyst note" })).toBeVisible();
+    await expect(notePanel.getByLabel("Case note")).toBeVisible();
+    await expect(notePanel.getByRole("button", { name: "Add note" })).toBeDisabled();
+  });
+
+  test("unsaved analyst notes are protected before route departure", async ({
+    page,
+    request,
+  }) => {
+    const showcase = await prepareShowcaseDataset(request);
+    const incidentId = showcase.scenarios.account_takeover.incident_id;
+    await loginThroughUi(page, "analyst", `/incidents/${incidentId}`);
+    await page.getByLabel("Case note").fill("Uncommitted synthetic investigation note");
+    await page.getByRole("link", { name: "Back to incident queue" }).click();
+
+    const dialog = page.getByRole("alertdialog", {
+      name: "Discard unsaved analyst note?",
+    });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Cancel" })).toBeFocused();
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(page).toHaveURL(new RegExp(`/incidents/${incidentId}$`));
+    await expect(page.getByLabel("Case note")).toHaveValue(
+      "Uncommitted synthetic investigation note",
+    );
+
+    await page.getByRole("link", { name: "Back to incident queue" }).click();
+    await page
+      .getByRole("alertdialog", { name: "Discard unsaved analyst note?" })
+      .getByRole("button", { name: "Discard note and leave" })
+      .click();
+    await expect(page).toHaveURL(/\/incidents$/);
+  });
+
   test("consequential transaction response prevents duplicate submission", async ({
     page,
     request,
@@ -157,7 +280,9 @@ test.describe("investigation workspace and analyst workflows", () => {
     const dialog = page.getByRole("alertdialog", { name: "Simulate release" });
     const confirm = dialog.getByRole("button", { name: "Simulate release" });
     await confirm.click();
-    await expect(page.getByText("Case updated")).toBeVisible();
+    const workflowFeedback = page.locator("[data-workflow-feedback]");
+    await expect(workflowFeedback).toContainText("Case updated");
+    await expect(workflowFeedback).toBeFocused();
     await expect(page.locator('.case-decision [data-status="released"]')).toBeVisible();
     const persisted = await getIncident(request, token, incidentId);
     expect(
@@ -196,7 +321,9 @@ test.describe("investigation workspace and analyst workflows", () => {
       );
       await pageB.getByRole("button", { name: "Mark in review" }).click();
       expect((await conflictResponse).status()).toBe(409);
-      await expect(pageB.getByText("Case changed before this action")).toBeVisible();
+      const workflowFeedback = pageB.locator("[data-workflow-feedback]");
+      await expect(workflowFeedback).toContainText("Case changed before this action");
+      await expect(workflowFeedback).toBeFocused();
       await expect(pageB.locator('.case-header [data-status="in_review"]')).toBeVisible();
 
       const token = await apiLogin(request, "analyst");
