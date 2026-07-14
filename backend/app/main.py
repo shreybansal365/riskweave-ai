@@ -10,6 +10,12 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import Engine
 
 from app.api.routes.auth import router as auth_router
+from app.api.routes.benchmark import router as benchmark_router
+from app.api.routes.context import router as context_router
+from app.api.routes.dashboard import router as dashboard_router
+from app.api.routes.incidents import router as incidents_router
+from app.api.routes.quantum import router as quantum_router
+from app.api.routes.scenarios import router as scenarios_router
 from app.api.routes.system import router as system_router
 from app.core.config import Settings, get_settings
 from app.core.middleware import RequestIdMiddleware, SecurityHeadersMiddleware
@@ -82,8 +88,14 @@ def create_app(
         CORSMiddleware,
         allow_origins=resolved_settings.cors_origin_list,
         allow_credentials=False,
-        allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["Accept", "Authorization", "Content-Type", "X-Request-ID"],
+        allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+        allow_headers=[
+            "Accept",
+            "Authorization",
+            "Content-Type",
+            "Idempotency-Key",
+            "X-Request-ID",
+        ],
         expose_headers=["X-Request-ID"],
     )
     app.add_middleware(SecurityHeadersMiddleware)
@@ -102,6 +114,12 @@ def create_app(
         )
 
     app.include_router(auth_router)
+    app.include_router(incidents_router)
+    app.include_router(dashboard_router)
+    app.include_router(context_router)
+    app.include_router(scenarios_router)
+    app.include_router(quantum_router)
+    app.include_router(benchmark_router)
     app.include_router(system_router)
     return app
 

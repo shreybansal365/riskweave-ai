@@ -157,7 +157,7 @@ export function App() {
       </main>
 
       <footer>
-        <span>RiskWeave AI · Intelligence foundation v0.3.0</span>
+        <span>RiskWeave AI · Business API foundation v0.4.0</span>
         <span className="api-origin" title={API_BASE_URL}>
           API {API_BASE_URL}
         </span>

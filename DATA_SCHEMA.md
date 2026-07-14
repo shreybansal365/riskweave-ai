@@ -241,6 +241,12 @@ An anomaly contribution is always 0–10 for its stream. Explanations describe a
 - `new_transaction_status`
 - `created_at`
 
+Runtime workflow requests require an `Idempotency-Key`. RiskWeave derives the action UUID from the
+incident, analyst, and key, so replaying the same request returns the one persisted append-oriented
+action. The key itself is not stored as a secret or accepted as a business-field override. Incident and
+transaction rows are locked while a validated transition is applied; an optional `expected_updated_at`
+token provides optimistic conflict detection in addition to the database lock.
+
 ### ScenarioRun
 
 - `scenario_run_id`

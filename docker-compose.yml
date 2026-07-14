@@ -28,7 +28,7 @@ services:
       context: ./backend
     environment:
       APP_NAME: ${APP_NAME:-RiskWeave API}
-      APP_VERSION: ${APP_VERSION:-0.3.0}
+      APP_VERSION: ${APP_VERSION:-0.4.0}
       APP_ENV: ${APP_ENV:-development}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       API_HOST: 0.0.0.0

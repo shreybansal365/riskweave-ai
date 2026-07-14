@@ -164,6 +164,10 @@ Required controls:
 
 Each scenario shows `not_run`, `running`, `completed`, or `failed`; it reports the deterministic result and links to the generated investigation. Re-running a scenario must not create duplicate logical records.
 
+Scenario execution and atomic reset controls are visible and enabled only for authenticated admins.
+Analysts may view scenario state and investigate generated incidents but receive no executable run or
+reset control.
+
 ## Customer and Account Context
 
 Show only decision-relevant synthetic context:

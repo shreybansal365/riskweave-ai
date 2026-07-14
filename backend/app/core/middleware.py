@@ -41,6 +41,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
-        if request.url.path.startswith("/api/auth"):
+        if request.url.path.startswith("/api"):
             response.headers["Cache-Control"] = "no-store"
         return response

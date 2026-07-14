@@ -102,7 +102,8 @@ Analysts can:
 - add plain-text notes;
 - simulate permitted, held, released, or declined transaction outcomes where authorized.
 
-Admins can additionally reset scenarios, inspect system health and audit events, and manage demo configuration.
+Admins can additionally run or reset scenarios, inspect system health and audit events, and manage
+demo configuration. Analysts may view scenario-generated incidents but may not run or reset scenarios.
 
 ### 4.6 Scenario simulator
 

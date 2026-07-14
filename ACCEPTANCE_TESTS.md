@@ -36,6 +36,19 @@
 - [ ] Analyst actions persist and create audit events.
 - [ ] Admin-only endpoints enforce server-side authorization.
 - [ ] Dashboard and benchmark endpoints return calculated database/service values.
+- [ ] Incident pagination includes stable metadata and deterministic tie-breaking.
+- [ ] Incident filters cover severity, status, scenario, date range, and bounded safe search fields.
+- [ ] Incident detail reconciles stored scores, contributions, chronology, analyst history, and
+  channel-linked crypto readiness.
+- [ ] Invalid incident transitions and stale concurrency tokens return `409`.
+- [ ] Replayed incident actions with the same idempotency key create one logical action.
+- [ ] Customer and account context responses are bounded and mask display identifiers.
+- [ ] Dashboard summary and each 14-day trend point reconcile to persisted source records.
+- [ ] Scenario run and reset APIs are admin-only and preserve existing deterministic services.
+- [ ] Quantum readiness is explained from asset fields and never changes fraud risk.
+- [ ] Benchmark summary retains all three operating points, six cohorts, exact unfavorable results,
+  comparator definitions, and limitations.
+- [ ] OpenAPI generation succeeds for every Milestone 4 endpoint.
 
 ## Fusion and rounding
 

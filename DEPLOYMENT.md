@@ -72,12 +72,13 @@ Only `VITE_API_BASE_URL` is exposed to frontend build tooling. Passwords, JWT se
 8. deploy the Vercel frontend;
 9. configure `VITE_API_BASE_URL` and the exact CORS origin;
 10. verify analyst and admin authentication;
-11. run and reset all scenarios;
-12. verify the fixed benchmark-v1 40+, 60+, 80+, cohort, comparator, and limitation summary;
-13. verify channel-linked quantum readiness;
-14. capture final URLs;
-15. document free-tier wake-up and pause behavior;
-16. rerun the local Docker acceptance suite.
+11. verify analysts can view scenario state but cannot run or reset it;
+12. use an admin identity to run and reset all scenarios;
+13. verify the fixed benchmark-v1 40+, 60+, 80+, cohort, comparator, and limitation summary;
+14. verify channel-linked quantum readiness;
+15. capture final URLs;
+16. document free-tier wake-up and pause behavior;
+17. rerun the local Docker acceptance suite.
 
 ## Free-tier operational caveats
 

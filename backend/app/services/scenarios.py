@@ -126,7 +126,9 @@ class ScenarioService:
         try:
             with self._session_factory.begin() as session:
                 run = session.scalar(
-                    select(ScenarioRun).where(ScenarioRun.scenario_key == scenario_key)
+                    select(ScenarioRun)
+                    .where(ScenarioRun.scenario_key == scenario_key)
+                    .with_for_update()
                 )
                 if run is None:
                     raise DatasetNotSeededError("run the deterministic reset before scenarios")

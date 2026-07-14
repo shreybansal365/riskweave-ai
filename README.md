@@ -2,11 +2,11 @@
 
 RiskWeave AI is an explainable cyber-transaction intelligence prototype for FinSpark’26 Problem Statement 2. The approved product vision correlates cybersecurity telemetry with transaction behaviour, while keeping every decision deterministic, inspectable, and clearly qualified as a synthetic-data prototype.
 
-Milestone 3 adds the offline intelligence core: a reproducible 14-day synthetic dataset, persisted
-behavioural baselines, transparent cyber and transaction rules, capped fixed-seed Isolation Forest
-support, strict entity/session correlation, documented interaction bonuses, backend-only Decimal
-fusion, grounded explanations, three locked showcase scenarios, atomic reset, and a 48-case synthetic
-benchmark. Public business APIs and screens remain deliberately deferred to Milestone 4.
+Milestone 4 exposes the persisted intelligence core through authenticated, typed business APIs. It
+adds incident investigation and analyst workflows, source-backed dashboard aggregates and 14-day
+trends, bounded customer/account context, admin-only deterministic scenario controls, explainable
+channel-linked quantum-readiness services, and transparent benchmark-v1 reporting. Business screens
+remain deliberately deferred to Milestone 5.
 
 > **Built and maintained by Shrey Bansal.**
 > Developed for the FinSpark’26 Hackathon under Team CyberForge.
@@ -90,7 +90,7 @@ Expected foundation responses:
 {
   "status": "ok",
   "service": "RiskWeave API",
-  "version": "0.3.0"
+  "version": "0.4.0"
 }
 ```
 
@@ -196,7 +196,7 @@ The current runtime consumes:
 | Variable | Purpose | Safe local default |
 |---|---|---|
 | `APP_NAME` | API display name | `RiskWeave API` |
-| `APP_VERSION` | API version | `0.3.0` |
+| `APP_VERSION` | API version | `0.4.0` |
 | `APP_ENV` | `development`, `test`, or `production` | `development` |
 | `LOG_LEVEL` | Typed Python log level | `INFO` |
 | `DATABASE_URL` | PostgreSQL connection using psycopg | Docker Compose value |
@@ -252,6 +252,12 @@ GitHub Actions verifies:
 - exact locked scenario scores and persisted explanations/contributions;
 - repeatable evaluation of the versioned 48-case benchmark;
 - channel-to-crypto-asset linkage without fraud-score coupling;
+- incident pagination, safe filters, deterministic detail chronology, and contribution consistency;
+- validated workflow transitions, row-lock concurrency, idempotent actions, RBAC, and audit logging;
+- source-backed dashboard aggregation, 14-day trend reconciliation, and bounded context queries;
+- admin-only deterministic scenario APIs and exact atomic reset;
+- explainable quantum-readiness and qualified benchmark-v1 API reports;
+- successful OpenAPI generation for the complete Milestone 4 surface;
 - valid Docker Compose configuration.
 
 ## Implemented API and security boundary
@@ -261,13 +267,31 @@ Implemented endpoints:
 - `POST /api/auth/login`;
 - `GET /api/auth/me`;
 - `GET /api/auth/admin-check` as the minimal server-side RBAC verification surface;
+- `GET /api/incidents`;
+- `GET /api/incidents/{incident_id}`;
+- `PATCH /api/incidents/{incident_id}`;
+- `POST /api/incidents/{incident_id}/actions`;
+- `GET /api/dashboard/summary`;
+- `GET /api/dashboard/trends`;
+- `GET /api/customers/{customer_id}`;
+- `GET /api/accounts/{account_id}`;
+- `GET /api/scenarios`;
+- `POST /api/scenarios/{scenario_key}/run` (admin only);
+- `POST /api/scenarios/reset` (admin only);
+- `GET /api/quantum/assets`;
+- `GET /api/quantum/summary`;
+- `GET /api/benchmark/summary`;
 - `GET /health`;
 - `GET /ready`.
 
 The PostgreSQL schema contains every entity and enum in `DATA_SCHEMA.md`. Audit rows are
 append-oriented in the application and protected by PostgreSQL from update, delete, and truncate
-operations. Milestone 3 intentionally exposes intelligence only through services and local CLI entry
-points; it adds no public scenario, incident, dashboard, benchmark, or quantum API.
+operations. All business routes require a short-lived access token. Analysts can investigate and
+update cases. Scenario execution and reset are server-side admin-only operations.
+
+Endpoint schemas, filters, workflow conflicts, and example requests are documented in
+`docs/API.md`. The state machine is documented in `docs/INCIDENT_WORKFLOWS.md`; the independent
+cryptographic-readiness method is documented in `docs/QUANTUM_READINESS.md`.
 
 ## Milestone 3 intelligence contract
 
@@ -313,8 +337,10 @@ in Milestone 4.
 
 The following are explicitly deferred until their approved milestones:
 
-- public incident-management, dashboard, scenario, benchmark, and quantum-readiness APIs;
-- business screens, metrics, charts, and finished visual design.
+- frontend authentication and business screens;
+- incident queue, investigation workspace, scenario simulator, charts, and final visual polish;
+- deployment changes, presentation assets, screenshots, and demo video;
+- prospectively designed benchmark-v2.
 
 This is a synthetic-data prototype, not a production banking control. Later benchmark outcomes must be
 reported exactly as computed and identified as prototype evaluation on deterministic synthetic data;

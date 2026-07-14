@@ -22,9 +22,10 @@ Roles:
 - `analyst`
 - `admin`
 
-Analysts can investigate, add notes, update permitted incident outcomes, and run non-destructive showcase scenarios.
+Analysts can investigate, add notes, update permitted incident outcomes, and view scenario-generated incidents.
 
-Admins can additionally perform atomic reset, inspect system health and audit events, and manage demo configuration.
+Admins can additionally run showcase scenarios, perform atomic reset, inspect system health and audit
+events, and manage demo configuration. Scenario run and reset routes are both admin-only in Milestone 4.
 
 Requirements:
 
@@ -55,6 +56,9 @@ monitoring.
 - server-side role checks;
 - no mass-assignment of score, severity, role, or transaction-status fields;
 - state-changing operations use explicit action schemas.
+- incident mutations require a bounded idempotency key, lock the incident and transaction rows, and
+  may validate an `expected_updated_at` concurrency token;
+- invalid workflow transitions return a conflict rather than silently mutating state.
 
 ## Score and model integrity
 

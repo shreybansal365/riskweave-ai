@@ -150,16 +150,13 @@ The event must match `customer_id`, `account_id`, and `session_id`. `device_id` 
 
 ## API boundary
 
-Implemented through Milestone 3:
+Implemented through Milestone 4:
 
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `GET /api/auth/admin-check` (Milestone 2 RBAC verification surface)
 - `GET /health`
 - `GET /ready`
-
-Planned for later approved milestones:
-
 - `GET /api/dashboard/summary`
 - `GET /api/dashboard/trends`
 - `GET /api/incidents`
@@ -174,8 +171,20 @@ Planned for later approved milestones:
 - `GET /api/quantum/assets`
 - `GET /api/quantum/summary`
 - `GET /api/benchmark/summary`
+
+Still deferred:
+
 - `GET /api/system/status` (admin only)
 - `GET /api/audit-events` (admin only)
 
-Milestone 3 scenario, reset, and benchmark operations are service/CLI-only. No public business route is
-added ahead of Milestone 4.
+Every `/api` business route is authenticated. Analysts may read all Milestone 4 investigation,
+dashboard, context, quantum, benchmark, and scenario-catalog responses and may apply validated incident
+actions. Scenario run and atomic reset routes are admin-only. Handlers validate and delegate; database
+queries, state transitions, aggregation, readiness calculation, and benchmark evaluation remain in
+services.
+
+Incident mutation requests use `Idempotency-Key`, row-level locks, an optional `expected_updated_at`
+token, explicit state transitions, and append-oriented action/audit records. Dashboard values and
+14-day trends are calculated from persisted rows. Quantum readiness is recomputed transparently from
+asset fields and is returned as context only. Benchmark responses evaluate immutable benchmark-v1 at
+request time and retain every unfavorable result and limitation.

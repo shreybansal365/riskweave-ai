@@ -1,0 +1,131 @@
+# RiskWeave AI — Milestone 4 API
+
+## Boundary
+
+The API exposes only deterministic synthetic prototype data. Every `/api` route except login requires
+a short-lived bearer token. Scores, severity, recommendations, dashboard values, benchmark metrics,
+and readiness priority are server-owned values; clients do not submit or recalculate them.
+
+Interactive OpenAPI documentation is available at `/docs` outside production. Production settings
+hide the interactive documentation but retain the same validated route schemas.
+
+## Authentication
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| POST | `/api/auth/login` | Public | Exchange demo credentials for a short-lived access token |
+| GET | `/api/auth/me` | Analyst or admin | Read the authenticated identity |
+| GET | `/api/auth/admin-check` | Admin | Milestone 2 RBAC verification surface |
+
+Demo credentials are supplied through environment variables and seeded as Argon2id hashes. Tokens and
+passwords must not be placed in documentation, URLs, source code, or Git history.
+
+## Incidents
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| GET | `/api/incidents` | Analyst or admin | Paginated and filtered incident queue data |
+| GET | `/api/incidents/{incident_id}` | Analyst or admin | Complete persisted investigation context |
+| PATCH | `/api/incidents/{incident_id}` | Analyst or admin | Apply an explicit incident-status transition |
+| POST | `/api/incidents/{incident_id}/actions` | Analyst or admin | Add a note or simulate an approved response |
+
+### List query contract
+
+- `page`: integer from 1;
+- `page_size`: integer from 1–100;
+- `sort_by`: `created_at`, `updated_at`, `severity`, `fused_score`, or `status`;
+- `sort_direction`: `asc` or `desc`;
+- `severity`: a defined `Severity` value;
+- `status`: a defined `IncidentStatus` value;
+- `scenario`: a defined `ScenarioKey` value;
+- `date_from` and `date_to`: timezone-aware timestamps in an ordered range;
+- `search`: 1–100 characters, matched only against customer display name and exact supported UUID
+  fields.
+
+Ordering always includes deterministic created-time and incident-ID tie breakers. General responses
+include masked display references while retaining synthetic UUID resource identifiers needed for
+navigation.
+
+### Incident detail contract
+
+The response contains the stored cyber, transaction, bonus, raw fused, and rounded fused values;
+severity; action; status; customer, account, session, beneficiary, transaction, and channel context;
+chronological events; categorized contributions; deterministic explanations; analyst history; and a
+separate channel-linked cryptographic-readiness summary.
+
+### Mutation contract
+
+Mutations require an `Idempotency-Key` header of 1–128 characters. The API returns:
+
+- `404` for an unknown incident;
+- `409` for an invalid transition, stale `expected_updated_at` token, or idempotency-key reuse with a
+  different payload;
+- `422` for an invalid request schema.
+
+Repeated submission of the same logical request returns the one recorded analyst action with
+`idempotent_replay: true`. See `INCIDENT_WORKFLOWS.md` for the state machine.
+
+## Dashboard
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| GET | `/api/dashboard/summary` | Analyst or admin | Source-backed current overview metrics |
+| GET | `/api/dashboard/trends` | Analyst or admin | Exactly 14 deterministic daily trend points |
+
+The summary includes visible incidents, severity counts, open/in-review cases, held transactions,
+permitted unusual activity, confirmed fraud, and source record-presence health. "Permitted unusual
+activity" means a persisted permitted transaction whose cyber or transaction stream is at least 20
+while the fused score remains below 40; it is not a real-world false-positive count. The trend endpoint calculates
+incident volume, severity distribution, average stored stream/fused scores, and transaction actions
+from the persisted background window. Empty days remain explicit zero-volume points.
+
+## Customer and account context
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| GET | `/api/customers/{customer_id}` | Analyst or admin | Bounded customer investigation context |
+| GET | `/api/accounts/{account_id}` | Analyst or admin | Bounded account investigation context |
+
+Responses include baseline ranges and frequencies, trusted devices, familiar locations, and the ten
+most recent applicable sessions, beneficiaries, transactions, and incidents. Display references, IP
+addresses, and beneficiary bank codes are masked.
+
+## Scenarios
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| GET | `/api/scenarios` | Analyst or admin | Read scenario definitions and persisted run state |
+| POST | `/api/scenarios/{scenario_key}/run` | Admin | Run or replay one deterministic scenario |
+| POST | `/api/scenarios/reset` | Admin | Atomically restore the exact baseline manifest |
+
+Routes call the Milestone 3 scenario and reset services. They do not duplicate scoring or fixture
+logic. Analysts can investigate generated incidents but cannot execute or reset scenarios.
+
+## Quantum readiness
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| GET | `/api/quantum/assets` | Analyst or admin | Explain each synthetic asset migration priority |
+| GET | `/api/quantum/summary` | Analyst or admin | Summarize asset, channel, migration, and priority state |
+
+Every response states that RiskWeave assesses migration readiness and does not detect active quantum
+attacks. The readiness service is separate from all fraud-risk inputs. See `QUANTUM_READINESS.md`.
+
+## Benchmark
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| GET | `/api/benchmark/summary` | Analyst or admin | Evaluate and report immutable benchmark-v1 |
+
+The endpoint reports 40+, 60+, and 80+ operating points, exact comparator definitions, all six
+cohorts, unfavorable results, limitations, and the synthetic-data disclaimer. It does not expose or
+create benchmark-v2 and does not claim that fusion outperforms isolated rules.
+
+## Cross-cutting response behavior
+
+- `X-Request-ID` is accepted when safe and returned on every response;
+- conservative API security headers are added to every response;
+- CORS uses the configuration allowlist and explicitly permits `GET`, `POST`, `PATCH`, and preflight;
+- production errors contain a safe message and request ID, not a stack trace;
+- route schemas reject unknown request fields;
+- all database writes use bounded transactions and server-side authorization.

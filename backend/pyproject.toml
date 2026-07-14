@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "riskweave-backend"
-version = "0.3.0"
-description = "Deterministic cyber-transaction intelligence foundation for RiskWeave AI"
+version = "0.4.0"
+description = "Explainable synthetic cyber-transaction intelligence API for RiskWeave AI"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "alembic==1.18.5",
