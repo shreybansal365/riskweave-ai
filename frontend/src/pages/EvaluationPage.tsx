@@ -50,7 +50,7 @@ function OperatingPointTable({ point }: { point: BenchmarkOperatingPoint }) {
       </thead>
       <tbody>
         {(Object.keys(methodNames) as (keyof typeof methodNames)[]).map((key) => (
-          <tr key={key}>
+          <tr key={key} data-benchmark-comparator={key}>
             <td>
               <strong>{methodNames[key]}</strong>
             </td>
@@ -85,7 +85,10 @@ export function EvaluationPage() {
         title="Evaluation"
         description="A qualified view of benchmark-v1 across three operating points, with unfavorable results and scope limitations retained."
       />
-      <div className="evaluation-disclaimer">
+      <div
+        className="evaluation-disclaimer"
+        data-benchmark-version={data.fixture_version}
+      >
         <Badge value={data.fixture_version} tone="blue" />
         <div>
           <strong>{data.benchmark_name}</strong>

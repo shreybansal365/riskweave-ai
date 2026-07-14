@@ -46,7 +46,11 @@ export function RiskBadge({ severity }: { severity: Severity }) {
     high: "red",
     critical: "red",
   };
-  return <Badge value={severity} tone={tone[severity]} />;
+  return (
+    <span data-risk-severity={severity}>
+      <Badge value={severity} tone={tone[severity]} />
+    </span>
+  );
 }
 
 export function StatusBadge({ status }: { status: string }) {
@@ -58,7 +62,11 @@ export function StatusBadge({ status }: { status: string }) {
         : status === "in_review" || status === "pending"
           ? "amber"
           : "neutral";
-  return <Badge value={status} tone={tone} />;
+  return (
+    <span data-status={status}>
+      <Badge value={status} tone={tone} />
+    </span>
+  );
 }
 
 export function ScoreDisplay({
@@ -73,7 +81,7 @@ export function ScoreDisplay({
   accent?: "neutral" | "cyber" | "transaction" | "fused" | "bonus";
 }) {
   return (
-    <div className={`score-display score-display--${accent}`}>
+    <div className={`score-display score-display--${accent}`} data-score-label={label}>
       <span>{label}</span>
       <strong>{score}</strong>
       {detail !== undefined && <small>{detail}</small>}
@@ -93,7 +101,7 @@ export function MetricCard({
   tone?: BadgeTone;
 }) {
   return (
-    <article className={`metric-card metric-card--${tone}`}>
+    <article className={`metric-card metric-card--${tone}`} data-metric-label={label}>
       <span>{label}</span>
       <strong>{value}</strong>
       <p>{context}</p>

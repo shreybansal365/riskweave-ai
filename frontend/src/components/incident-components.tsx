@@ -24,7 +24,7 @@ export function ContributionList({
       ) : (
         <ol>
           {items.map((item) => (
-            <li key={item.contribution_id}>
+            <li key={item.contribution_id} data-contribution-code={item.code}>
               <span className="contribution-points">+{item.points}</span>
               <div>
                 <strong>{item.label}</strong>
@@ -62,6 +62,7 @@ export function IncidentTimeline({ items }: { items: TimelineItem[] }) {
         <li
           key={`${item.source_id}-${item.code}-${index.toString()}`}
           className={`timeline-item timeline-item--${item.item_type}`}
+          data-timeline-code={item.code}
         >
           <div className="timeline-marker">
             <span>{String(index + 1).padStart(2, "0")}</span>

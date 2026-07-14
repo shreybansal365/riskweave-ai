@@ -57,6 +57,22 @@ export function OverviewPage() {
     );
   }
 
+  if (summary.data.visible_incidents === 0 && recent.data.items.length === 0) {
+    return (
+      <>
+        <PageHeader
+          eyebrow="Contextual risk operations"
+          title="Operational overview"
+          description="A source-backed view of synthetic incidents, intervention outcomes, and service health across the fixed 14-day evaluation window."
+        />
+        <EmptyState
+          title="No incidents in the current dataset"
+          message="RiskWeave received a valid empty response from the persisted incident sources. Run a deterministic scenario or restore the baseline before investigating cases."
+        />
+      </>
+    );
+  }
+
   const criticalHigh =
     summary.data.incidents_by_severity.critical + summary.data.incidents_by_severity.high;
   const activeCases = summary.data.open_incidents + summary.data.in_review_incidents;

@@ -21,8 +21,15 @@ const grid = "#e4e9ef";
 const axis = { fontSize: 11, fill: "#667085" };
 
 export function IncidentVolumeChart({ points }: { points: TrendPoint[] }) {
+  const summary = points
+    .map((point) => `${formatDate(point.day)}: ${point.incident_volume.toString()}`)
+    .join(", ");
   return (
-    <div className="chart" aria-label="Fourteen-day incident volume line chart">
+    <div
+      className="chart"
+      role="img"
+      aria-label={`Fourteen-day incident volume. ${summary}`}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={points} margin={{ top: 10, right: 8, left: -22, bottom: 0 }}>
           <defs>
@@ -68,7 +75,11 @@ export function SeverityDistributionChart({ counts }: { counts: SeverityCounts }
     return <rect x={x} y={y} width={width} height={height} rx={3} fill={fill} />;
   };
   return (
-    <div className="chart" aria-label="Incident severity distribution bar chart">
+    <div
+      className="chart"
+      role="img"
+      aria-label={`Incident severity distribution. Low ${counts.low.toString()}, Guarded ${counts.guarded.toString()}, Elevated ${counts.elevated.toString()}, High ${counts.high.toString()}, Critical ${counts.critical.toString()}.`}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
@@ -109,8 +120,18 @@ export function RiskTrendChart({ points }: { points: TrendPoint[] }) {
         : Number(point.average_transaction_score),
     fused: point.average_fused_score === null ? null : Number(point.average_fused_score),
   }));
+  const summary = normalized
+    .map(
+      (point) =>
+        `${formatDate(point.day)}: cyber ${String(point.cyber ?? "not available")}, transaction ${String(point.transaction ?? "not available")}, fused ${String(point.fused ?? "not available")}`,
+    )
+    .join("; ");
   return (
-    <div className="chart" aria-label="Cyber transaction and fused risk trend chart">
+    <div
+      className="chart"
+      role="img"
+      aria-label={`Cyber, transaction, and fused risk trend. ${summary}`}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={normalized}
@@ -181,7 +202,11 @@ export function TransactionActionsChart({ points }: { points: TrendPoint[] }) {
     count,
   }));
   return (
-    <div className="chart" aria-label="Transaction action distribution bar chart">
+    <div
+      className="chart"
+      role="img"
+      aria-label={`Transaction action distribution. Allowed ${totals.permitted.toString()}, Held ${totals.held.toString()}, Released ${totals.released.toString()}, Declined ${totals.declined.toString()}, Pending ${totals.pending.toString()}.`}
+    >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 6 }}>
           <CartesianGrid stroke={grid} strokeDasharray="2 4" vertical={false} />

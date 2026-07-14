@@ -23,6 +23,10 @@ dist/
 **/.vite/
 coverage/
 **/coverage/
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/.playwright-cache/
 *.tsbuildinfo
 npm-debug.log*
 yarn-debug.log*

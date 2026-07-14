@@ -140,7 +140,10 @@ export function QuantumReadinessPage() {
           </thead>
           <tbody>
             {assets.data.items.map((asset) => (
-              <tr key={asset.crypto_asset_id}>
+              <tr
+                key={asset.crypto_asset_id}
+                data-crypto-asset-id={asset.crypto_asset_id}
+              >
                 <td>
                   <strong>{asset.name}</strong>
                   <small>Assessed {formatDateTime(asset.assessed_at)}</small>

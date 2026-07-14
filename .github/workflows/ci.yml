@@ -88,3 +88,55 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker compose config --quiet
+
+  e2e:
+    name: Browser E2E (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    needs: [frontend, backend, compose]
+    env:
+      APP_ENV: test
+      POSTGRES_PASSWORD: riskweave-e2e-ci-only
+      JWT_SECRET: riskweave-e2e-ci-jwt-secret-at-least-32-characters
+      DEMO_ADMIN_EMAIL: admin@riskweave.demo
+      DEMO_ADMIN_PASSWORD: Admin-E2E-CI-Password-2026!
+      DEMO_ANALYST_EMAIL: analyst@riskweave.demo
+      DEMO_ANALYST_PASSWORD: Analyst-E2E-CI-Password-2026!
+      E2E_ADMIN_EMAIL: admin@riskweave.demo
+      E2E_ADMIN_PASSWORD: Admin-E2E-CI-Password-2026!
+      E2E_ANALYST_EMAIL: analyst@riskweave.demo
+      E2E_ANALYST_PASSWORD: Analyst-E2E-CI-Password-2026!
+      E2E_BASE_URL: http://localhost:4173
+      E2E_API_URL: http://localhost:8000
+      E2E_RUN_ID: github-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.13.0
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: docker compose up --build -d
+      - name: Wait for database-backed readiness
+        run: curl --fail --retry 30 --retry-connrefused --retry-delay 2 http://localhost:8000/ready
+      - run: docker compose exec -T backend python -m app.cli.seed_demo_users
+      - run: npm run test:e2e:chromium
+        working-directory: frontend
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: riskweave-playwright-failures
+          path: frontend/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Report composed-service logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop deterministic browser stack
+        if: always()
+        run: docker compose down --volumes

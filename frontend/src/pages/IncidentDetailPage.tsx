@@ -163,7 +163,7 @@ export function IncidentDetailPage() {
       <div className="case-breadcrumb">
         <Link to={returnPath}>← Back to incident queue</Link>
       </div>
-      <header className="case-header">
+      <header className="case-header" data-incident-id={data.incident_id}>
         <div>
           <p className="eyebrow">Incident investigation</p>
           <div className="case-title-line">

@@ -179,6 +179,42 @@
 - [ ] Works at 1440×900 and 1280×720 without clipped primary actions.
 - [ ] Account-takeover and Scenario B screenshots are presentation-ready.
 
+## Milestone 6 composed-product verification
+
+- [ ] Milestone 5 checkpoint commit exists before browser-hardening changes.
+- [ ] Chromium completes all applicable analyst, admin, failure-injection, accessibility, responsive,
+  consistency, performance, and scenario journeys.
+- [ ] Firefox and WebKit complete all applicable core product journeys using pinned Playwright engines.
+- [ ] Test setup verifies both roles and restores the deterministic showcase dataset without
+  test-order dependence.
+- [ ] Authentication tests cover memory-only JWT behavior, refresh, logout, bad credentials,
+  throttling, invalid/expired session, backend unavailable, `401`, and `403`.
+- [ ] Overview totals and 14-day trend points reconcile with authenticated API responses.
+- [ ] Queue pagination, sorting, search, filters, URL state, keyboard activation, and return-state
+  preservation use server behavior.
+- [ ] Both showcase investigations render exact backend scores, contributions, statuses, timelines,
+  context, and recommendations.
+- [ ] Analyst actions, notes, duplicate prevention, audit history, and two-context stale `409` behavior
+  pass through the rendered workflow.
+- [ ] All three scenarios display exact authoritative outcomes; replay is idempotent and reset restores
+  the exact fingerprint.
+- [ ] Quantum and benchmark values reconcile to APIs and retain required separation, disclaimers,
+  unfavorable results, limitations, and bounded language.
+- [ ] System health reports real frontend, API, database, migration, and source state with a recoverable
+  degraded path.
+- [ ] No business-critical displayed value exists only as a frontend constant.
+- [ ] Required axe surfaces have no serious or critical violations.
+- [ ] Required keyboard focus, dialog focus restoration, reduced-motion, and text-plus-color semantics
+  pass.
+- [ ] Required screens remain usable at 1440×900, 1280×720, and 1024×768.
+- [ ] Unexpected console errors, uncaught exceptions, failed HTTP/network requests, secret leakage, and
+  third-party calls fail the suite.
+- [ ] Nine top-aligned, fully loaded 1440×900 visual-review baselines exist.
+- [ ] Chromium E2E is integrated into CI without removing existing gates; failure artifacts upload only
+  on failure.
+- [ ] Browser matrix, test identities, reset behavior, artifacts, responsive results, accessibility,
+  visual baselines, and acceptance evidence are documented.
+
 ## Documentation
 
 - [ ] README covers problem, solution, setup, demo, architecture, risk model, benchmark, security, synthetic data, and limitations.

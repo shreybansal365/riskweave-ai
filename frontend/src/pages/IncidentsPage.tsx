@@ -83,19 +83,21 @@ export function IncidentsPage() {
         description="Filter and triage persisted incidents without recreating risk decisions in the browser."
       />
       <form className="filter-bar" onSubmit={submitSearch} aria-label="Incident filters">
-        <label className="search-control">
-          <span>Search supported identifiers or customer</span>
+        <label className="search-control" htmlFor="incident-search">
+          <span>Search UUID or customer name</span>
           <input
+            id="incident-search"
             value={searchDraft}
             onChange={(event) => {
               setSearchDraft(event.target.value);
             }}
-            placeholder="INC reference, UUID, or customer"
+            placeholder="Incident UUID or synthetic customer"
           />
         </label>
-        <label>
+        <label htmlFor="severity-filter">
           <span>Severity</span>
           <select
+            id="severity-filter"
             value={params.get("severity") ?? ""}
             onChange={(event) => {
               update({ severity: event.target.value || null });
@@ -111,9 +113,10 @@ export function IncidentsPage() {
             )}
           </select>
         </label>
-        <label>
+        <label htmlFor="status-filter">
           <span>Status</span>
           <select
+            id="status-filter"
             value={params.get("status") ?? ""}
             onChange={(event) => {
               update({ status: event.target.value || null });
@@ -129,9 +132,10 @@ export function IncidentsPage() {
             ))}
           </select>
         </label>
-        <label>
+        <label htmlFor="scenario-filter">
           <span>Scenario</span>
           <select
+            id="scenario-filter"
             value={params.get("scenario") ?? ""}
             onChange={(event) => {
               update({ scenario: event.target.value || null });
@@ -143,9 +147,10 @@ export function IncidentsPage() {
             <option value="account_takeover">Account takeover</option>
           </select>
         </label>
-        <label>
+        <label htmlFor="date-from-filter">
           <span>From</span>
           <input
+            id="date-from-filter"
             type="date"
             value={params.get("date_from") ?? ""}
             onChange={(event) => {
@@ -153,9 +158,10 @@ export function IncidentsPage() {
             }}
           />
         </label>
-        <label>
+        <label htmlFor="date-to-filter">
           <span>To</span>
           <input
+            id="date-to-filter"
             type="date"
             value={params.get("date_to") ?? ""}
             onChange={(event) => {
@@ -211,9 +217,10 @@ export function IncidentsPage() {
               </p>
               <h2 id="queue-title">Prioritized investigation queue</h2>
             </div>
-            <label className="sort-control">
+            <label className="sort-control" htmlFor="incident-sort">
               <span>Sort</span>
               <select
+                id="incident-sort"
                 value={`${query.sortBy ?? "created_at"}:${query.sortDirection ?? "desc"}`}
                 onChange={(event) => {
                   const [sortBy, sortDirection] = event.target.value.split(":");
@@ -250,6 +257,7 @@ export function IncidentsPage() {
                 <tr
                   key={incident.incident_id}
                   className="clickable-row"
+                  data-incident-id={incident.incident_id}
                   tabIndex={0}
                   onClick={() => {
                     openRow(incident.incident_id);

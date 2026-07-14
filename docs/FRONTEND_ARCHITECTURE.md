@@ -2,7 +2,7 @@
 
 ## Product boundary
 
-Milestone 5 is a React 19 and strict-TypeScript presentation layer over the authenticated FastAPI
+Milestone 6 is a React 19 and strict-TypeScript presentation layer over the authenticated FastAPI
 business surface. It does not calculate scores, severities, thresholds, recommended actions,
 scenario expectations, workflow legality, dashboard aggregates, benchmark metrics, or quantum
 readiness. Those values and decisions are returned by the backend.
@@ -56,7 +56,7 @@ protected operation.
 Presentational components never call `fetch`. TanStack Query owns server state, cancellation, caching,
 and post-mutation invalidation. Types in `src/types/api.ts` mirror the generated OpenAPI schemas and
 are exercised by API-shaped test fixtures. OpenAPI generation remains a backend CI check; automatic
-TypeScript generation is deferred to avoid destabilizing the locked Milestone 5 surface.
+TypeScript generation is deferred to avoid destabilizing the locked product surface.
 
 ## Server-authoritative workflow support
 
@@ -92,3 +92,9 @@ management, and axe-core checks on public and authenticated product surfaces.
 schemas. Run `npm run test:coverage` from `frontend/` for the versioned coverage report.
 
 The backend PostgreSQL integration suite remains required; frontend tests do not replace it.
+
+Playwright adds composed-product coverage against the Docker application for analyst/admin journeys,
+API-to-render reconciliation, stale concurrency, exact scenarios/reset, console/network hygiene,
+accessibility, required viewports, and deterministic visual-review evidence. Browser setup, the pinned
+matrix, synthetic test-user contract, failure artifacts, and CI policy are documented in
+`END_TO_END_TESTING.md`.

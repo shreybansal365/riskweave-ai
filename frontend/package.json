@@ -16,7 +16,13 @@
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:chromium": "playwright test --project=chromium",
+    "test:e2e:headed": "playwright test --project=chromium --headed",
+    "test:e2e:debug": "playwright test --project=chromium --debug",
+    "test:e2e:visual": "UPDATE_VISUAL_BASELINES=1 playwright test visual-baselines.spec.ts --project=chromium",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@tanstack/react-query": "5.101.2",
@@ -26,7 +32,9 @@
     "recharts": "3.9.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.61.1",
     "@tailwindcss/vite": "4.3.2",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "6.9.1",

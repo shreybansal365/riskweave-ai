@@ -67,6 +67,7 @@ describe("RiskWeave authenticated product", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "email or password is incorrect",
     );
+    expect(screen.getByLabelText("Password")).toHaveValue("");
     expect(localStorage).toHaveLength(0);
   });
 
@@ -80,6 +81,7 @@ describe("RiskWeave authenticated product", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Too many attempts. Try again in 30 seconds.",
     );
+    expect(screen.getByLabelText("Password")).toHaveValue("");
     rateLimited.unmount();
 
     installApiMock({ loginNetworkFailure: true });
@@ -90,6 +92,7 @@ describe("RiskWeave authenticated product", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "The authentication service is unavailable.",
     );
+    expect(screen.getByLabelText("Password")).toHaveValue("");
   });
 
   it("logs in through login and me, supports keyboard entry, and exposes role-aware navigation", async () => {
@@ -116,6 +119,21 @@ describe("RiskWeave authenticated product", () => {
     expect(localStorage).toHaveLength(0);
   });
 
+  it("restores an authenticated deep link including its query filters", async () => {
+    installApiMock({ role: "analyst" });
+    renderApp("/incidents?severity=critical");
+    const user = userEvent.setup();
+    await user.type(
+      await screen.findByLabelText("Email address"),
+      "analyst@riskweave.demo",
+    );
+    await user.type(screen.getByLabelText("Password"), "correct horse battery staple");
+    await user.click(screen.getByRole("button", { name: "Continue securely" }));
+    expect(await screen.findByRole("heading", { name: "Incident queue" })).toBeVisible();
+    expect(screen.getByLabelText("Severity")).toHaveValue("critical");
+    expect(window.location.search).toBe("?severity=critical");
+  });
+
   it("renders every overview value from API-backed fixtures", async () => {
     installApiMock();
     renderApp("/overview", session());
@@ -135,6 +153,16 @@ describe("RiskWeave authenticated product", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "The overview could not reconcile its source-backed aggregates.",
     );
+  });
+
+  it("renders an explicit overview empty state from valid API-owned zero counts", async () => {
+    installApiMock({ dashboardEmpty: true, incidentsEmpty: true });
+    renderApp("/overview", session());
+    expect(
+      await screen.findByRole("heading", {
+        name: "No incidents in the current dataset",
+      }),
+    ).toBeVisible();
   });
 
   it("clears the in-memory session on logout", async () => {

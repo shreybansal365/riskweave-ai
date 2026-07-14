@@ -126,6 +126,7 @@ export function SimulatorPage() {
             <article
               className={`scenario-card scenario-card--${scenario.scenario_key}`}
               key={scenario.scenario_key}
+              data-scenario-key={scenario.scenario_key}
             >
               <header>
                 <span className="scenario-index">0{index + 1}</span>

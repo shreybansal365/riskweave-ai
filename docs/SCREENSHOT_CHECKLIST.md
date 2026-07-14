@@ -1,6 +1,6 @@
-# Milestone 5 screenshot checklist
+# Milestone 6 visual-baseline checklist
 
-Screenshots are deferred, but these views are prepared for the later evidence pass:
+The functional review captures now exist in `docs/visual-baselines/milestone-6/`:
 
 - Overview at 1440×900 with the seeded 14-day dataset and no loading state.
 - Incident queue with scenario markers, server filters, and readable fused scores.
@@ -11,7 +11,7 @@ Screenshots are deferred, but these views are prepared for the later evidence pa
 - Quantum-readiness inventory with separation disclaimer visible.
 - Evaluation view with 40+, 60+, 80+, cohort context, limitations, and the exact bounded statement.
 
-Before capture:
+They are Milestone 7 review inputs, not the final PPT screenshots. Before any recapture:
 
 1. restore the deterministic baseline;
 2. run all three showcase scenarios;
@@ -21,3 +21,6 @@ Before capture:
 6. use a consistent 1440×900 viewport;
 7. confirm no tooltip, toast, loading skeleton, or debug console obscures the evidence;
 8. preserve all synthetic-data and benchmark qualification language.
+
+The automated capture additionally requires route-specific persisted content, the exact route, loaded
+fonts, reduced motion, and scroll position zero before writing a PNG.

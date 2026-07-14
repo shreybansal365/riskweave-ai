@@ -2,12 +2,12 @@
 
 RiskWeave AI is an explainable cyber-transaction intelligence prototype for FinSpark’26 Problem Statement 2. The approved product vision correlates cybersecurity telemetry with transaction behaviour, while keeping every decision deterministic, inspectable, and clearly qualified as a synthetic-data prototype.
 
-Milestone 5 adds the complete authenticated analyst experience on top of the persisted intelligence
-core: an operational overview, server-filtered incident queue, evidence-dense investigation workspace,
-role-aware deterministic simulator, quantum-readiness inventory, administrator health view, and an
-honest benchmark-v1 evidence surface. The browser presents API-owned values and server-approved
-workflow actions; it contains no scoring formula, threshold engine, scenario logic, or fabricated
-banking metric.
+Milestone 6 verifies the complete authenticated product against the local Docker stack through a
+deterministic Playwright matrix. Analyst/admin journeys, API-to-render consistency, stale workflow
+conflicts, exact scenario/reset behavior, accessibility, required viewports, browser console/network
+hygiene, and nine review baselines now have automated evidence. The browser still presents API-owned
+values and server-approved workflow actions; it contains no scoring formula, threshold engine,
+scenario logic, or fabricated banking metric.
 
 > **Built and maintained by Shrey Bansal.**
 > Developed for the FinSpark’26 Hackathon under Team CyberForge.
@@ -196,6 +196,10 @@ Common repository commands:
 | `make lint` | Run Ruff and ESLint |
 | `make typecheck` | Run mypy and strict TypeScript checks |
 | `make test` | Run pytest and Vitest |
+| `make test-e2e-chromium` | Run the standard composed-product browser suite |
+| `make test-e2e` | Run the complete locally supported browser matrix |
+| `make test-e2e-headed` | Run Chromium visibly for local investigation |
+| `make test-e2e-visual` | Capture the nine deterministic 1440×900 review baselines |
 | `make audit` | Audit locked runtime dependencies |
 | `make check` | Run all non-build quality gates |
 | `make build` | Create the frontend production build |
@@ -234,6 +238,10 @@ The current runtime consumes:
 | `MODEL_RANDOM_SEED` | Locked Isolation Forest seed | `26026` |
 | `SIMULATION_EPOCH` | Locked UTC simulation epoch | `2026-07-14T09:00:00Z` |
 | `VITE_API_BASE_URL` | Browser-visible API origin | `http://localhost:8000` |
+| `E2E_BASE_URL` | Playwright application origin | `http://localhost:4173` |
+| `E2E_API_URL` | Playwright setup/API reconciliation origin | `http://localhost:8000` |
+| `E2E_ADMIN_EMAIL` / `E2E_ANALYST_EMAIL` | Synthetic browser-test identities | demo emails |
+| `E2E_ADMIN_PASSWORD` / `E2E_ANALYST_PASSWORD` | Uncommitted browser-test credentials | none |
 
 The backend rejects other simulation epochs or seeds so fixture identity and score expectations cannot
 drift silently.
@@ -246,8 +254,8 @@ drift silently.
 │   ├── app/services/        Database-backed use-case and scenario orchestration
 │   ├── risk_engine/         Pure rules, anomaly, correlation, fusion, explanation, benchmark
 │   └── data/                Versioned baseline manifest and 48 benchmark fixtures
-├── frontend/                Authenticated React product UI, typed API client, design system, tests
-├── docs/                    Intelligence, synthetic-data, and benchmark implementation notes
+├── frontend/                Authenticated React UI, typed API client, unit tests, Playwright E2E
+├── docs/                    Architecture, test evidence, and deterministic review baselines
 ├── .github/workflows/       CI quality gates
 ├── docker-compose.yml       Local frontend, backend, and PostgreSQL topology
 ├── Makefile                 Development and verification commands
@@ -282,8 +290,17 @@ GitHub Actions verifies:
 - in-memory JWT login, authenticated routing, and role-aware analyst/admin navigation;
 - API-backed overview, queue, investigation, simulator, quantum, health, and evaluation views;
 - Vitest, Testing Library, keyboard-flow, and automated accessibility checks for core UI behavior;
+- Playwright analyst/admin journeys across Chromium, Firefox, and WebKit;
+- rendered-to-API data reconciliation, stale `409` workflow handling, and exact reset fingerprints;
+- axe, keyboard, reduced-motion, console/network, and 1440/1280/1024 viewport audits;
+- deterministic 1440×900 visual-review baselines and practical route/bundle sanity checks;
 - V8 frontend coverage reporting through `npm run test:coverage`;
 - valid Docker Compose configuration.
+
+The browser matrix, deterministic reset strategy, artifact handling, headed mode, Linux Firefox
+fallback for this macOS automation host, and CI behavior are documented in
+`docs/END_TO_END_TESTING.md`. The milestone evidence is summarized in
+`docs/MILESTONE_6_ACCEPTANCE.md`.
 
 ## Implemented API and security boundary
 
@@ -356,16 +373,16 @@ that are not calibrated identically. It does not establish universal false-posit
 > RiskWeave demonstrates context-aware avoidance of an unnecessary intervention in the deterministic legitimate-new-device scenario. Broader false-positive reduction has not yet been established by benchmark-v1.
 
 A separately versioned, prospectively designed `benchmark-v2` remains future work; it is not created
-in Milestone 5.
+in Milestone 6.
 
 ## Deferred boundary
 
-Milestone 5 provides the complete functional product UI, but deliberately does not claim final visual
-masterpiece status. The following remain outside this milestone:
+Milestone 6 provides a cross-browser verified functional product, but deliberately does not claim
+final visual masterpiece or production status. The following remain outside this milestone:
 
-- Milestone 6 visual critique, refinement, and final animation/responsive polish;
-- complete Playwright end-to-end coverage and cloud deployment;
-- final GitHub presentation treatment, screenshots, PPT, and demo video;
+- Milestone 7 multi-pass visual critique, brand refinement, and final animation/responsive polish;
+- cloud deployment;
+- final GitHub presentation treatment, final screenshots, PPT, and demo video;
 - prospectively designed benchmark-v2.
 
 This is a synthetic-data prototype, not a production banking control. Later benchmark outcomes must be

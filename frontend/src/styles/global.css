@@ -146,7 +146,7 @@ p {
     border-color 120ms ease;
 }
 .nav-item > span {
-  color: #64758a;
+  color: #74869b;
   font-family: var(--font-mono);
   font-size: 0.58rem;
 }
@@ -202,7 +202,7 @@ p {
   font-weight: 650;
 }
 .route-context span {
-  color: var(--slate-400);
+  color: var(--slate-500);
 }
 .workspace-tools {
   display: flex;
@@ -595,7 +595,7 @@ p {
 .health-source-table article {
   padding: 0.7rem 0;
   display: grid;
-  grid-template-columns: 6.5rem 1fr auto;
+  grid-template-columns: 6.5rem minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.8rem;
   border-bottom: 1px solid var(--slate-150);
@@ -611,15 +611,18 @@ p {
 }
 .source-health-list span,
 .health-source-table span {
+  min-width: 0;
   display: grid;
   gap: 0.15rem;
 }
 .source-health-list strong,
 .health-source-table strong {
+  overflow-wrap: anywhere;
   font-size: 0.72rem;
 }
 .source-health-list small,
 .health-source-table small {
+  overflow-wrap: anywhere;
   color: var(--slate-500);
   font-size: 0.61rem;
 }
@@ -979,7 +982,7 @@ p {
 }
 .convergence-operator,
 .convergence-arrow {
-  color: var(--slate-400);
+  color: var(--slate-600);
   font-family: var(--font-mono);
   font-size: 1rem;
 }
@@ -1206,7 +1209,7 @@ p {
   line-height: 1.45;
 }
 .contribution-group li small {
-  color: var(--slate-400);
+  color: var(--slate-600);
   font-family: var(--font-mono);
   font-size: 0.5rem;
 }
@@ -1369,7 +1372,7 @@ p {
   gap: 0.7rem;
 }
 .scenario-index {
-  color: var(--slate-400);
+  color: var(--slate-600);
   font-family: var(--font-mono);
   font-size: 0.58rem;
 }
@@ -1881,6 +1884,9 @@ p {
   }
   .metric-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+  .health-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   .filter-bar {
     grid-template-columns: repeat(3, 1fr);

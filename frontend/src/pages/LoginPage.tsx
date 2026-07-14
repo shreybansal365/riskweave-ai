@@ -27,8 +27,8 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  if (session !== null) return <Navigate to="/overview" replace />;
   const returnTo = (location.state as { from?: string } | null)?.from ?? "/overview";
+  if (session !== null) return <Navigate to={returnTo} replace />;
 
   const submit = async (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -38,6 +38,7 @@ export function LoginPage() {
       await login(email, password);
       void navigate(returnTo, { replace: true });
     } catch (caught) {
+      setPassword("");
       setError(loginFailure(caught));
     } finally {
       setSubmitting(false);

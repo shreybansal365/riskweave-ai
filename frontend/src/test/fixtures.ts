@@ -521,6 +521,7 @@ export function installApiMock(
     actionConflict?: boolean;
     actionIdempotent?: boolean;
     dashboardFails?: boolean;
+    dashboardEmpty?: boolean;
     incidentsEmpty?: boolean;
     incidentPages?: number;
     incidentNotFound?: boolean;
@@ -571,7 +572,26 @@ export function installApiMock(
       if (url.pathname === "/api/dashboard/summary")
         return options.dashboardFails === true
           ? response({ detail: "Synthetic aggregate failure" }, 500)
-          : response(dashboardSummary);
+          : response(
+              options.dashboardEmpty === true
+                ? {
+                    ...dashboardSummary,
+                    visible_incidents: 0,
+                    incidents_by_severity: {
+                      low: 0,
+                      guarded: 0,
+                      elevated: 0,
+                      high: 0,
+                      critical: 0,
+                    },
+                    open_incidents: 0,
+                    in_review_incidents: 0,
+                    transactions_held: 0,
+                    legitimate_unusual_activity_permitted: 0,
+                    confirmed_fraud_cases: 0,
+                  }
+                : dashboardSummary,
+            );
       if (url.pathname === "/api/dashboard/trends") return response(dashboardTrends);
       if (url.pathname === "/api/incidents") {
         if (options.incidentsEmpty === true)

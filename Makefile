@@ -1,4 +1,4 @@
-.PHONY: setup backend-install frontend-install format format-check lint typecheck test audit check build migrate migration-check seed-users seed-data reset-data scenario benchmark docker-up docker-down docker-logs
+.PHONY: setup backend-install frontend-install format format-check lint typecheck test test-e2e test-e2e-chromium test-e2e-headed test-e2e-visual audit check build migrate migration-check seed-users seed-data reset-data scenario benchmark docker-up docker-down docker-logs
 
 PYTHON ?= python3.12
 BACKEND_VENV := backend/.venv
@@ -33,6 +33,18 @@ typecheck:
 test:
 	cd backend && ../$(BACKEND_VENV)/bin/pytest
 	cd frontend && npm run test
+
+test-e2e:
+	cd frontend && npm run test:e2e
+
+test-e2e-chromium:
+	cd frontend && npm run test:e2e:chromium
+
+test-e2e-headed:
+	cd frontend && npm run test:e2e:headed
+
+test-e2e-visual:
+	cd frontend && npm run test:e2e:visual
 
 audit:
 	cd backend && ../$(BACKEND_VENV)/bin/pip-audit --cache-dir .cache/pip-audit --requirement requirements.txt --disable-pip
