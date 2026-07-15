@@ -254,6 +254,66 @@
   1024×768 without incomplete shells, errors, clipping, false arithmetic, or contradictory context.
 - [ ] Milestone 6 baselines remain unchanged as historical evidence.
 
+## Milestone 7B.1 brand lock and login route focus
+
+- [ ] Milestone 7B is committed before brand-lock work begins.
+- [ ] Concept A is recreated as maintainable SVG artwork rather than an embedded concept-sheet PNG.
+- [ ] Light and dark horizontal lockups, standalone icon, favicon, and app-icon variants exist.
+- [ ] Every public wordmark reads exactly `RiskWeave AI`; `AI` is teal and the same visual cap height.
+- [ ] Login, desktop shell, compact shell, favicon, and metadata use the approved brand assets.
+- [ ] Icon-only and decorative Brand variants expose the correct accessible semantics.
+- [ ] The optional tagline is not globally repeated in the application workspace.
+- [ ] Obsolete branch-merger logo classes and references are absent.
+- [ ] Direct and reloaded login routes focus the hero heading for announcement without a visible
+  rectangle, outline, or box shadow.
+- [ ] Interactive controls retain a clear keyboard focus indicator after the route-focus correction.
+- [ ] Skip navigation, destination-heading focus, route titles, and axe checks continue to pass.
+- [ ] Milestone 7B.1 visual evidence contains the three login states, two shell viewports, both
+  lockups, and the small-size preview without overwriting Milestone 7B.
+
+## Milestone 7B.1.1 dark brand, favicon, and repository scope
+
+- [ ] The approved light Concept A geometry and colour treatment remain visually unchanged.
+- [ ] Light and dark full-size lockups use identical Concept A path geometry.
+- [ ] The dark decision path and solid endpoint use inverse slate `#98A4B3` against application
+  background `#08111F`, with measured WCAG contrast of at least 4.5:1.
+- [ ] The dark mark contains no halo, translucent backing stroke, keyline, or outlined target-like
+  endpoint.
+- [ ] Exported horizontal SVG wordmarks use deterministic vector outlines, retain an accessible
+  `RiskWeave AI` title, and embed no font file.
+- [ ] Document metadata declares SVG, 32×32 PNG, 16×16 PNG, ICO, Apple touch, and web-manifest icon
+  fallbacks; every declared asset responds successfully.
+- [ ] A cache-busted real Chrome or Brave tab displays the Concept A favicon rather than a generic
+  globe or default framework icon.
+- [ ] Direct-entry and reloaded login states remain clean while semantic route focus, skip
+  navigation, and visible interactive focus remain intact.
+- [ ] `frontend/public/` contains only reviewed production brand, favicon, manifest, and metadata
+  assets, with no generated previews, caches, or hidden system files.
+- [ ] Milestone 7B.1.1 evidence is isolated under its own directory and does not overwrite earlier
+  visual baselines.
+
+## Milestone 7B.1.2 original Concept A geometry fidelity
+
+- [ ] The original cropped Concept A artwork controls full-size mark geometry; the previous compact
+  production mark controls neither amplitude nor crossover placement.
+- [ ] The original-versus-previous diagnosis and previous path data are preserved before replacement.
+- [ ] React, light-lockup, dark-lockup, and standalone full-size assets use the same eight path strings,
+  endpoint coordinates, 16-unit stroke width, and `700×240` geometric source.
+- [ ] The corrected mark materially restores the reference's tall cyber descent, separate upper cyber
+  arc, broad amber rise, first crossover, lower weave, decision tail, and large solid endpoint.
+- [ ] The public application lockup remains horizontal and the outlined `RiskWeave AI` wordmark remains
+  unchanged.
+- [ ] Light full-size geometry uses cyan `#1F9E9D`, amber `#DF9417`, and navy `#0B1A2D`.
+- [ ] Dark full-size geometry differs only through inverse decision colour `#98A4B3`; its 7.47:1
+  contrast, solid endpoint, and no-halo treatment remain intact.
+- [ ] Favicon declarations, fallbacks, manifest, MIME handling, and cache-busted real-browser activation
+  remain unchanged and valid.
+- [ ] Route-heading semantic focus, clean direct/reload rendering, skip navigation, visible interactive
+  focus, and axe results do not regress.
+- [ ] Milestone 7B.1.2 evidence contains original/corrected, previous/corrected, overlay, both lockups,
+  login, two shell sizes, favicon preview, and direct/reload comparisons without overwriting earlier
+  evidence.
+
 ## Documentation
 
 - [ ] README covers problem, solution, setup, demo, architecture, risk model, benchmark, security, synthetic data, and limitations.

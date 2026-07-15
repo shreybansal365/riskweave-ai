@@ -35,6 +35,24 @@ These files are reviewed Milestone 7B baselines, not final PPT screenshots. The 
 was not overwritten. Capture provenance and exact filenames are indexed in
 `docs/visual-baselines/milestone-7b/README.md`.
 
+## Milestone 7B.1 focused brand evidence
+
+The Concept A and login-route-focus capture writes only to
+`docs/visual-baselines/milestone-7b1/`. It contains direct and reloaded login evidence at 1440×900,
+login at 1024×768, authenticated shell evidence at both viewports, light/dark lockup previews, and a
+favicon/small-size preview. The focused route heading remains the active element in the login
+captures; the absence of a rectangle is therefore evidence of the scoped visual correction rather
+than a scripted blur.
+
+## Milestone 7B.1.1 inverse-brand and favicon evidence
+
+The correction capture writes only to `docs/visual-baselines/milestone-7b1-1/`. It contains the
+unchanged light lockup, corrected inverse dark lockup, favicon assets at 16/32/64 pixels on light and
+dark surfaces, direct/reloaded login states and comparison, authenticated shell at 1440×900 and
+1024×768, and a manual real-browser tab capture. The actual tab capture records browser/version,
+cache-busting procedure, route, and observed icon in the directory README. Earlier baselines remain
+untouched.
+
 ## Route-specific readiness
 
 - **Login:** split authentication composition is complete; no credential, token, stale error, or
@@ -90,4 +108,11 @@ Capture with:
 ```bash
 cd frontend
 npm run test:e2e:visual
+```
+
+Capture the narrowly scoped Milestone 7B.1.1 evidence with:
+
+```bash
+cd frontend
+npm run test:e2e:brand-visual-7b1-1
 ```

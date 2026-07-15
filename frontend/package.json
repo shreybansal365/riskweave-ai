@@ -22,6 +22,9 @@
     "test:e2e:headed": "playwright test --project=chromium --headed",
     "test:e2e:debug": "playwright test --project=chromium --debug",
     "test:e2e:visual": "UPDATE_VISUAL_BASELINES=1 playwright test visual-baselines.spec.ts --project=chromium",
+    "test:e2e:brand-visual": "UPDATE_BRAND_BASELINES=1 playwright test brand-baselines.spec.ts --project=chromium",
+    "test:e2e:brand-visual-7b1-1": "UPDATE_BRAND_7B1_1_BASELINES=1 playwright test brand-baselines-7b1-1.spec.ts --project=chromium",
+    "test:e2e:brand-visual-7b1-2": "UPDATE_BRAND_7B1_2_BASELINES=1 playwright test brand-baselines-7b1-2.spec.ts --project=chromium",
     "test:e2e:report": "playwright show-report"
   },
   "dependencies": {

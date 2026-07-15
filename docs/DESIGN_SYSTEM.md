@@ -11,6 +11,26 @@ Milestone 7B gives the product a restrained signature: separate cyber and transa
 through documented cross-domain interactions and become one explainable, backend-authoritative
 decision. That signature is strongest in the investigation workspace and remains secondary elsewhere.
 
+## Brand identity
+
+Concept A is the locked primary mark. Its cyan cyber strand and amber transaction strand weave,
+transition through one authoritative decision path, and terminate at one solid endpoint. On light
+surfaces that path is navy; on the `#08111F` login and rail surface, the same geometry uses muted
+inverse slate `#98A4B3` at 7.47:1 contrast. It never uses a halo or outlined target treatment. The
+exact public wordmark is `RiskWeave AI`; the teal `AI` uses the same cap height rather than appended
+microtype.
+
+The `Brand` component owns the full/icon, light/dark, size, accessible, and decorative variants.
+Static SVG, PNG, ICO, web-manifest, and favicon metadata live under `frontend/public/`. Exported
+horizontal lockups outline their wordmark lettering for deterministic cross-machine rendering. The
+optional tagline is not present in routine product navigation. Full usage, minimum-size,
+clear-space, favicon simplification, and prohibited-modification rules are in
+`docs/BRAND_GUIDELINES.md`.
+
+The compact logo and the operational Decision Weave are intentionally distinct. The mark expresses
+the product idea; Decision Weave must continue to expose actual API-backed evidence, interactions,
+weighted terms, and decisions.
+
 ## Editorial hierarchy
 
 The interface uses three explicit information levels:
@@ -138,7 +158,9 @@ and no eligible interaction bonus. `Allow and monitor` is treatment, not an inve
 
 - the skip link targets the main workspace;
 - document titles and the primary heading update with route changes;
-- route navigation moves focus to the destination heading or main content;
+- route navigation moves focus to the destination heading or main content; noninteractive route
+  headings use the dedicated route-focus-target treatment so semantic focus does not create an
+  interactive-control rectangle;
 - queue rows have row-header semantics and keyboard activation;
 - dialogs trap focus, support Escape, and restore focus to the trigger;
 - successful workflow mutations focus a confirmation; stale `409` conflicts focus an alert;

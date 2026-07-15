@@ -43,6 +43,33 @@ Do not use:
 
 Implement semantic tokens such as `surface`, `text-primary`, `risk-critical`, and `signal-correlation`; components must not scatter raw colour values.
 
+### Locked brand identity
+
+Concept A is the definitive RiskWeave AI logo. The production SVG preserves two woven signal
+strands, cyan/teal cyber evidence, amber transaction evidence, one authoritative decision path, and
+one solid endpoint. The light variant keeps the approved navy decision treatment. The dark variant
+uses the same geometry with inverse slate `#98A4B3` against `#08111F` (7.47:1 contrast), without a
+halo, keyline, or outlined target ring. The full wordmark is exactly `RiskWeave AI`; `AI` is teal and
+has the same visual cap height as `RiskWeave`, never superscript or microtype.
+
+The full-size mark uses the reference-derived `700×240` Concept A geometry documented in
+`docs/visual-baselines/milestone-7b1-2/GEOMETRY_NOTES.md`. Its tall descending cyber sweep, separate
+upper cyber arc, broad transaction rise, two woven decision sections, and 25-unit endpoint are the
+locked production silhouette. Normal-size React, light-lockup, dark-lockup, and standalone assets
+use the same path and endpoint coordinates. Small favicon and app-icon treatments may remain
+optically simplified.
+
+Use the light-surface lockup with a navy wordmark and the dark-surface lockup with a near-white
+wordmark. Exported public lockups use outlined wordmark paths for cross-machine consistency; the
+reusable Brand component provides semantic HTML text, full and icon-only variants, accessible
+naming, and an explicit decorative mode. The optimized favicon may simplify fine geometry but must
+preserve the two-strand crossover and single endpoint. Minimum sizes, clear space, asset locations,
+tagline usage, and prohibited modifications are documented in `docs/BRAND_GUIDELINES.md`.
+
+The optional tagline `Cyber intelligence. Financial confidence.` is selective. Do not repeat it in
+navigation or ordinary page headers. The brand mark is an identity asset; it is not the operational
+Decision Weave and never stands in for case evidence or score provenance.
+
 ### Typography
 
 - Use a locally bundled free variable font such as Inter.
@@ -310,6 +337,10 @@ Honor reduced-motion preferences. Motion must not hide or delay essential inform
   dialogs remain viewport-bounded with internally scrollable content.
 - Skip-to-main-content, route-specific document titles, heading focus after navigation, row-header
   semantics, focus restoration, session-expiry announcement, and unsaved-note protection.
+- Programmatically focused route headings use a dedicated noninteractive route-focus target. They
+  remain focusable and announced after navigation but do not receive the interactive-control focus
+  ring. Links, buttons, fields, navigation items, dialogs, rows, and other controls retain the strong
+  visible focus treatment.
 - Production-CSS contrast and 200% zoom verification supplement automated axe checks.
 
 ## Required UI states

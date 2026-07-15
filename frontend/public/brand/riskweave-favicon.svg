@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">RiskWeave AI</title>
+  <rect width="64" height="64" rx="14" fill="#08111F"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.5">
+    <path stroke="#DF9417" d="M4 48h8c8 0 13-5 19-15"/>
+    <path stroke="#1F9E9D" d="M31 33c6-10 12-15 20-8"/>
+    <path stroke="#1F9E9D" d="M4 16h8c9 0 14 5 20 15 6 10 12 14 20 8"/>
+    <path stroke="#98A4B3" d="M52 39c2-2 3-3 5-4M51 25c2 2 4 4 6 6M57 33h1"/>
+  </g>
+  <circle cx="59" cy="33" r="4.25" fill="#98A4B3"/>
+</svg>

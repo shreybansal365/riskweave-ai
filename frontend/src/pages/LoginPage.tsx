@@ -49,10 +49,12 @@ export function LoginPage() {
   return (
     <main className="login-layout">
       <section className="login-context" aria-labelledby="login-context-title">
-        <Brand />
+        <Brand surface="dark" size="large" />
         <div>
           <p className="eyebrow">Contextual risk operations</p>
-          <h1 id="login-context-title">One incident. Every relevant signal.</h1>
+          <h1 id="login-context-title" data-route-focus-target="true">
+            One incident. Every relevant signal.
+          </h1>
           <p>
             RiskWeave correlates cyber telemetry with transaction behaviour so analysts
             can investigate one explainable case instead of disconnected alerts.

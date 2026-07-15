@@ -104,6 +104,10 @@ describe("RiskWeave authenticated product", () => {
         name: "One incident. Every relevant signal.",
       }),
     ).toHaveFocus();
+    expect(screen.getByRole("link", { name: "RiskWeave AI overview" })).toBeVisible();
+    expect(
+      screen.queryByText("Cyber intelligence. Financial confidence."),
+    ).not.toBeInTheDocument();
     await user.tab();
     expect(screen.getByLabelText("Email address")).toHaveFocus();
     await user.type(screen.getByLabelText("Email address"), "analyst@riskweave.demo");
@@ -117,6 +121,9 @@ describe("RiskWeave authenticated product", () => {
       ),
     ).toBeVisible();
     expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeVisible();
+    expect(screen.getAllByRole("link", { name: "RiskWeave AI overview" })).toHaveLength(
+      2,
+    );
     expect(
       screen.queryByRole("link", { name: /System Health/i }),
     ).not.toBeInTheDocument();
@@ -472,6 +479,8 @@ describe("RiskWeave authenticated product", () => {
     await waitFor(() => {
       expect(heading).toHaveFocus();
     });
-    expect(document.title).toBe("Operational overview · RiskWeave");
+    expect(heading).toHaveAttribute("data-route-focus-target", "true");
+    expect(heading).toHaveAttribute("tabindex", "-1");
+    expect(document.title).toBe("Operational overview · RiskWeave AI");
   });
 });

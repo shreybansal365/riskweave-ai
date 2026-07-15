@@ -88,7 +88,7 @@ export function AppShell() {
       </a>
       <aside className="side-rail">
         <div className="rail-brand">
-          <Brand />
+          <Brand surface="dark" />
           <span className="workspace-label">Analyst workspace</span>
         </div>
         <nav className="primary-nav" aria-label="Primary navigation">
@@ -129,7 +129,7 @@ export function AppShell() {
       <div className="workspace">
         <header className="workspace-topbar">
           <div className="mobile-brand">
-            <Brand compact />
+            <Brand variant="icon" surface="light" size="small" />
           </div>
           <div className="route-context" aria-label={`Current route: ${routeName}`}>
             <span>Workspace</span>

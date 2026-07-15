@@ -27,7 +27,7 @@ export function PageHeader({
     <header className={`page-header page-header--${variant}`}>
       <div>
         <p className="eyebrow">{eyebrow}</p>
-        <h1>{title}</h1>
+        <h1 data-route-focus-target="true">{title}</h1>
         <p className="page-description">{description}</p>
       </div>
       {actions !== undefined && <div className="page-actions">{actions}</div>}

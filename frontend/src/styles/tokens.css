@@ -31,6 +31,12 @@
   --blue-100: #e4edf7;
 
   /* Stream and product semantics. */
+  --brand-cyber: #1f9e9d;
+  --brand-transaction: #df9417;
+  --brand-decision: #0b1a2d;
+  --brand-decision-inverse: #98a4b3;
+  --brand-wordmark-light: #0b1a2d;
+  --brand-wordmark-dark: #f7f9fb;
   --signal-cyber: var(--cyan-700);
   --signal-transaction: var(--amber-700);
   --signal-correlation: var(--teal-700);

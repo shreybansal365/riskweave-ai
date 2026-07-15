@@ -65,10 +65,12 @@ function RouteLoading({ children }: { children: ReactNode }) {
                     : location.pathname === "/evaluation"
                       ? "Evaluation"
                       : "Workspace";
-    document.title = `${routeName} · RiskWeave`;
+    document.title = `${routeName} · RiskWeave AI`;
 
     const focusHeading = () => {
-      const heading = document.querySelector<HTMLElement>("main h1");
+      const heading = document.querySelector<HTMLElement>(
+        'main [data-route-focus-target="true"]',
+      );
       if (heading === null) return false;
       heading.tabIndex = -1;
       heading.focus({ preventScroll: true });
@@ -130,7 +132,7 @@ function NotFoundPage() {
   return (
     <main className="not-found">
       <p className="eyebrow">404 · Unknown route</p>
-      <h1>This workspace path does not exist.</h1>
+      <h1 data-route-focus-target="true">This workspace path does not exist.</h1>
       <p>
         Return to the operational overview and continue from a supported product route.
       </p>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">RiskWeave AI app icon</title>
+  <rect width="128" height="128" rx="20" fill="#08111F"/>
+  <g data-brand-mark="concept-a" transform="translate(10 25) scale(.34)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="#DF9417" stroke-width="9" d="M12 88H48C74 88 95 72 115 50"/>
+    <path stroke="#1F9E9D" stroke-width="9" d="M115 50C139 28 166 19 191 24C218 29 236 48 257 56"/>
+    <path stroke="#1F9E9D" stroke-width="9" d="M12 25H46C78 25 101 39 125 64C148 88 175 94 204 87"/>
+    <path stroke="#98A4B3" stroke-width="9" d="M204 87C220 84 231 77 241 69"/>
+    <path stroke="#DF9417" stroke-width="9" d="M241 69C251 62 259 56 270 52"/>
+    <path stroke="#98A4B3" stroke-width="9" d="M257 56C262 55 266 53 270 52M270 52H293"/>
+    <circle cx="304" cy="52" r="11" fill="#98A4B3" stroke="none"/>
+  </g>
+</svg>

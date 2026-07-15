@@ -116,6 +116,10 @@ submission clears it.
 
 - a skip link targets `#main-content`;
 - each route sets a specific document title and moves focus to its `h1` after lazy rendering;
+- route headings expose `data-route-focus-target="true"`; programmatic focus is retained for
+  announcement while a narrowly scoped style suppresses only the noninteractive heading ring;
+- interactive links, fields, buttons, navigation, rows, and dialogs keep the global visible-focus
+  treatment;
 - queue rows support keyboard activation and retain row-header semantics;
 - confirmation dialogs trap focus, support Escape, and restore the trigger;
 - danger toasts use an alert, receive focus, and persist until dismissed;
@@ -142,8 +146,12 @@ dialog behavior, notifications, and error states. The backend PostgreSQL integra
 required; frontend tests do not replace it.
 
 The Milestone 6 Playwright matrix and `docs/visual-baselines/milestone-6/` remain historical evidence.
-The updated Milestone 7B browser contract adds context/integrity projections, transaction-status URL
+The reviewed Milestone 7B browser contract adds context/integrity projections, transaction-status URL
 filtering, exact Decision Weave terms, session/focus/toast/note behavior, quantum/fraud separation,
-production-CSS accessibility, and three required viewports. Its results and captures must be described
-as pending until the suites have passed. The planned capture directory is
-`docs/visual-baselines/milestone-7b/`.
+production-CSS accessibility, and three required viewports. Its capture directory is
+`docs/visual-baselines/milestone-7b/`. Milestone 7B.1 adds focused Concept A and login-route-focus
+evidence in `docs/visual-baselines/milestone-7b1/` without overwriting that matrix.
+Milestone 7B.1.1 adds inverse-dark-lockup, favicon-fallback, real-tab, and route-focus regression
+evidence in `docs/visual-baselines/milestone-7b1-1/`. Document metadata declares SVG, PNG, ICO,
+Apple-touch, and manifest icon assets using root-relative production paths. The exported SVG
+lockups contain outlined lettering; runtime Brand text remains semantic HTML.

@@ -280,7 +280,7 @@ export function IncidentDetailPage() {
         <div>
           <p className="eyebrow">Incident investigation</p>
           <div className="case-title-line">
-            <h1>{data.incident_reference}</h1>
+            <h1 data-route-focus-target="true">{data.incident_reference}</h1>
             <RiskBadge severity={data.severity} />
             <StatusBadge status={data.status} />
           </div>

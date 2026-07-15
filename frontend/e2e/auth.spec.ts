@@ -5,9 +5,140 @@ import {
   assertNoCredentialPersistence,
   beginBrowserAudit,
 } from "./support/browser-audit";
+import { expectNoSeriousAccessibilityViolations } from "./support/accessibility";
 import { e2eEnvironment } from "./support/environment";
 
 test.describe("authenticated product journeys", () => {
+  test("login route focus remains semantic without drawing a headline rectangle", async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== "chromium", "Focused route-entry regression runs once");
+
+    const assertCleanRouteFocus = async () => {
+      const heading = page.getByRole("heading", {
+        level: 1,
+        name: "One incident. Every relevant signal.",
+      });
+      await expect(heading).toBeFocused();
+      await expect(heading).toHaveAttribute("data-route-focus-target", "true");
+      await expect(heading).toHaveAttribute("tabindex", "-1");
+      const focusStyle = await heading.evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          outlineStyle: style.outlineStyle,
+          outlineWidth: style.outlineWidth,
+          boxShadow: style.boxShadow,
+        };
+      });
+      expect(focusStyle.outlineStyle).toBe("none");
+      expect(focusStyle.outlineWidth).toBe("0px");
+      expect(focusStyle.boxShadow).toBe("none");
+    };
+
+    await page.goto("/login");
+    await assertCleanRouteFocus();
+    await expect(page.getByRole("link", { name: "RiskWeave AI overview" })).toBeVisible();
+    const expectedIcons = [
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        sizes: "",
+        href: "/brand/riskweave-favicon.svg?v=20260715",
+      },
+      {
+        rel: "icon",
+        type: "image/png",
+        sizes: "32x32",
+        href: "/brand/riskweave-favicon-32.png?v=20260715",
+      },
+      {
+        rel: "icon",
+        type: "image/png",
+        sizes: "16x16",
+        href: "/brand/riskweave-favicon-16.png?v=20260715",
+      },
+      {
+        rel: "shortcut icon",
+        type: "image/x-icon",
+        sizes: "",
+        href: "/favicon.ico?v=20260715",
+      },
+      {
+        rel: "apple-touch-icon",
+        type: "",
+        sizes: "180x180",
+        href: "/brand/riskweave-apple-touch-icon.png?v=20260715",
+      },
+    ];
+    const iconDeclarations = await page
+      .locator('link[rel*="icon"]')
+      .evaluateAll((links) =>
+        links.map((link) => {
+          const icon = link as HTMLLinkElement;
+          return {
+            rel: icon.rel,
+            type: icon.type,
+            sizes: icon.sizes.value,
+            href: icon.getAttribute("href"),
+          };
+        }),
+      );
+    expect(iconDeclarations).toEqual(expectedIcons);
+    for (const icon of expectedIcons) {
+      const response = await page.request.get(icon.href);
+      expect(response.status(), icon.href).toBe(200);
+      expect(response.headers()["content-type"], icon.href).toContain(
+        icon.type === "image/x-icon" ? "image" : icon.type || "image/png",
+      );
+    }
+    const manifestResponse = await page.request.get("/site.webmanifest");
+    expect(manifestResponse.status()).toBe(200);
+    const manifest = (await manifestResponse.json()) as {
+      icons: { src: string }[];
+    };
+    for (const icon of manifest.icons) {
+      expect((await page.request.get(icon.src)).status(), icon.src).toBe(200);
+    }
+    await expect(page).toHaveTitle(/RiskWeave AI$/);
+    await expect(page.locator('link[href*="vite"], link[href*="react.svg"]')).toHaveCount(
+      0,
+    );
+    const darkBrand = page.locator(".login-context .brand");
+    await expect(darkBrand).toHaveAttribute("data-brand-surface", "dark");
+    await expect(darkBrand.locator(".brand-mark__decision-halo")).toHaveCount(0);
+    const darkDecision = await darkBrand
+      .locator(".brand-mark__strand--decision")
+      .first()
+      .evaluate((element) => getComputedStyle(element).stroke);
+    const darkEndpoint = await darkBrand
+      .locator(".brand-mark__endpoint")
+      .evaluate((element) => {
+        const style = getComputedStyle(element);
+        return { fill: style.fill, stroke: style.stroke };
+      });
+    expect(darkDecision).toBe("rgb(152, 164, 179)");
+    expect(darkEndpoint).toEqual({ fill: "rgb(152, 164, 179)", stroke: "none" });
+    await expect(page.locator(".brand-weave, .brand-thread, .brand-knot")).toHaveCount(0);
+    await expect(
+      page.getByText("Cyber intelligence. Financial confidence.", { exact: true }),
+    ).toHaveCount(0);
+
+    await page.reload();
+    await assertCleanRouteFocus();
+    await page.keyboard.press("Tab");
+    const email = page.getByLabel("Email address");
+    await expect(email).toBeFocused();
+    const controlFocusStyle = await email.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { outlineWidth: style.outlineWidth, boxShadow: style.boxShadow };
+    });
+    expect(
+      controlFocusStyle.outlineWidth !== "0px" || controlFocusStyle.boxShadow !== "none",
+    ).toBe(true);
+    await expectNoSeriousAccessibilityViolations(page);
+  });
+
   test("analyst login, route protection, role navigation, logout, and refresh semantics", async ({
     page,
   }) => {

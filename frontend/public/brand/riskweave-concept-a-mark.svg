@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 240" role="img" aria-labelledby="title">
+  <title id="title">RiskWeave AI Concept A mark</title>
+  <g data-brand-mark="concept-a" data-brand-geometry="concept-a-reference-v2" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="16">
+    <path stroke="#DF9417" d="M16 214H104C166 214 217 185 264 107"/>
+    <path stroke="#1F9E9D" d="M282 88C338 39 383 18 422 23C482 29 525 83 610 105"/>
+    <path stroke="#1F9E9D" d="M16 20H115C180 20 235 54 284 104"/>
+    <path stroke="#0B1A2D" d="M284 104C301 123 317 146 335 163"/>
+    <path stroke="#1F9E9D" d="M335 163C354 183 374 197 397 203"/>
+    <path stroke="#0B1A2D" d="M397 203C429 216 461 216 491 207"/>
+    <path stroke="#DF9417" d="M491 207C541 190 575 146 626 124"/>
+    <path stroke="#0B1A2D" d="M610 105C620 109 628 115 637 120M626 124C630 122 634 121 637 120M637 120H641"/>
+    <circle cx="666" cy="120" r="25" fill="#0B1A2D" stroke="none"/>
+  </g>
+</svg>

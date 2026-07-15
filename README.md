@@ -2,6 +2,8 @@
 
 RiskWeave AI is an explainable cyber-transaction intelligence prototype for FinSpark’26 Problem Statement 2. The approved product vision correlates cybersecurity telemetry with transaction behaviour, while keeping every decision deterministic, inspectable, and clearly qualified as a synthetic-data prototype.
 
+*Cyber intelligence. Financial confidence.*
+
 Milestone 6 established the historical composed-product verification baseline against the local
 Docker stack: analyst/admin journeys, API-to-render consistency, stale workflow conflicts, exact
 scenario/reset behavior, accessibility, required viewports, console/network hygiene, and nine
@@ -150,7 +152,8 @@ in application memory; a hard refresh intentionally requires a new sign-in.
 
 Frontend architecture, API-client ownership, authentication flow, and route behavior are documented in
 `docs/FRONTEND_ARCHITECTURE.md`. The reusable visual language is documented in
-`docs/DESIGN_SYSTEM.md`.
+`docs/DESIGN_SYSTEM.md`; the locked Concept A identity, production SVG assets, and wordmark rules are
+documented in `docs/BRAND_GUIDELINES.md`.
 
 Restore the exact deterministic background dataset:
 
