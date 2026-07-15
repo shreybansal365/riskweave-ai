@@ -63,10 +63,30 @@ without duplicating the state machine.
   `weighted_term`;
 - `correlation_bonus` contains only the persisted eligible interaction bonus;
 - `raw_fused_score` and `rounded_fused_score` expose the pre-rounding and final stored values;
-- `rounding_mode` is `ROUND_HALF_UP`.
+- `rounding_mode` is `ROUND_HALF_UP`;
+- `interaction_source_pairs` contains one deterministic backend-authored pair for each persisted
+  interaction contribution. Each pair names the interaction contribution/rule, its own persisted
+  event, transaction, and optional baseline source IDs, and the exact cyber and transaction component
+  contribution IDs, rule codes, and persisted source references. A zero-bonus incident returns an
+  empty list.
 
 The projection exists so clients can explain weighted fusion without embedding `0.45`, performing
-arithmetic, or reconstructing thresholds. It is presentation data, not a writable scoring surface.
+arithmetic, reconstructing thresholds, or owning fraud-rule pairing semantics. The five documented
+interaction rules resolve by exact backend rule code. Historical background interactions resolve only
+when their persisted event and transaction references each identify one unambiguous component; missing
+or ambiguous references fail safely. No database migration is required because contribution IDs,
+codes, source references, and ordering are already persisted.
+
+The session summary keeps two device concepts separate:
+
+- `device_posture` and `organizationally_trusted` describe technical or organizational security
+  posture;
+- `customer_device_familiar` and `customer_familiarity` state whether the device ID appears in the
+  customer's persisted behavioural baseline.
+
+`device_first_seen_at` is technical device-inventory history, not proof that the customer previously
+used the device in a baseline session. The API therefore never treats trusted posture as customer
+familiarity.
 
 ### Mutation contract
 
@@ -101,9 +121,10 @@ from the persisted background window. Empty days remain explicit zero-volume poi
 | GET | `/api/customers/{customer_id}` | Analyst or admin | Bounded customer investigation context |
 | GET | `/api/accounts/{account_id}` | Analyst or admin | Bounded account investigation context |
 
-Responses include baseline ranges and frequencies, trusted devices, familiar locations, and the ten
-most recent applicable sessions, beneficiaries, transactions, and incidents. Display references, IP
-addresses, and beneficiary bank codes are masked.
+Responses include baseline ranges and frequencies, organizationally trusted device inventory,
+familiar locations, and the ten most recent applicable sessions, beneficiaries, transactions, and
+incidents. Organizational posture is distinct from customer familiarity in the behavioural baseline.
+Display references, IP addresses, and beneficiary bank codes are masked.
 
 ## Scenarios
 
@@ -151,8 +172,12 @@ values instead of deriving environment or dataset state from the frontend build 
 
 `/api/system/integrity` adds the service/version, safe API-origin classification, database and
 migration readiness, expected/current deterministic counts, fingerprints, exact-baseline state,
-scenario-run records, benchmark fixture metadata, and references to the latest reset and audit event.
-It is administrator-only because it exposes deeper operational evidence.
+scenario-run records, benchmark fixture metadata, the summarized audit-event count, and the latest
+safe audit reference. It is administrator-only because it exposes deeper operational evidence.
+
+This is the complete implemented administrative boundary. Administrators can run/reset scenarios and
+inspect integrity evidence. The API intentionally provides neither unrestricted paginated audit-event
+browsing nor a general demo-configuration editor.
 
 Neither endpoint returns secrets, plaintext credentials, bearer tokens, connection strings, raw
 environment variables, or database URLs. Both are read-only projections. `/health` remains public and

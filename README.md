@@ -66,9 +66,11 @@ The frontend displays backend-owned status. It does not recreate backend readine
 
 Incident detail now includes a read-only `fusion_projection`. It supplies the stream weights,
 weighted terms, interaction bonus, persisted raw value, rounded result, and rounding mode used by the
-Decision Weave. The UI renders that projection but never derives it. Authenticated shell context comes
-from `/api/system/context`; the deeper dataset, scenario, benchmark, migration, reset, and audit
-integrity projection comes from the admin-only `/api/system/integrity` endpoint.
+Decision Weave. It also supplies exact persisted cyber/transaction component pairs for every
+interaction knot, so the browser owns no fraud-rule pairing table. The UI renders that projection but
+never derives it. Authenticated shell context comes from `/api/system/context`; the deeper dataset,
+scenario, benchmark, migration, reset, and summarized audit-integrity projection comes from the
+admin-only `/api/system/integrity` endpoint.
 
 ## Prerequisites
 
@@ -356,6 +358,10 @@ The PostgreSQL schema contains every entity and enum in `DATA_SCHEMA.md`. Audit 
 append-oriented in the application and protected by PostgreSQL from update, delete, and truncate
 operations. All business routes require a short-lived access token. Analysts can investigate and
 update cases. Scenario execution and reset are server-side admin-only operations.
+
+The implemented admin boundary is deliberately narrow: administrators run/reset deterministic
+scenarios and inspect integrity evidence, including audit count and the latest safe audit reference.
+RiskWeave does not expose unrestricted audit-event browsing or a general demo-configuration editor.
 
 Endpoint schemas, filters, workflow conflicts, and example requests are documented in
 `docs/API.md`. The state machine is documented in `docs/INCIDENT_WORKFLOWS.md`; the independent

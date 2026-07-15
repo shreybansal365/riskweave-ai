@@ -120,13 +120,15 @@ The hero investigation component has meaningful DOM order:
 6. authoritative decision.
 
 `fusion_projection` supplies the score, decimal weight, and weighted term for both streams, plus the
-interaction bonus, raw fused value, rounded fused result, and `ROUND_HALF_UP` mode. The frontend does
-not contain `0.45`, calculate a weighted term, apply a threshold, or infer an action.
+interaction bonus, raw fused value, rounded fused result, `ROUND_HALF_UP` mode, and exact persisted
+cyber/transaction component pair for each interaction. The frontend does not contain `0.45`,
+calculate a weighted term, apply a threshold, infer an action, or own fraud-rule pairing semantics.
 
-Interaction knots pair only persisted interaction contributions with their documented cyber and
-transaction source evidence. When no eligible rule exists, the component says so explicitly and
-shows a zero bonus rather than drawing a decorative connection. An adjacent text alternative states
-the same meaning without depending on layout or color.
+Interaction knots use backend-authored contribution IDs, rule codes, event IDs, transaction IDs, and
+baseline references to pair persisted cyber and transaction evidence. When no eligible rule exists,
+the backend returns an empty source-pair list and the component says so explicitly, showing a zero
+bonus rather than drawing a decorative connection. An adjacent text alternative states the same
+meaning without depending on layout or color.
 
 The first fold pairs the Decision Weave with:
 

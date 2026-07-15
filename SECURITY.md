@@ -24,8 +24,10 @@ Roles:
 
 Analysts can investigate, add notes, update permitted incident outcomes, and view scenario-generated incidents.
 
-Admins can additionally run showcase scenarios, perform atomic reset, inspect system health and audit
-events, and manage demo configuration. Scenario run and reset routes are both admin-only in Milestone 4.
+Admins can additionally run showcase scenarios, perform atomic reset, and inspect system health plus
+deterministic integrity evidence. The integrity projection contains summarized audit count and the
+latest safe audit reference; it is not an unrestricted audit-event browser or a general demo-
+configuration editor. Scenario run and reset routes are both admin-only.
 
 Requirements:
 

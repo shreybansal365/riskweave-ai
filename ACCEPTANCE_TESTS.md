@@ -222,8 +222,9 @@
   frontend source contains no scoring constant or independent score calculation.
 - [ ] Decision Weave distinguishes source scores, weighted terms, eligible interaction bonus, raw
   fused score, rounded score, severity, recommendation, and transaction state without false arithmetic.
-- [ ] Decision Weave interaction knots pair only persisted genuine interactions with their source
-  cyber and transaction evidence.
+- [ ] Decision Weave interaction knots use backend-authored persisted contribution IDs, rule codes,
+  and event/transaction references to pair genuine cyber and transaction evidence; the frontend owns
+  no fraud-rule pairing table.
 - [ ] Decision Weave has a plain-language alternative and meaningful DOM order at 1440, 1280, and
   1024 px.
 - [ ] Decision Context answers what happened, how risky it is, why, transaction treatment, and the

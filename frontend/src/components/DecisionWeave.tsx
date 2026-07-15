@@ -1,33 +1,11 @@
-import { formatDecimal, shortIdentifier, titleCase } from "../lib/format";
+import { formatDecimal, titleCase } from "../lib/format";
 import type {
   Contribution,
   FusionProjection,
+  InteractionSourcePair,
   Severity,
   TransactionStatus,
 } from "../types/api";
-
-const interactionSourceCodes: Record<string, { cyber: string; transaction: string }> = {
-  "correlation.new_device_new_beneficiary": {
-    cyber: "cyber.new_device",
-    transaction: "transaction.new_beneficiary",
-  },
-  "correlation.failed_mfa_high_amount": {
-    cyber: "cyber.failed_mfa",
-    transaction: "transaction.high_amount",
-  },
-  "correlation.endpoint_velocity_spike": {
-    cyber: "cyber.endpoint_alert",
-    transaction: "transaction.velocity_spike",
-  },
-  "correlation.risky_network_new_beneficiary": {
-    cyber: "cyber.risky_network",
-    transaction: "transaction.new_beneficiary",
-  },
-  "correlation.impossible_travel_high_amount": {
-    cyber: "cyber.impossible_travel",
-    transaction: "transaction.high_amount",
-  },
-};
 
 /**
  * Read-only projection from the authoritative backend scoring contract.
@@ -134,59 +112,51 @@ function WeightedTerm({
 
 function InteractionKnot({
   item,
-  cyberEvidence,
-  transactionEvidence,
+  sourcePair,
 }: {
   item: Contribution;
-  cyberEvidence: Contribution[];
-  transactionEvidence: Contribution[];
+  sourcePair: InteractionSourcePair | undefined;
 }) {
-  const sourceCodes = interactionSourceCodes[item.code];
-  const mappedCyber =
-    sourceCodes === undefined
-      ? undefined
-      : cyberEvidence.find((candidate) => candidate.code === sourceCodes.cyber);
-  const mappedTransaction =
-    sourceCodes === undefined
-      ? undefined
-      : transactionEvidence.find(
-          (candidate) => candidate.code === sourceCodes.transaction,
-        );
-  const cyberMatches = cyberEvidence.filter(
-    (candidate) =>
-      item.source_event_id !== null && candidate.source_event_id === item.source_event_id,
-  );
-  const transactionMatches = transactionEvidence.filter(
-    (candidate) =>
-      item.source_transaction_id !== null &&
-      candidate.source_transaction_id === item.source_transaction_id,
-  );
-  const cyberSource =
-    mappedCyber?.label ??
-    (cyberMatches.length === 1
-      ? cyberMatches[0]?.label
-      : item.source_event_id === null
-        ? "Documented cyber evidence"
-        : `Cyber source ${shortIdentifier(item.source_event_id)}`);
-  const transactionSource =
-    mappedTransaction?.label ??
-    (transactionMatches.length === 1
-      ? transactionMatches[0]?.label
-      : item.source_transaction_id === null
-        ? "Documented transaction evidence"
-        : `Transaction source ${shortIdentifier(item.source_transaction_id)}`);
-
   return (
     <li className="decision-weave__knot" data-contribution-code={item.code}>
       <header>
         <strong>{item.label}</strong>
         <span>+{item.points}</span>
       </header>
-      <div className="decision-weave__source-pair" aria-label="Paired evidence sources">
-        <span>{cyberSource}</span>
-        <i aria-hidden="true">↔</i>
-        <span>{transactionSource}</span>
-      </div>
+      {sourcePair === undefined ? (
+        <p className="decision-weave__source-pair-unavailable" role="status">
+          Persisted component provenance is unavailable for this interaction.
+        </p>
+      ) : (
+        <div
+          className="decision-weave__source-pair"
+          aria-label="Backend-authored paired evidence sources"
+          data-interaction-contribution-id={sourcePair.interaction_contribution_id}
+          data-interaction-rule-code={sourcePair.interaction_rule_code}
+          data-interaction-source-event-id={sourcePair.interaction_source_event_id}
+          data-interaction-source-transaction-id={
+            sourcePair.interaction_source_transaction_id
+          }
+        >
+          <span
+            data-source-contribution-id={sourcePair.cyber_component.contribution_id}
+            data-source-rule-code={sourcePair.cyber_component.rule_code}
+            data-source-event-id={sourcePair.cyber_component.source_event_id ?? undefined}
+          >
+            {sourcePair.cyber_component.label}
+          </span>
+          <i aria-hidden="true">↔</i>
+          <span
+            data-source-contribution-id={sourcePair.transaction_component.contribution_id}
+            data-source-rule-code={sourcePair.transaction_component.rule_code}
+            data-source-transaction-id={
+              sourcePair.transaction_component.source_transaction_id ?? undefined
+            }
+          >
+            {sourcePair.transaction_component.label}
+          </span>
+        </div>
+      )}
       <p>{item.explanation}</p>
       <code>{item.code}</code>
     </li>
@@ -263,8 +233,9 @@ export function DecisionWeave({
                   <InteractionKnot
                     key={item.contribution_id}
                     item={item}
-                    cyberEvidence={cyberEvidence}
-                    transactionEvidence={transactionEvidence}
+                    sourcePair={fusionProjection?.interaction_source_pairs.find(
+                      (pair) => pair.interaction_contribution_id === item.contribution_id,
+                    )}
                   />
                 ))}
             </ol>

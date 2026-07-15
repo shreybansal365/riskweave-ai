@@ -1,15 +1,31 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
 from sqlalchemy import func, select
 
 from app.db.session import SessionFactory
-from app.models.domain import AuditEvent, Incident, RiskContribution, ScenarioRun, Transaction
-from app.models.enums import AuditEventType, ScenarioKey, ScenarioRunStatus, TransactionStatus
-from app.services.demo_data import DemoDataService, dataset_fingerprint
+from app.models.domain import (
+    AuditEvent,
+    BehaviourBaseline,
+    Device,
+    Incident,
+    RiskContribution,
+    ScenarioRun,
+    Transaction,
+)
+from app.models.enums import (
+    AuditEventType,
+    DevicePosture,
+    ScenarioKey,
+    ScenarioRunStatus,
+    TransactionStatus,
+)
+from app.services.demo_data import SIMULATION_EPOCH, DemoDataService, dataset_fingerprint
 from app.services.scenarios import ScenarioService
+from app.synthetic.identity import deterministic_uuid
 
 
 @pytest.mark.integration
@@ -125,6 +141,80 @@ def test_scenario_execution_is_idempotent_and_reset_restores_exact_baseline(
         runs = session.scalars(select(ScenarioRun)).all()
         assert all(item.status == ScenarioRunStatus.NOT_RUN for item in runs)
         assert all(item.result_incident_id is None for item in runs)
+
+
+@pytest.mark.integration
+def test_account_takeover_separates_device_posture_from_customer_familiarity_and_resets_exactly(
+    postgres_session_factory: SessionFactory,
+) -> None:
+    data_service = DemoDataService(postgres_session_factory)
+    baseline_snapshot = data_service.reset(request_id="scenario-trust-semantics-reset")
+    scenario_service = ScenarioService(postgres_session_factory)
+    scenario_service.run(ScenarioKey.NORMAL_ACTIVITY, request_id="scenario-trust-normal")
+    scenario_service.run(
+        ScenarioKey.LEGITIMATE_NEW_DEVICE,
+        request_id="scenario-trust-legitimate",
+    )
+    takeover = scenario_service.run(
+        ScenarioKey.ACCOUNT_TAKEOVER,
+        request_id="scenario-trust-takeover",
+    )
+    replay = scenario_service.run(
+        ScenarioKey.ACCOUNT_TAKEOVER,
+        request_id="scenario-trust-takeover-replay",
+    )
+
+    assert replay == takeover
+    assert takeover.incident_id == deterministic_uuid("incident", "scenario-account_takeover")
+    assert (
+        takeover.cyber_score,
+        takeover.transaction_score,
+        takeover.correlation_bonus,
+        takeover.raw_fused_score,
+        takeover.fused_score,
+        takeover.severity,
+        takeover.recommended_action,
+        takeover.transaction_status,
+    ) == (
+        78,
+        79,
+        18,
+        Decimal("88.65"),
+        89,
+        "critical",
+        "hold_and_open_critical_incident",
+        "held",
+    )
+    with postgres_session_factory() as session:
+        assert session.scalar(select(func.count()).select_from(Incident)) == 18
+        incident = session.get(Incident, takeover.incident_id)
+        assert incident is not None
+        assert incident.created_at == SIMULATION_EPOCH + timedelta(minutes=30)
+        device_id = deterministic_uuid("device", "scenario-account-takeover-device")
+        assert incident.transaction.session.device_id == device_id
+        device = session.get(Device, device_id)
+        assert device is not None
+        assert device.trusted is True
+        assert device.posture == DevicePosture.TRUSTED
+        baseline = session.scalar(
+            select(BehaviourBaseline).where(BehaviourBaseline.customer_id == incident.customer_id)
+        )
+        assert baseline is not None
+        assert device_id not in baseline.known_device_ids
+        explanations = {
+            item.code: item.explanation
+            for item in session.scalars(
+                select(RiskContribution).where(RiskContribution.incident_id == takeover.incident_id)
+            )
+        }
+        assert "not previously observed" in explanations["cyber.new_device"]
+        assert "trusted organizational posture" in explanations["cyber.behavioural_deviation"]
+
+    restored = data_service.reset(request_id="scenario-trust-semantics-restore")
+    assert restored.fingerprint == baseline_snapshot.fingerprint
+    with postgres_session_factory() as session:
+        assert dataset_fingerprint(session) == baseline_snapshot.fingerprint
+        assert session.scalar(select(func.count()).select_from(Incident)) == 15
 
 
 @pytest.mark.integration

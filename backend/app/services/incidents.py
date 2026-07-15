@@ -13,10 +13,12 @@ from sqlalchemy.orm import Session
 from app.models.domain import (
     Account,
     AnalystAction,
+    BehaviourBaseline,
     Beneficiary,
     CryptoAsset,
     Customer,
     CyberEvent,
+    Device,
     Incident,
     RiskContribution,
     Transaction,
@@ -42,12 +44,17 @@ from app.schemas.incidents import (
     IncidentDetailResponse,
     IncidentListItemResponse,
     IncidentListResponse,
+    InteractionSourcePairResponse,
     SessionSummaryResponse,
     TimelineItemResponse,
     TransactionSummaryResponse,
     WeightedScoreTermResponse,
 )
 from app.services.analyst_workflows import available_actions_for
+from app.services.incident_provenance import (
+    IncidentProvenanceError,
+    project_interaction_source_pairs,
+)
 from app.services.presentation import masked_ip, masked_uuid
 from app.services.quantum_readiness import (
     FRAUD_RISK_SEPARATION_NOTICE,
@@ -150,6 +157,8 @@ class IncidentQueryService:
                 Customer,
                 Account,
                 BankingSession,
+                Device,
+                BehaviourBaseline,
                 Beneficiary,
                 TransactionChannel,
                 CryptoAsset,
@@ -158,6 +167,8 @@ class IncidentQueryService:
             .join(Customer, Customer.customer_id == Incident.customer_id)
             .join(Account, Account.account_id == Incident.account_id)
             .join(BankingSession, BankingSession.session_id == Incident.session_id)
+            .join(Device, Device.device_id == BankingSession.device_id)
+            .join(BehaviourBaseline, BehaviourBaseline.customer_id == Incident.customer_id)
             .join(Beneficiary, Beneficiary.beneficiary_id == Transaction.beneficiary_id)
             .join(TransactionChannel, TransactionChannel.channel_id == Transaction.channel_id)
             .join(CryptoAsset, CryptoAsset.crypto_asset_id == TransactionChannel.crypto_asset_id)
@@ -171,6 +182,8 @@ class IncidentQueryService:
             customer,
             account,
             banking_session,
+            device,
+            behavioural_baseline,
             beneficiary,
             channel,
             crypto_asset,
@@ -198,6 +211,16 @@ class IncidentQueryService:
             .order_by(CyberEvent.event_time, CyberEvent.cyber_event_id)
         ).all()
         contribution_responses = [_contribution(item) for item in contributions]
+        interaction_source_pairs = project_interaction_source_pairs(contributions)
+        persisted_interaction_points = sum(
+            item.points
+            for item in contributions
+            if item.category == ContributionCategory.CORRELATION
+        )
+        if persisted_interaction_points != incident.correlation_bonus:
+            raise IncidentProvenanceError(
+                "persisted interaction contributions do not match the incident correlation bonus"
+            )
         assessment = self._quantum.assess(crypto_asset)
         analyst_actions = [
             AnalystActionResponse(
@@ -234,7 +257,7 @@ class IncidentQueryService:
             model_version=incident.model_version,
             created_at=incident.created_at,
             updated_at=incident.updated_at,
-            fusion_projection=_fusion_projection(incident),
+            fusion_projection=_fusion_projection(incident, interaction_source_pairs),
             customer=CustomerSummaryResponse(
                 customer_id=customer.customer_id,
                 customer_reference=masked_uuid(customer.customer_id, prefix="CUS"),
@@ -259,6 +282,17 @@ class IncidentQueryService:
                 started_at=banking_session.started_at,
                 ended_at=banking_session.ended_at,
                 status=banking_session.status.value,
+                device_posture=device.posture,
+                organizationally_trusted=device.trusted,
+                customer_device_familiar=(
+                    device.device_id in behavioural_baseline.known_device_ids
+                ),
+                customer_familiarity=(
+                    "familiar"
+                    if device.device_id in behavioural_baseline.known_device_ids
+                    else "new_to_behavioural_history"
+                ),
+                device_first_seen_at=device.first_seen_at,
             ),
             transaction=TransactionSummaryResponse(
                 transaction_id=transaction.transaction_id,
@@ -400,7 +434,10 @@ def _contribution(item: RiskContribution) -> ContributionResponse:
     )
 
 
-def _fusion_projection(incident: Incident) -> FusionProjectionResponse:
+def _fusion_projection(
+    incident: Incident,
+    interaction_source_pairs: list[InteractionSourcePairResponse],
+) -> FusionProjectionResponse:
     """Project the locked fusion formula from stored backend-owned incident values."""
 
     quantum = Decimal("0.01")
@@ -420,6 +457,7 @@ def _fusion_projection(incident: Incident) -> FusionProjectionResponse:
         correlation_bonus=incident.correlation_bonus,
         raw_fused_score=incident.raw_fused_score,
         rounded_fused_score=incident.fused_score,
+        interaction_source_pairs=interaction_source_pairs,
     )
 
 

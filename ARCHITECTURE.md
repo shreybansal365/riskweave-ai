@@ -108,7 +108,10 @@ The benchmark reporting layer does not alter fixtures, labels, engine weights, t
 9. Explainability creates stable reason codes and concrete descriptions.
 10. Decision logic maps the fused score to severity and recommended action.
 11. Incident, contributions, timeline references, recommendation, and audit event are stored atomically.
-12. Frontend retrieves the stored values through APIs and never recalculates them.
+12. The incident API projects exact persisted cyber/transaction component pairs for every
+    interaction contribution; malformed or ambiguous provenance is rejected instead of inferred.
+13. Frontend retrieves the stored values and backend-authored provenance through APIs and never
+    recalculates them or owns interaction-rule pairing semantics.
 
 ## Risk formula
 
@@ -150,7 +153,7 @@ The event must match `customer_id`, `account_id`, and `session_id`. `device_id` 
 
 ## API boundary
 
-Implemented through Milestone 4:
+Current implemented product boundary:
 
 - `POST /api/auth/login`
 - `GET /api/auth/me`
@@ -171,17 +174,20 @@ Implemented through Milestone 4:
 - `GET /api/quantum/assets`
 - `GET /api/quantum/summary`
 - `GET /api/benchmark/summary`
-
-Still deferred:
-
-- `GET /api/system/status` (admin only)
-- `GET /api/audit-events` (admin only)
+- `GET /api/system/context`
+- `GET /api/system/integrity` (admin only)
 
 Every `/api` business route is authenticated. Analysts may read all Milestone 4 investigation,
 dashboard, context, quantum, benchmark, and scenario-catalog responses and may apply validated incident
 actions. Scenario run and atomic reset routes are admin-only. Handlers validate and delegate; database
 queries, state transitions, aggregation, readiness calculation, and benchmark evaluation remain in
 services.
+
+`/api/system/context` is the safe authenticated shell projection. `/api/system/integrity` is the
+admin-only deterministic-integrity projection and includes summarized audit count plus the latest safe
+audit reference. RiskWeave intentionally does not expose unrestricted audit-event browsing or a
+general demo-configuration editor; administration is limited to scenario execution, exact reset, and
+integrity inspection.
 
 Incident mutation requests use `Idempotency-Key`, row-level locks, an optional `expected_updated_at`
 token, explicit state transitions, and append-oriented action/audit records. Dashboard values and

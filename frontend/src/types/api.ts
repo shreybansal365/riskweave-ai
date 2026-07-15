@@ -110,6 +110,27 @@ export interface WeightedScoreTerm {
   weighted_term: string;
 }
 
+export interface InteractionComponentSource {
+  contribution_id: string;
+  category: string;
+  rule_code: string;
+  label: string;
+  source_event_id: string | null;
+  source_transaction_id: string | null;
+  source_baseline_id: string | null;
+}
+
+export interface InteractionSourcePair {
+  interaction_contribution_id: string;
+  interaction_rule_code: string;
+  display_order: number;
+  interaction_source_event_id: string;
+  interaction_source_transaction_id: string;
+  interaction_source_baseline_id: string | null;
+  cyber_component: InteractionComponentSource;
+  transaction_component: InteractionComponentSource;
+}
+
 export interface FusionProjection {
   cyber: WeightedScoreTerm;
   transaction: WeightedScoreTerm;
@@ -117,6 +138,7 @@ export interface FusionProjection {
   raw_fused_score: string;
   rounded_fused_score: number;
   rounding_mode: "ROUND_HALF_UP";
+  interaction_source_pairs: InteractionSourcePair[];
 }
 
 export interface IncidentListItem extends IncidentScore {
@@ -228,6 +250,13 @@ export interface IncidentDetail extends IncidentScore {
     started_at: string;
     ended_at: string | null;
     status: string;
+    device_posture: string;
+    organizationally_trusted: boolean;
+    customer_device_familiar: boolean;
+    customer_familiarity: "familiar" | "new_to_behavioural_history";
+    customer_familiarity_basis: "behavioural_baseline_known_device_ids";
+    device_first_seen_at: string;
+    device_first_seen_scope: "technical_device_inventory";
   };
   transaction: {
     transaction_id: string;

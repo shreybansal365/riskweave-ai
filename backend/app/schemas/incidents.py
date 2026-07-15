@@ -10,6 +10,7 @@ from pydantic import Field, field_validator, model_validator
 from app.models.enums import (
     AnalystActionType,
     ContributionCategory,
+    DevicePosture,
     IncidentStatus,
     RecommendedAction,
     ScenarioKey,
@@ -35,6 +36,31 @@ class WeightedScoreTermResponse(ApiModel):
     weighted_term: Decimal = Field(ge=0, le=100)
 
 
+class InteractionComponentSourceResponse(ApiModel):
+    """One persisted stream contribution supporting an interaction."""
+
+    contribution_id: UUID
+    category: ContributionCategory
+    rule_code: str
+    label: str
+    source_event_id: UUID | None
+    source_transaction_id: UUID | None
+    source_baseline_id: UUID | None
+
+
+class InteractionSourcePairResponse(ApiModel):
+    """Backend-authored pairing for one persisted interaction contribution."""
+
+    interaction_contribution_id: UUID
+    interaction_rule_code: str
+    display_order: int = Field(ge=0)
+    interaction_source_event_id: UUID
+    interaction_source_transaction_id: UUID
+    interaction_source_baseline_id: UUID | None
+    cyber_component: InteractionComponentSourceResponse
+    transaction_component: InteractionComponentSourceResponse
+
+
 class FusionProjectionResponse(ApiModel):
     """Read-only explanation of persisted fusion inputs and output."""
 
@@ -44,6 +70,7 @@ class FusionProjectionResponse(ApiModel):
     raw_fused_score: Decimal = Field(ge=0, le=100)
     rounded_fused_score: int = Field(ge=0, le=100)
     rounding_mode: Literal["ROUND_HALF_UP"] = "ROUND_HALF_UP"
+    interaction_source_pairs: list[InteractionSourcePairResponse]
 
 
 class IncidentListItemResponse(IncidentScoreResponse):
@@ -139,6 +166,15 @@ class SessionSummaryResponse(ApiModel):
     started_at: datetime
     ended_at: datetime | None
     status: str
+    device_posture: DevicePosture
+    organizationally_trusted: bool
+    customer_device_familiar: bool
+    customer_familiarity: Literal["familiar", "new_to_behavioural_history"]
+    customer_familiarity_basis: Literal["behavioural_baseline_known_device_ids"] = (
+        "behavioural_baseline_known_device_ids"
+    )
+    device_first_seen_at: datetime
+    device_first_seen_scope: Literal["technical_device_inventory"] = "technical_device_inventory"
 
 
 class CryptoReadinessSummaryResponse(ApiModel):

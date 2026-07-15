@@ -88,6 +88,11 @@ The baseline is derived only from deterministic synthetic historical sessions an
 - `first_seen_at`
 - `last_seen_at`
 
+`trusted` and `posture` describe technical or organizational device posture. Customer familiarity is
+derived separately from the customer's behavioural-baseline `known_device_ids`. `first_seen_at`
+records technical device-inventory history and is not proof of prior customer use in a baseline
+session.
+
 ### Session
 
 - `session_id`

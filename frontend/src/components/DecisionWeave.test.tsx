@@ -57,6 +57,34 @@ const fusionProjection: FusionProjection = {
   raw_fused_score: "88.65",
   rounded_fused_score: 89,
   rounding_mode: "ROUND_HALF_UP",
+  interaction_source_pairs: [
+    {
+      interaction_contribution_id: "interaction-1",
+      interaction_rule_code: "correlation.failed_mfa_high_amount",
+      display_order: 1,
+      interaction_source_event_id: "event-mfa",
+      interaction_source_transaction_id: "transaction-1",
+      interaction_source_baseline_id: "baseline-1",
+      cyber_component: {
+        contribution_id: "cyber-1",
+        category: "cyber_rule",
+        rule_code: "cyber.failed_mfa",
+        label: "Failed MFA",
+        source_event_id: "event-mfa",
+        source_transaction_id: null,
+        source_baseline_id: null,
+      },
+      transaction_component: {
+        contribution_id: "transaction-1",
+        category: "transaction_rule",
+        rule_code: "transaction.high_amount",
+        label: "Unusually high amount",
+        source_event_id: null,
+        source_transaction_id: "transaction-1",
+        source_baseline_id: "baseline-1",
+      },
+    },
+  ],
 };
 
 describe("DecisionWeave", () => {
@@ -100,6 +128,11 @@ describe("DecisionWeave", () => {
     expect(knot).not.toBeNull();
     expect(within(knot as HTMLElement).getByText("Failed MFA")).toBeVisible();
     expect(within(knot as HTMLElement).getByText("Unusually high amount")).toBeVisible();
+    expect(
+      within(knot as HTMLElement).getByLabelText(
+        "Backend-authored paired evidence sources",
+      ),
+    ).toHaveAttribute("data-interaction-contribution-id", "interaction-1");
     expect(screen.getByText("88.65")).toBeVisible();
     expect(screen.getByText("89")).toBeVisible();
   });
@@ -131,5 +164,55 @@ describe("DecisionWeave", () => {
     expect(screen.getByText("Permitted")).toBeVisible();
     expect(screen.queryByText("Cyber weighted term")).not.toBeInTheDocument();
     expect(screen.queryByText("0.45")).not.toBeInTheDocument();
+  });
+
+  it("renders an unfamiliar interaction code from backend-authored component provenance", () => {
+    const interaction = interactions[0];
+    const sourcePair = fusionProjection.interaction_source_pairs[0];
+    if (interaction === undefined || sourcePair === undefined)
+      throw new Error("Decision Weave provenance fixture is incomplete");
+    const backendOnlyInteraction = {
+      ...interaction,
+      code: "correlation.backend_owned_rule",
+      label: "Backend-owned interaction",
+    };
+    const backendProjection: FusionProjection = {
+      ...fusionProjection,
+      interaction_source_pairs: [
+        {
+          ...sourcePair,
+          interaction_rule_code: "correlation.backend_owned_rule",
+          cyber_component: {
+            ...sourcePair.cyber_component,
+            label: "Backend-selected cyber source",
+          },
+          transaction_component: {
+            ...sourcePair.transaction_component,
+            label: "Backend-selected transaction source",
+          },
+        },
+      ],
+    };
+
+    render(
+      <DecisionWeave
+        cyberScore={78}
+        transactionScore={79}
+        correlationBonus={18}
+        rawFusedScore="88.65"
+        fusedScore={89}
+        severity="critical"
+        recommendedActionLabel="Hold and open critical incident"
+        transactionStatus="held"
+        decisionExplanation="The persisted evidence justified a critical intervention."
+        cyberEvidence={cyberEvidence}
+        transactionEvidence={transactionEvidence}
+        interactions={[backendOnlyInteraction]}
+        fusionProjection={backendProjection}
+      />,
+    );
+
+    expect(screen.getByText("Backend-selected cyber source")).toBeVisible();
+    expect(screen.getByText("Backend-selected transaction source")).toBeVisible();
   });
 });

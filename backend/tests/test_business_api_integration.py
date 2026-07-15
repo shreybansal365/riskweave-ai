@@ -12,10 +12,17 @@ from sqlalchemy import delete, func, select
 from app.core.config import Settings
 from app.core.security import PasswordService
 from app.db.session import SessionFactory
-from app.models.domain import AnalystAction, AuditEvent, Incident, Transaction
+from app.models.domain import (
+    AnalystAction,
+    AuditEvent,
+    Incident,
+    RiskContribution,
+    Transaction,
+)
 from app.models.enums import (
     AnalystActionType,
     AuditEventType,
+    ContributionCategory,
     TransactionStatus,
 )
 from app.services.demo_data import DemoDataService, dataset_fingerprint
@@ -184,6 +191,7 @@ def test_incident_detail_is_chronological_grounded_and_consistent(
         "raw_fused_score": "9.00",
         "rounded_fused_score": 9,
         "rounding_mode": "ROUND_HALF_UP",
+        "interaction_source_pairs": [],
     }
     assert payload["customer"]["customer_reference"].startswith("CUS-••••-")
     assert "xxx.xxx" in payload["session"]["masked_ip_address"]
@@ -206,6 +214,35 @@ def test_incident_detail_is_chronological_grounded_and_consistent(
     missing = postgres_client.get(f"/api/incidents/{uuid4()}", headers=headers)
     assert missing.status_code == 404
     assert missing.json() == {"detail": "Incident not found"}
+
+
+@pytest.mark.integration
+def test_incident_detail_fails_safely_for_malformed_persisted_interaction_provenance(
+    postgres_client: TestClient,
+    postgres_settings: Settings,
+    postgres_session_factory: SessionFactory,
+    password_service: PasswordService,
+) -> None:
+    _prepare(postgres_session_factory, postgres_settings, password_service)
+    headers = _login(postgres_client, postgres_settings, "analyst")
+    with postgres_session_factory.begin() as session:
+        interaction = session.scalar(
+            select(RiskContribution)
+            .join(Incident, Incident.incident_id == RiskContribution.incident_id)
+            .where(
+                RiskContribution.category == ContributionCategory.CORRELATION,
+                Incident.correlation_bonus > 0,
+            )
+            .order_by(RiskContribution.display_order, RiskContribution.contribution_id)
+        )
+        assert interaction is not None
+        incident_id = interaction.incident_id
+        interaction.source_event_id = None
+
+    response = postgres_client.get(f"/api/incidents/{incident_id}", headers=headers)
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Incident provenance is unavailable"}
 
 
 @pytest.mark.integration
@@ -536,7 +573,10 @@ def test_scenario_api_is_admin_only_idempotent_and_exactly_resettable(
         f"/api/incidents/{first.json()['incident_id']}", headers=analyst_headers
     )
     assert attack_detail.status_code == 200
-    assert attack_detail.json()["fusion_projection"] == {
+    attack_payload = attack_detail.json()
+    attack_projection = attack_payload["fusion_projection"]
+    attack_pairs = attack_projection.pop("interaction_source_pairs")
+    assert attack_projection == {
         "cyber": {"score": 78, "weight": "0.45", "weighted_term": "35.10"},
         "transaction": {"score": 79, "weight": "0.45", "weighted_term": "35.55"},
         "correlation_bonus": 18,
@@ -544,6 +584,38 @@ def test_scenario_api_is_admin_only_idempotent_and_exactly_resettable(
         "rounded_fused_score": 89,
         "rounding_mode": "ROUND_HALF_UP",
     }
+    assert [item["interaction_rule_code"] for item in attack_pairs] == [
+        "correlation.new_device_new_beneficiary",
+        "correlation.failed_mfa_high_amount",
+        "correlation.endpoint_velocity_spike",
+    ]
+    assert all(
+        item["cyber_component"]["contribution_id"]
+        and item["cyber_component"]["source_event_id"]
+        and item["transaction_component"]["contribution_id"]
+        and item["transaction_component"]["source_transaction_id"]
+        == attack_payload["transaction"]["transaction_id"]
+        for item in attack_pairs
+    )
+    assert attack_payload["session"]["device_posture"] == "trusted"
+    assert attack_payload["session"]["organizationally_trusted"] is True
+    assert attack_payload["session"]["customer_device_familiar"] is False
+    assert attack_payload["session"]["customer_familiarity"] == "new_to_behavioural_history"
+    assert (
+        attack_payload["session"]["customer_familiarity_basis"]
+        == "behavioural_baseline_known_device_ids"
+    )
+    assert attack_payload["session"]["device_first_seen_scope"] == "technical_device_inventory"
+    assert "not previously observed" in next(
+        item["explanation"]
+        for item in attack_payload["cyber_contributions"]
+        if item["code"] == "cyber.new_device"
+    )
+    assert "trusted organizational posture" in next(
+        item["explanation"]
+        for item in attack_payload["cyber_contributions"]
+        if item["code"] == "cyber.behavioural_deviation"
+    )
     legitimate = postgres_client.post(
         "/api/scenarios/legitimate_new_device/run",
         headers={**admin_headers, "X-Request-ID": "admin-scenario-legitimate"},
@@ -560,6 +632,7 @@ def test_scenario_api_is_admin_only_idempotent_and_exactly_resettable(
         "raw_fused_score": "22.50",
         "rounded_fused_score": 23,
         "rounding_mode": "ROUND_HALF_UP",
+        "interaction_source_pairs": [],
     }
     scenario_filter = postgres_client.get(
         "/api/incidents?scenario=account_takeover", headers=analyst_headers
@@ -725,6 +798,29 @@ def test_openapi_contains_complete_milestone_four_surface(
     assert "transaction_status" in incident_parameters
     incident_detail_schema = document["components"]["schemas"]["IncidentDetailResponse"]
     assert "fusion_projection" in incident_detail_schema["required"]
+    fusion_schema = document["components"]["schemas"]["FusionProjectionResponse"]
+    assert "interaction_source_pairs" in fusion_schema["required"]
+    pair_schema = document["components"]["schemas"]["InteractionSourcePairResponse"]
+    assert {
+        "interaction_contribution_id",
+        "interaction_rule_code",
+        "display_order",
+        "interaction_source_event_id",
+        "interaction_source_transaction_id",
+        "interaction_source_baseline_id",
+        "cyber_component",
+        "transaction_component",
+    } <= set(pair_schema["required"])
+    session_schema = document["components"]["schemas"]["SessionSummaryResponse"]
+    assert {
+        "device_posture",
+        "organizationally_trusted",
+        "customer_device_familiar",
+        "customer_familiarity",
+        "device_first_seen_at",
+    } <= set(session_schema["required"])
+    assert "/api/system/status" not in paths
+    assert "/api/audit-events" not in paths
     assert paths["/api/system/context"]["get"]["security"] == [{"HTTPBearer": []}]
     assert paths["/api/system/integrity"]["get"]["security"] == [{"HTTPBearer": []}]
 

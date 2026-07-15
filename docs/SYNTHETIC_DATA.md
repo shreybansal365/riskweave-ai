@@ -34,7 +34,7 @@ fixture context, not claims that a trained model discovered 15 real incidents.
 Baselines are derived from persisted synthetic sessions, events, transactions, devices, beneficiaries,
 and channels—not copied into UI constants. Each baseline records:
 
-- trusted/seen device identifiers;
+- previously observed customer device identifiers;
 - usual login cities and login-hour range;
 - known beneficiary identifiers and typical beneficiary age;
 - median amount and median absolute deviation;
@@ -42,6 +42,11 @@ and channels—not copied into UI constants. Each baseline records:
 - known channel usage;
 - usual destination-risk levels;
 - exact sample window and model version.
+
+Device security posture and customer familiarity are independent. `Device.trusted` and
+`Device.posture` describe technical or organizational posture. A device is familiar to a customer
+only when its ID appears in that customer's persisted baseline `known_device_ids`. Device
+`first_seen_at` is technical inventory history and is not evidence of prior customer use.
 
 ## Scenario and reset semantics
 

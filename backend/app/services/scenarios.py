@@ -391,7 +391,7 @@ def _create_entities(session: OrmSession, scenario_key: ScenarioKey) -> _Scenari
             False,
             Decimal("1.5"),
             (
-                "session started on a device absent from customer history",
+                "device was not previously observed in this customer's behavioural history",
                 "browser fingerprint had not appeared before",
                 "device posture was not trusted",
                 "login time was outside the personal baseline",
@@ -465,7 +465,8 @@ def _create_entities(session: OrmSession, scenario_key: ScenarioKey) -> _Scenari
             True,
             Decimal("4"),
             (
-                "session started on a device absent from customer history",
+                "device had a trusted organizational posture but was absent from this "
+                "customer's behavioural history",
                 "MFA outcome differed from normal successful authentication",
                 "network reputation differed from normal sessions",
                 "location behaviour differed from customer history",

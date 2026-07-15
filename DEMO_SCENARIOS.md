@@ -96,6 +96,12 @@ Purpose: demonstrate that a cyber-only view would escalate the activity, while n
 
 **Key:** `account_takeover`
 
+The synthetic device has a known fleet fingerprint and trusted organizational security posture, but
+its device ID is absent from this customer's persisted behavioural baseline. RiskWeave therefore
+reports two separate facts: `Device posture: Trusted` and `Customer familiarity: New to behavioural
+history`. Technical posture does not establish prior customer use. The device record's
+`first_seen_at` represents technical inventory history, not proof of a customer baseline session.
+
 ### Cyber score
 
 Rule contributions:

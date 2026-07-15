@@ -48,7 +48,8 @@ class CyberRiskEngine:
                     CYBER_NEW_DEVICE,
                     "New device",
                     12,
-                    "The session used a device not previously trusted for this customer.",
+                    "The session used a device not previously observed in this customer's "
+                    "behavioural history.",
                 )
             )
         if not features.fingerprint_known:

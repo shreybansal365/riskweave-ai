@@ -120,6 +120,7 @@ Decision Weave and never stands in for case evidence or score provenance.
 5. Customer and Account Context
 6. Quantum Readiness
 7. System Health
+8. Evaluation
 
 ## Overview
 
@@ -276,7 +277,7 @@ Admin-only operational view:
 - simulation epoch and seeds;
 - scenario state;
 - benchmark fixture version;
-- latest reset and audit-event status.
+- latest reset, summarized audit integrity, and latest safe audit reference;
 - truthful environment/deployment context and safe API origin;
 - baseline and active incident counts plus dataset fingerprint or verified integrity state.
 

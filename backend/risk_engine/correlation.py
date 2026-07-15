@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import timedelta
+from types import MappingProxyType
 from uuid import UUID
 
 from app.models.enums import ContributionCategory
@@ -23,6 +25,34 @@ from risk_engine.types import (
 
 CORRELATION_WINDOW = timedelta(minutes=30)
 MAX_CORRELATION_BONUS = 18
+
+# Backend-owned component semantics for every documented interaction rule. The
+# incident projection reuses this exact contract so browsers never need to know
+# which fraud-rule contributions form an interaction.
+INTERACTION_COMPONENT_CODES: Mapping[str, tuple[str, str]] = MappingProxyType(
+    {
+        "correlation.new_device_new_beneficiary": (
+            CYBER_NEW_DEVICE,
+            TRANSACTION_NEW_BENEFICIARY,
+        ),
+        "correlation.failed_mfa_high_amount": (
+            CYBER_FAILED_MFA,
+            TRANSACTION_HIGH_AMOUNT,
+        ),
+        "correlation.endpoint_velocity_spike": (
+            CYBER_ENDPOINT_ALERT,
+            TRANSACTION_VELOCITY_SPIKE,
+        ),
+        "correlation.risky_network_new_beneficiary": (
+            CYBER_RISKY_NETWORK,
+            TRANSACTION_NEW_BENEFICIARY,
+        ),
+        "correlation.impossible_travel_high_amount": (
+            CYBER_IMPOSSIBLE_TRAVEL,
+            TRANSACTION_HIGH_AMOUNT,
+        ),
+    }
+)
 
 
 def correlate_events(
@@ -70,10 +100,9 @@ def evaluate_interactions(
         code: str,
         label: str,
         points: int,
-        cyber_code: str,
-        transaction_code: str,
         explanation: str,
     ) -> None:
+        cyber_code, transaction_code = INTERACTION_COMPONENT_CODES[code]
         cyber_signal = cyber_by_code.get(cyber_code)
         transaction_signal = transaction_by_code.get(transaction_code)
         if cyber_signal is None or transaction_signal is None:
@@ -96,8 +125,6 @@ def evaluate_interactions(
         code="correlation.new_device_new_beneficiary",
         label="New device and new beneficiary",
         points=6,
-        cyber_code=CYBER_NEW_DEVICE,
-        transaction_code=TRANSACTION_NEW_BENEFICIARY,
         explanation=(
             "A new customer device was followed by a transfer to a newly created beneficiary."
         ),
@@ -106,8 +133,6 @@ def evaluate_interactions(
         code="correlation.failed_mfa_high_amount",
         label="Failed MFA and high amount",
         points=6,
-        cyber_code=CYBER_FAILED_MFA,
-        transaction_code=TRANSACTION_HIGH_AMOUNT,
         explanation=(
             "Failed MFA preceded a transfer at least five times the customer's median amount."
         ),
@@ -116,8 +141,6 @@ def evaluate_interactions(
         code="correlation.endpoint_velocity_spike",
         label="Endpoint alert and velocity spike",
         points=6,
-        cyber_code=CYBER_ENDPOINT_ALERT,
-        transaction_code=TRANSACTION_VELOCITY_SPIKE,
         explanation="A compromised-device alert coincided with sharply elevated transfer velocity.",
     )
 
@@ -127,8 +150,6 @@ def evaluate_interactions(
             code="correlation.risky_network_new_beneficiary",
             label="Risky network and new beneficiary",
             points=4,
-            cyber_code=CYBER_RISKY_NETWORK,
-            transaction_code=TRANSACTION_NEW_BENEFICIARY,
             explanation=(
                 "A risky network source preceded a transfer to a newly created beneficiary."
             ),
@@ -138,8 +159,6 @@ def evaluate_interactions(
         code="correlation.impossible_travel_high_amount",
         label="Impossible travel and high amount",
         points=6,
-        cyber_code=CYBER_IMPOSSIBLE_TRAVEL,
-        transaction_code=TRANSACTION_HIGH_AMOUNT,
         explanation="An impossible-travel event preceded a transfer at least five times normal.",
     )
 

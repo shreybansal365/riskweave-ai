@@ -381,6 +381,23 @@ export function IncidentDetailPage() {
             <dt>Session</dt>
             <dd>{shortIdentifier(data.session.session_id)}</dd>
           </div>
+          <div data-device-posture>
+            <dt>Device posture</dt>
+            <dd>
+              {titleCase(data.session.device_posture)} ·{" "}
+              {data.session.organizationally_trusted
+                ? "organizational trust established"
+                : "organizational trust not established"}
+            </dd>
+          </div>
+          <div data-customer-familiarity>
+            <dt>Customer familiarity</dt>
+            <dd>
+              {data.session.customer_device_familiar
+                ? "Previously observed in behavioural history"
+                : "New to behavioural history"}
+            </dd>
+          </div>
         </dl>
       </section>
 
@@ -655,7 +672,7 @@ export function IncidentDetailPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt>Trusted devices</dt>
+                  <dt>Organizationally trusted devices</dt>
                   <dd>{customer.data.trusted_devices.length}</dd>
                 </div>
                 <div>
@@ -669,7 +686,7 @@ export function IncidentDetailPage() {
               </dl>
               <div className="context-columns">
                 <section>
-                  <h3>Trusted devices</h3>
+                  <h3>Organizationally trusted devices</h3>
                   {customer.data.trusted_devices.slice(0, 4).map((device) => (
                     <p key={device.device_id}>
                       <strong>{device.device_reference}</strong>

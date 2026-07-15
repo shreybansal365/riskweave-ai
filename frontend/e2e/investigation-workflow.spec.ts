@@ -64,6 +64,42 @@ test.describe("investigation workspace and analyst workflows", () => {
     await expect(page.locator(".case-decision")).toContainText(
       "Hold transaction and open critical incident",
     );
+    expect(detail.session.device_posture).toBe("trusted");
+    expect(detail.session.organizationally_trusted).toBe(true);
+    expect(detail.session.customer_device_familiar).toBe(false);
+    expect(detail.session.customer_familiarity).toBe("new_to_behavioural_history");
+    await expect(page.locator("[data-device-posture]")).toContainText(
+      "Trusted · organizational trust established",
+    );
+    await expect(page.locator("[data-customer-familiarity]")).toContainText(
+      "New to behavioural history",
+    );
+    await expect(
+      page.getByText(/not previously observed in this customer's/i).first(),
+    ).toBeVisible();
+    await expect(page.getByText(/trusted organizational posture/i).first()).toBeVisible();
+
+    for (const pair of detail.fusion_projection.interaction_source_pairs) {
+      const knot = weave.locator(
+        `[data-interaction-contribution-id="${pair.interaction_contribution_id}"]`,
+      );
+      await expect(knot).toHaveAttribute(
+        "data-interaction-rule-code",
+        pair.interaction_rule_code,
+      );
+      await expect(knot).toContainText(pair.cyber_component.label);
+      await expect(knot).toContainText(pair.transaction_component.label);
+      await expect(
+        knot.locator(
+          `[data-source-contribution-id="${pair.cyber_component.contribution_id}"]`,
+        ),
+      ).toHaveAttribute("data-source-rule-code", pair.cyber_component.rule_code);
+      await expect(
+        knot.locator(
+          `[data-source-contribution-id="${pair.transaction_component.contribution_id}"]`,
+        ),
+      ).toHaveAttribute("data-source-rule-code", pair.transaction_component.rule_code);
+    }
 
     for (const contribution of [
       ...detail.cyber_contributions,
@@ -126,6 +162,7 @@ test.describe("investigation workspace and analyst workflows", () => {
     await expect(weave.locator('[data-weave-step="interactions"]')).toContainText(
       "+0.00",
     );
+    expect(detail.fusion_projection.interaction_source_pairs).toEqual([]);
     const decision = weave.locator('[data-weave-step="decision"]');
     await expect(decision).toContainText("22.50");
     await expect(decision).toContainText("23");

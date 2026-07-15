@@ -8,7 +8,7 @@ stored results and must never reproduce this arithmetic.
 
 | Stable code | Trigger | Points |
 |---|---|---:|
-| `cyber.new_device` | Device is absent from trusted history | 12 |
+| `cyber.new_device` | Device is absent from the customer's behavioural history | 12 |
 | `cyber.first_seen_fingerprint` | Browser/device fingerprint has not appeared before | 8 |
 | `cyber.untrusted_device_posture` | Device posture is not trusted | 6 |
 | `cyber.failed_mfa` | Correlated session contains failed MFA | 14 |
@@ -22,6 +22,10 @@ stored results and must never reproduce this arithmetic.
 An otherwise ordinary session receives a transparent 10-point baseline exposure contribution. Rule
 contributions retain stable codes, labels, explanations, baseline references, and source-event
 references where an event caused the contribution.
+
+Device posture and customer familiarity are intentionally separate features. A technically trusted
+organizational posture does not make a device familiar to a customer; familiarity comes only from the
+persisted behavioural baseline's known device IDs.
 
 ## Transaction rules
 

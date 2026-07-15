@@ -20,6 +20,7 @@ from app.services.analyst_workflows import (
     WorkflowConflictError,
     WorkflowNotFoundError,
 )
+from app.services.incident_provenance import IncidentProvenanceError
 from app.services.incidents import IncidentNotFoundError, IncidentQueryService
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
@@ -68,7 +69,12 @@ def list_incidents(
 @router.get(
     "/{incident_id}",
     response_model=IncidentDetailResponse,
-    responses={status.HTTP_404_NOT_FOUND: {"description": "Incident not found"}},
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Incident not found"},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "Persisted incident provenance is unavailable"
+        },
+    },
 )
 def get_incident(
     incident_id: UUID,
@@ -79,6 +85,11 @@ def get_incident(
         return IncidentQueryService().get_incident(session, incident_id)
     except IncidentNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Incident not found") from exc
+    except IncidentProvenanceError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Incident provenance is unavailable",
+        ) from exc
 
 
 @router.patch(
