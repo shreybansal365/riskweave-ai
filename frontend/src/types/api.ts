@@ -60,9 +60,11 @@ export interface SeverityCounts {
   critical: number;
 }
 
-export interface SourceHealth {
+export type SourceCoverageStatus = "fixture_available" | "fixture_empty";
+
+export interface SourceCoverage {
   source: string;
-  status: string;
+  status: SourceCoverageStatus;
   record_count: number;
   detail: string;
 }
@@ -75,7 +77,7 @@ export interface DashboardSummary {
   transactions_held: number;
   legitimate_unusual_activity_permitted: number;
   confirmed_fraud_cases: number;
-  source_systems: SourceHealth[];
+  source_systems: SourceCoverage[];
   synthetic_data_notice: string;
 }
 
@@ -92,6 +94,7 @@ export interface TrendPoint {
 export interface DashboardTrends {
   window_start: string;
   window_end: string;
+  window_incident_count: number;
   points: TrendPoint[];
   synthetic_data_notice: string;
 }

@@ -158,7 +158,9 @@ function InteractionKnot({
         </div>
       )}
       <p>{item.explanation}</p>
-      <code>{item.code}</code>
+      <code title={item.code} aria-label={`Interaction rule code ${item.code}`}>
+        {item.code}
+      </code>
     </li>
   );
 }

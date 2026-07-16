@@ -85,7 +85,10 @@ For optional host-native development:
 - Python 3.12;
 - GNU Make or compatible `make`.
 
-Every dependency is free and open source. JavaScript and Python dependencies are pinned in committed lockfiles.
+Every dependency is free and open source. JavaScript and Python dependencies are pinned in committed
+lockfiles. The application bundles Inter Variable locally through
+`@fontsource-variable/inter@5.2.8`; its SIL OFL 1.1 attribution is recorded in
+`THIRD_PARTY_NOTICES.md`.
 
 ## Fresh-clone setup
 
@@ -144,12 +147,12 @@ in application memory; a hard refresh intentionally requires a new sign-in.
 
 | Route | Purpose | Access |
 |---|---|---|
-| `/overview` | Source-backed metrics, 14-day trends, priority cases, source health | analyst, admin |
+| `/overview` | Current source-backed workload, fixed 14-day trends, priority cases, and persisted fixture coverage | analyst, admin |
 | `/incidents` | Server-filtered, URL-preserved triage queue including transaction-state filtering | analyst, admin |
 | `/incidents/:incidentId` | Decision Context, Decision Weave, evidence chronology, context, and analyst workflow | analyst, admin |
 | `/simulator` | Scenario state and authoritative expected outcomes | read: analyst/admin; run/reset: admin |
 | `/quantum-readiness` | Channel-linked crypto migration posture | analyst, admin |
-| `/system-health` | Liveness, readiness, migration, deterministic integrity, and source diagnostics | admin |
+| `/system-health` | Liveness, readiness, migration, deterministic integrity, and fixture coverage | admin |
 | `/evaluation` | Qualified benchmark-v1 evidence at 40+, 60+, and 80+ | analyst, admin |
 
 Frontend architecture, API-client ownership, authentication flow, and route behavior are documented in
@@ -304,7 +307,7 @@ GitHub Actions verifies:
 - source-backed dashboard aggregation, 14-day trend reconciliation, and bounded context queries;
 - admin-only deterministic scenario APIs and exact atomic reset;
 - explainable quantum-readiness and qualified benchmark-v1 API reports;
-- successful OpenAPI generation for the complete Milestone 4 surface;
+- successful OpenAPI generation for the current implemented product surface;
 - in-memory JWT login, authenticated routing, and role-aware analyst/admin navigation;
 - API-backed overview, queue, investigation, simulator, quantum, health, and evaluation views;
 - Vitest, Testing Library, keyboard-flow, and automated accessibility checks for core UI behavior;
@@ -409,9 +412,8 @@ in Milestone 6.
 
 ## Deferred boundary
 
-Milestone 7B implements the audited visual hierarchy and product contract but deliberately does not
-claim production status or completed browser/visual evidence before the updated verification run. The
-following remain outside this milestone:
+Milestone 7B implements the audited visual hierarchy and product contract, and its browser/visual
+evidence is complete. The following remain outside the current local release-candidate boundary:
 
 - final post-verification presentation adjustments and any later animation refinement;
 - cloud deployment;

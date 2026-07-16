@@ -1,6 +1,15 @@
 @import "tailwindcss";
 @import "./tokens.css";
 
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("@fontsource-variable/inter/files/inter-latin-wght-normal.woff2")
+    format("woff2-variations");
+}
+
 * {
   box-sizing: border-box;
 }
@@ -358,6 +367,28 @@ p {
 .service-chip--degraded i {
   background: var(--red-700);
   box-shadow: 0 0 0 3px rgb(165 42 33 / 11%);
+}
+.coverage-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  color: var(--slate-600);
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+.coverage-chip i {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--slate-400);
+  box-shadow: 0 0 0 3px rgb(152 164 179 / 16%);
+}
+.coverage-chip--fixture_available i {
+  background: var(--teal-700);
+  box-shadow: 0 0 0 3px rgb(15 107 102 / 11%);
+}
+.coverage-chip--fixture_empty i {
+  background: var(--slate-400);
 }
 .tooltip {
   position: relative;
@@ -3899,10 +3930,13 @@ textarea:focus-visible,
 
 .decision-weave__knot code {
   display: block;
+  max-width: 100%;
   margin-top: 0.4rem;
+  overflow: hidden;
   color: var(--text-muted);
   font-size: 0.75rem;
-  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .decision-weave__decision {

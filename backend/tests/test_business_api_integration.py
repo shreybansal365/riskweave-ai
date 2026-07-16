@@ -464,21 +464,38 @@ def test_dashboard_summary_and_trends_match_persisted_source_records(
     password_service: PasswordService,
 ) -> None:
     _prepare(postgres_session_factory, postgres_settings, password_service)
+    admin_headers = _login(postgres_client, postgres_settings, "admin")
+    for scenario_key in (
+        "normal_activity",
+        "legitimate_new_device",
+        "account_takeover",
+    ):
+        scenario = postgres_client.post(
+            f"/api/scenarios/{scenario_key}/run",
+            headers={
+                **admin_headers,
+                "X-Request-ID": f"dashboard-showcase-{scenario_key}",
+            },
+        )
+        assert scenario.status_code == 200, scenario.text
     headers = _login(postgres_client, postgres_settings, "analyst")
     summary = postgres_client.get("/api/dashboard/summary", headers=headers)
     assert summary.status_code == 200, summary.text
     payload = summary.json()
-    assert payload["visible_incidents"] == 15
-    assert sum(payload["incidents_by_severity"].values()) == 15
-    assert payload["open_incidents"] == 15
+    assert payload["visible_incidents"] == 18
+    assert sum(payload["incidents_by_severity"].values()) == 18
+    assert payload["open_incidents"] == 18
     assert len(payload["source_systems"]) == 4
     assert all(item["record_count"] > 0 for item in payload["source_systems"])
+    assert {item["status"] for item in payload["source_systems"]} == {"fixture_available"}
 
     trends = postgres_client.get("/api/dashboard/trends", headers=headers)
     assert trends.status_code == 200, trends.text
-    points = trends.json()["points"]
+    trend_payload = trends.json()
+    points = trend_payload["points"]
     assert len(points) == 14
-    assert sum(item["incident_volume"] for item in points) == 15
+    assert trend_payload["window_incident_count"] == 15
+    assert trend_payload["window_incident_count"] == sum(item["incident_volume"] for item in points)
     assert all(
         sum(item["severity_distribution"].values()) == item["incident_volume"] for item in points
     )

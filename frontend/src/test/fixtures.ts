@@ -328,13 +328,13 @@ export const dashboardSummary: DashboardSummary = {
   source_systems: [
     {
       source: "Cyber telemetry",
-      status: "healthy",
+      status: "fixture_available",
       record_count: 188,
       detail: "Deterministic cyber events loaded.",
     },
     {
       source: "Transactions",
-      status: "healthy",
+      status: "fixture_available",
       record_count: 240,
       detail: "Synthetic transactions loaded.",
     },
@@ -345,16 +345,17 @@ export const dashboardSummary: DashboardSummary = {
 export const dashboardTrends: DashboardTrends = {
   window_start: "2026-07-01",
   window_end: "2026-07-14",
+  window_incident_count: 15,
   synthetic_data_notice: dashboardSummary.synthetic_data_notice,
   points: Array.from({ length: 14 }, (_, index) => ({
     day: `2026-07-${String(index + 1).padStart(2, "0")}`,
-    incident_volume: index % 3,
+    incident_volume: index === 13 ? 2 : 1,
     severity_distribution: {
       low: 1,
       guarded: 0,
       elevated: 0,
       high: 0,
-      critical: index % 5 === 0 ? 1 : 0,
+      critical: index === 13 ? 1 : 0,
     },
     average_cyber_score: "32.00",
     average_transaction_score: "28.00",

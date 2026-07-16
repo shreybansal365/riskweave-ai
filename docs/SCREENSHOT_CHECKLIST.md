@@ -58,7 +58,8 @@ untouched.
 - **Login:** split authentication composition is complete; no credential, token, stale error, or
   session notice from an earlier run is visible.
 - **Overview:** urgent metrics, controlled outcomes, priority investigations, analytical trends, all
-  transaction-action categories, and source health are loaded from the API.
+  transaction-action categories, and persisted fixture coverage are loaded from the API. The current
+  18-case workload and 15-case chart window are visibly distinct.
 - **Incident queue:** transaction-state filter is visible; amount, C/T/bonus/fused composition,
   recommendation, transaction state, and case state remain readable.
 - **Account takeover:** Decision Context shows the authoritative treatment; Decision Weave shows

@@ -2,7 +2,7 @@
 
 ## Product boundary
 
-The Milestone 7B frontend is a React 19 and strict-TypeScript presentation layer over the
+The current frontend is a React 19 and strict-TypeScript presentation layer over the
 authenticated FastAPI product surface. It does not calculate scores, weights, weighted terms,
 severities, thresholds, recommended actions, scenario expectations, workflow legality, dashboard
 aggregates, benchmark metrics, dataset state, or quantum readiness. Those values and decisions are
@@ -13,12 +13,12 @@ returned by the backend.
 | Route | Data sources | Composition and authorization |
 |---|---|---|
 | `/login` | `POST /api/auth/login`, then `GET /api/auth/me` | Public split authentication/context surface; authenticated users redirect to overview |
-| `/overview` | Dashboard summary/trends and priority incident list | Analyst/admin operations briefing: urgent metrics, controlled outcomes, priority cases, then trends |
+| `/overview` | Dashboard summary/trends and priority incident list | Analyst/admin operations briefing: current workload, controlled outcomes, priority cases, then the fixed baseline trend window |
 | `/incidents` | Paginated incident list | Analyst/admin server-filtered triage register with URL state, including `transaction_status` |
 | `/incidents/:incidentId` | Incident detail, customer context, and mutation routes | Analyst/admin Decision Context, Decision Weave, chronology, controls, context, and provenance |
 | `/simulator` | Scenario catalog and run/reset mutations | Progressive three-state story; catalog for analyst/admin, run/reset controls for admin only |
 | `/quantum-readiness` | Quantum summary/assets | Analyst/admin migration register explicitly separated from fraud scoring |
-| `/system-health` | `/health`, `/ready`, dashboard source health, `/api/system/integrity` | Admin-only diagnostic and deterministic-integrity ledger |
+| `/system-health` | `/health`, `/ready`, persisted fixture coverage, `/api/system/integrity` | Admin-only runtime diagnostic and deterministic-integrity ledger |
 | `/evaluation` | Benchmark summary | Analyst/admin bounded evidence report with calibration limitations before comparator detail |
 
 The route tree uses protected parent routes, lazy route modules, route loading fallbacks, and bounded
@@ -38,6 +38,11 @@ presenting one flat template menu. It requests:
 The shell never infers those values from `import.meta.env.MODE` or turns a missing response into a
 fake healthy state. `/api/system/integrity` is not fetched globally; the admin-only System Health
 route requests that deeper projection when needed.
+
+Dashboard source rows report deterministic fixture availability only. `Healthy`, `Connected`,
+`Reachable`, and `Ready` remain reserved for actual frontend, API, PostgreSQL, and migration checks.
+The Overview renders the current visible workload separately from the backend-authored
+`window_incident_count`, which is derived from the exact 14 returned trend points.
 
 ## Authentication and session workflow
 
@@ -71,6 +76,10 @@ authoritative. The browser never treats a hidden control as an authorization bou
 Presentational components never call `fetch`. TanStack Query owns server state, cancellation, caching,
 and post-mutation invalidation. Types in `src/types/api.ts` mirror the OpenAPI response contracts and
 are exercised by API-shaped fixtures.
+
+Application typography uses the exactly pinned `@fontsource-variable/inter@5.2.8` Latin variable
+WOFF2 asset through Vite. Codes, formulas, and identifiers retain the system monospace stack. No
+runtime font request leaves the application origin.
 
 Additive Milestone 7B contracts are:
 

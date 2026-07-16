@@ -145,7 +145,8 @@ and no eligible interaction bonus. `Allow and monitor` is treatment, not an inve
 
 - **Login** — split product-context and restrained authentication surfaces; no marketing hero.
 - **Overview** — three urgent metrics, a controlled-outcome ledger, priority cases, then analytical
-  trends and source coverage.
+  trends and persisted fixture coverage. The current 18-case workload is explicitly separate from
+  the 15-case fixed trend window.
 - **Incident queue** — filter/search workbench followed by one dense server-backed triage register.
 - **Investigation** — decision first, evidence second, context and provenance third, with a bounded
   action rail.
@@ -173,9 +174,12 @@ and no eligible interaction bonus. `Allow and monitor` is treatment, not an inve
 - text accompanies every severity, state, chart, and evidence encoding;
 - reduced-motion preferences disable nonessential movement.
 
-The Milestone 6 axe and keyboard results remain historical evidence. Production-CSS contrast, 200%
-zoom, the updated mutation/session flows, and all Milestone 7B viewports must be rerun before the
-redesign is accepted.
+The Milestone 6 axe and keyboard results remain historical evidence. Milestone 7B production-CSS
+contrast, 200% zoom, mutation/session flows, and all supported viewports were rerun and accepted.
+
+The application uses `@fontsource-variable/inter@5.2.8`, bundled locally under SIL OFL 1.1. The
+outlined RiskWeave AI wordmark remains a separate frozen brand asset and is not derived from the
+application font. Monospace treatment remains reserved for codes, formulas, scores, and identifiers.
 
 ## Responsive boundary
 
@@ -194,9 +198,9 @@ region; required triage columns are not silently deleted or compressed below the
 ## Visual-review evidence
 
 Milestone 6 captures in `docs/visual-baselines/milestone-6/` are immutable historical inputs. The
-Milestone 7B capture test targets nine screens at all three required viewports and writes to
-`docs/visual-baselines/milestone-7b/`. Those new files are **planned/pending** until the explicit visual
-capture command succeeds; their directory must not be cited as completed evidence beforehand.
+completed Milestone 7B capture matrix contains nine screens at all three required viewports in
+`docs/visual-baselines/milestone-7b/`. Later additive evidence directories do not overwrite that
+historical matrix.
 
 ## Explicitly rejected patterns
 

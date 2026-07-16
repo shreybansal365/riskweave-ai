@@ -177,7 +177,7 @@ Current implemented product boundary:
 - `GET /api/system/context`
 - `GET /api/system/integrity` (admin only)
 
-Every `/api` business route is authenticated. Analysts may read all Milestone 4 investigation,
+Every `/api` business route is authenticated. Analysts may read the current investigation,
 dashboard, context, quantum, benchmark, and scenario-catalog responses and may apply validated incident
 actions. Scenario run and atomic reset routes are admin-only. Handlers validate and delegate; database
 queries, state transitions, aggregation, readiness calculation, and benchmark evaluation remain in
@@ -190,7 +190,10 @@ general demo-configuration editor; administration is limited to scenario executi
 integrity inspection.
 
 Incident mutation requests use `Idempotency-Key`, row-level locks, an optional `expected_updated_at`
-token, explicit state transitions, and append-oriented action/audit records. Dashboard values and
-14-day trends are calculated from persisted rows. Quantum readiness is recomputed transparently from
+token, explicit state transitions, and append-oriented action/audit records. Dashboard current-state
+values are calculated from all visible persisted rows. The trends response includes an explicit
+`window_incident_count` derived from the exact 14 daily points; showcase incidents do not alter that
+fixed baseline window. Source-coverage statuses describe deterministic fixture availability, not live
+connector health. Quantum readiness is recomputed transparently from
 asset fields and is returned as context only. Benchmark responses evaluate immutable benchmark-v1 at
 request time and retain every unfavorable result and limitation.

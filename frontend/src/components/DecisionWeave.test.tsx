@@ -133,6 +133,11 @@ describe("DecisionWeave", () => {
         "Backend-authored paired evidence sources",
       ),
     ).toHaveAttribute("data-interaction-contribution-id", "interaction-1");
+    expect(
+      within(knot as HTMLElement).getByLabelText(
+        "Interaction rule code correlation.failed_mfa_high_amount",
+      ),
+    ).toHaveAttribute("title", "correlation.failed_mfa_high_amount");
     expect(screen.getByText("88.65")).toBeVisible();
     expect(screen.getByText("89")).toBeVisible();
   });

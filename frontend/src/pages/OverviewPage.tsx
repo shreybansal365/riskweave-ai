@@ -17,7 +17,7 @@ import {
   PageHeader,
   Panel,
   RiskBadge,
-  ServiceStatusIndicator,
+  SourceCoverageIndicator,
   StatusBadge,
 } from "../components/ui";
 import { formatDateTime, formatMoney, formatNumber, titleCase } from "../lib/format";
@@ -95,7 +95,7 @@ export function OverviewPage() {
       <PageHeader
         eyebrow="Operations briefing"
         title="Operational overview"
-        description="Cases requiring attention, intervention state, and source-backed evidence across the deterministic 14-day window."
+        description="Current persisted workload alongside a separate deterministic 14-day trend window."
         variant="briefing"
       />
 
@@ -127,10 +127,12 @@ export function OverviewPage() {
       </section>
 
       <section className="operational-ledger" aria-label="Controlled outcomes">
-        <div>
-          <span>Visible incidents</span>
+        <div data-current-visible-count={summary.data.visible_incidents}>
+          <span>Current visible incidents</span>
           <strong>{formatNumber(summary.data.visible_incidents)}</strong>
-          <small>Persisted cases</small>
+          <small>
+            14-day chart window: {trends.data.window_incident_count} incidents
+          </small>
         </div>
         <div>
           <span>Unusual but permitted</span>
@@ -186,13 +188,20 @@ export function OverviewPage() {
           title="Daily incident cadence"
           eyebrow="14-day UTC window"
           aside={
-            <span className="panel-stat">{summary.data.visible_incidents} total</span>
+            <span
+              className="panel-stat"
+              data-trend-window-count={trends.data.window_incident_count}
+            >
+              {trends.data.window_incident_count} in chart window
+            </span>
           }
           variant="ledger"
         >
           <IncidentVolumeChart points={trends.data.points} />
           <p className="chart-summary">
-            Discrete daily counts from persisted incident records.
+            {trends.data.window_incident_count} baseline incidents are represented by the
+            exact returned daily series; showcase incidents remain in the current workload
+            total.
           </p>
         </Panel>
         <Panel title="Severity distribution" eyebrow="Current case mix" variant="ledger">
@@ -230,16 +239,17 @@ export function OverviewPage() {
       </div>
 
       <div className="overview-grid overview-grid--lower">
-        <Panel title="Source systems" eyebrow="Persisted data coverage" variant="open">
+        <Panel
+          title="Persisted source coverage"
+          eyebrow="Deterministic fixture availability"
+          variant="open"
+        >
           <div className="source-health-list">
             {summary.data.source_systems.map((source) => (
               <article key={source.source}>
-                <ServiceStatusIndicator
-                  status={source.status === "healthy" ? "connected" : "degraded"}
-                  label={source.status}
-                />
+                <SourceCoverageIndicator status={source.status} />
                 <span>
-                  <strong>{source.source}</strong>
+                  <strong>{titleCase(source.source)}</strong>
                   <small>{source.detail}</small>
                 </span>
                 <b>{formatNumber(source.record_count)}</b>

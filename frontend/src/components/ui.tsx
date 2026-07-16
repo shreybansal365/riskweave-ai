@@ -7,7 +7,7 @@ import {
 } from "react";
 
 import { titleCase } from "../lib/format";
-import type { Severity } from "../types/api";
+import type { Severity, SourceCoverageStatus } from "../types/api";
 
 export function PageHeader({
   eyebrow,
@@ -221,6 +221,19 @@ export function ServiceStatusIndicator({
 }) {
   return (
     <span className={`service-chip service-chip--${status}`}>
+      <i aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+export function SourceCoverageIndicator({ status }: { status: SourceCoverageStatus }) {
+  const label = status === "fixture_available" ? "Fixture available" : "Fixture empty";
+  return (
+    <span
+      className={`coverage-chip coverage-chip--${status}`}
+      data-coverage-status={status}
+    >
       <i aria-hidden="true" />
       {label}
     </span>

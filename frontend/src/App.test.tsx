@@ -155,6 +155,14 @@ describe("RiskWeave authenticated product", () => {
       await screen.findByRole("heading", { name: "Operational overview" }),
     ).toBeVisible();
     expect(screen.getByText("18")).toBeVisible();
+    expect(screen.getByText("15 in chart window")).toBeVisible();
+    expect(screen.getByText("14-day chart window: 15 incidents")).toBeVisible();
+    expect(
+      screen.getByText(
+        /15 baseline incidents are represented by the exact returned daily series/,
+      ),
+    ).toBeVisible();
+    expect(screen.getAllByText("Fixture available")).toHaveLength(2);
     expect(screen.getByText("Transactions held")).toBeVisible();
     expect(screen.getByText("Unusual but permitted")).toBeVisible();
     expect(await screen.findByText(incidentDetail.incident_reference)).toBeVisible();

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import Field
 
@@ -16,9 +17,9 @@ class SeverityCountsResponse(ApiModel):
     critical: int = Field(ge=0)
 
 
-class SourceHealthResponse(ApiModel):
+class SourceCoverageResponse(ApiModel):
     source: str
-    status: str
+    status: Literal["fixture_available", "fixture_empty"]
     record_count: int = Field(ge=0)
     detail: str
 
@@ -31,7 +32,7 @@ class DashboardSummaryResponse(ApiModel):
     transactions_held: int = Field(ge=0)
     legitimate_unusual_activity_permitted: int = Field(ge=0)
     confirmed_fraud_cases: int = Field(ge=0)
-    source_systems: list[SourceHealthResponse]
+    source_systems: list[SourceCoverageResponse]
     synthetic_data_notice: str
 
 
@@ -57,5 +58,9 @@ class DashboardTrendPointResponse(ApiModel):
 class DashboardTrendsResponse(ApiModel):
     window_start: date
     window_end: date
+    window_incident_count: int = Field(
+        ge=0,
+        description="Sum of incident_volume across the exact returned trend points.",
+    )
     points: list[DashboardTrendPointResponse]
     synthetic_data_notice: str

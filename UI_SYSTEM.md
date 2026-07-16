@@ -72,7 +72,8 @@ Decision Weave and never stands in for case evidence or score provenance.
 
 ### Typography
 
-- Use a locally bundled free variable font such as Inter.
+- Use the locally bundled `@fontsource-variable/inter@5.2.8` application font under SIL OFL 1.1;
+  runtime font requests must remain local.
 - Use tabular numerals for scores, amounts, and timestamps.
 - Maintain a compact enterprise hierarchy rather than oversized marketing typography.
 - Default body text must remain readable at 14–16 px.

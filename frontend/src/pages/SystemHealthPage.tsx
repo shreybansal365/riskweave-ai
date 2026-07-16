@@ -11,6 +11,7 @@ import {
   PageHeader,
   Panel,
   ServiceStatusIndicator,
+  SourceCoverageIndicator,
 } from "../components/ui";
 
 export function SystemHealthPage() {
@@ -271,13 +272,13 @@ export function SystemHealthPage() {
         </>
       )}
       <Panel
-        title="Source-system coverage"
-        eyebrow="Persisted deterministic dataset"
+        title="Persisted source coverage"
+        eyebrow="Fixture availability, not live connector health"
         variant="open"
       >
         {sources.isError ? (
           <ErrorState
-            message="Authenticated source-health data is unavailable."
+            message="Authenticated persisted-source coverage is unavailable."
             onRetry={() => void sources.refetch()}
           />
         ) : sources.isPending ? (
@@ -286,12 +287,9 @@ export function SystemHealthPage() {
           <div className="health-source-table">
             {sources.data.source_systems.map((source) => (
               <article key={source.source}>
-                <ServiceStatusIndicator
-                  status={source.status === "healthy" ? "connected" : "degraded"}
-                  label={source.status}
-                />
+                <SourceCoverageIndicator status={source.status} />
                 <span>
-                  <strong>{source.source}</strong>
+                  <strong>{titleCase(source.source)}</strong>
                   <small>{source.detail}</small>
                 </span>
                 <b>{formatNumber(source.record_count)} records</b>

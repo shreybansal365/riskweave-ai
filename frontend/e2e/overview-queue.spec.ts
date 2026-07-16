@@ -57,6 +57,26 @@ test.describe("overview and incident queue", () => {
     }
 
     expect(trends.points).toHaveLength(14);
+    const returnedWindowCount = trends.points.reduce(
+      (total, point) => total + point.incident_volume,
+      0,
+    );
+    expect(trends.window_incident_count).toBe(15);
+    expect(trends.window_incident_count).toBe(returnedWindowCount);
+    await expect(page.locator("[data-current-visible-count]")).toHaveAttribute(
+      "data-current-visible-count",
+      summary.visible_incidents.toString(),
+    );
+    await expect(page.locator("[data-current-visible-count]")).toContainText(
+      `14-day chart window: ${trends.window_incident_count.toString()} incidents`,
+    );
+    await expect(page.locator("[data-trend-window-count]")).toHaveAttribute(
+      "data-trend-window-count",
+      trends.window_incident_count.toString(),
+    );
+    await expect(page.locator("[data-trend-window-count]")).toHaveText(
+      `${trends.window_incident_count.toString()} in chart window`,
+    );
     const incidentVolumeChart = page.getByRole("img", {
       name: "Incident volume by UTC day",
     });
@@ -115,6 +135,13 @@ test.describe("overview and incident queue", () => {
       page.getByRole("link", { name: new RegExp(firstRecent?.incident_reference ?? "") }),
     ).toHaveAttribute("href", `/incidents/${firstRecent?.incident_id ?? ""}`);
     await expect(page.getByText(summary.synthetic_data_notice)).toBeVisible();
+    const coverage = page.locator(".panel").filter({
+      has: page.getByRole("heading", { name: "Persisted source coverage" }),
+    });
+    await expect(
+      coverage.locator('[data-coverage-status="fixture_available"]'),
+    ).toHaveCount(summary.source_systems.length);
+    await expect(coverage.getByText("Connected", { exact: true })).toHaveCount(0);
     audit.assertClean();
     audit.stop();
   });

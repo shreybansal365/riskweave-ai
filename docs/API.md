@@ -107,12 +107,16 @@ Repeated submission of the same logical request returns the one recorded analyst
 | GET | `/api/dashboard/summary` | Analyst or admin | Source-backed current overview metrics |
 | GET | `/api/dashboard/trends` | Analyst or admin | Exactly 14 deterministic daily trend points |
 
-The summary includes visible incidents, severity counts, open/in-review cases, held transactions,
-permitted unusual activity, confirmed fraud, and source record-presence health. "Permitted unusual
+The summary includes current visible incidents, severity counts, open/in-review cases, held
+transactions, permitted unusual activity, confirmed fraud, and persisted fixture coverage. Coverage
+statuses are `fixture_available` or `fixture_empty`; they do not assert live SIEM, identity, endpoint,
+core-banking, or payment-processor connectivity. "Permitted unusual
 activity" means a persisted permitted transaction whose cyber or transaction stream is at least 20
-while the fused score remains below 40; it is not a real-world false-positive count. The trend endpoint calculates
-incident volume, severity distribution, average stored stream/fused scores, and transaction actions
-from the persisted background window. Empty days remain explicit zero-volume points.
+while the fused score remains below 40; it is not a real-world false-positive count. The trend endpoint
+calculates incident volume, severity distribution, average stored stream/fused scores, and transaction
+actions from the persisted background window. Its backend-authored `window_incident_count` is the sum
+of the exact returned daily points. Empty days remain explicit zero-volume points. After all showcase
+scenarios, the current summary contains 18 incidents while the fixed trend window remains 15.
 
 ## Customer and account context
 

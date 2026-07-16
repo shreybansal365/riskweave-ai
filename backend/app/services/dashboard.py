@@ -20,7 +20,7 @@ from app.schemas.dashboard import (
     DashboardTrendPointResponse,
     DashboardTrendsResponse,
     SeverityCountsResponse,
-    SourceHealthResponse,
+    SourceCoverageResponse,
     TransactionActionCountsResponse,
 )
 from app.services.demo_data import SIMULATION_EPOCH, WINDOW_START
@@ -72,13 +72,13 @@ class DashboardService:
                 "Persisted synthetic channel and cryptographic-inventory links.",
             ),
         )
-        source_systems: list[SourceHealthResponse] = []
+        source_systems: list[SourceCoverageResponse] = []
         for source, model, detail in source_specs:
             record_count = int(session.scalar(select(func.count()).select_from(model)) or 0)
             source_systems.append(
-                SourceHealthResponse(
+                SourceCoverageResponse(
                     source=source,
-                    status="healthy" if record_count > 0 else "empty",
+                    status="fixture_available" if record_count > 0 else "fixture_empty",
                     record_count=record_count,
                     detail=detail,
                 )
@@ -141,6 +141,7 @@ class DashboardService:
         return DashboardTrendsResponse(
             window_start=WINDOW_START.date(),
             window_end=WINDOW_START.date() + timedelta(days=13),
+            window_incident_count=sum(point.incident_volume for point in points),
             points=points,
             synthetic_data_notice=SYNTHETIC_NOTICE,
         )
