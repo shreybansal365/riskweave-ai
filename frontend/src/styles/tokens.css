@@ -58,7 +58,7 @@
   --surface-emphasis: #eef3f5;
   --surface-inverse: var(--navy-900);
 
-  --font-sans: "Inter Variable", Inter, "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Inter Variable", Inter, "Segoe UI", system-ui, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --radius-control: 0.32rem;
   --radius-panel: 0.48rem;

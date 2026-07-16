@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { createRandomUuid } from "../lib/random";
 import { ToastContext, type ToastMessage } from "./toast-context";
 
 const TOAST_DURATION_MS = 5000;
@@ -93,7 +94,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const notify = useCallback((message: Omit<ToastMessage, "id">) => {
-    const id = crypto.randomUUID();
+    const id = createRandomUuid();
     setMessages((current) => [...current, { ...message, id }]);
   }, []);
 

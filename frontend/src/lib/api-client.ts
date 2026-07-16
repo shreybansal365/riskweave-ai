@@ -1,3 +1,5 @@
+import { createRandomUuid } from "./random";
+
 export const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000"
 ).replace(/\/$/, "");
@@ -93,5 +95,5 @@ export async function apiRequest<T>(
 }
 
 export function createIdempotencyKey(scope: string): string {
-  return `${scope}-${crypto.randomUUID()}`;
+  return `${scope}-${createRandomUuid()}`;
 }

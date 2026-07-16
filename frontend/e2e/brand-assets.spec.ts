@@ -92,7 +92,8 @@ test.describe("RiskWeave production brand assets", () => {
 
     for (const svg of [light, dark]) {
       expect(svg).toContain('<title id="title">RiskWeave AI</title>');
-      expect(svg).toContain('data-wordmark-outline="avenir-next"');
+      expect(svg).toContain('data-wordmark-outline="inter-ofl-1.1"');
+      expect(svg.toLowerCase()).not.toContain("avenir");
       expect(svg).not.toContain("<text");
     }
 

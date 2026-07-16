@@ -1,4 +1,4 @@
-.PHONY: setup backend-install frontend-install format format-check lint typecheck test test-e2e test-e2e-chromium test-e2e-headed test-e2e-visual audit check build migrate migration-check seed-users seed-data reset-data scenario benchmark docker-up docker-down docker-logs
+.PHONY: setup backend-install frontend-install format format-check lint typecheck test test-e2e test-e2e-chromium test-e2e-headed test-e2e-visual audit check build migrate migration-check bootstrap-release seed-users seed-data reset-data scenario benchmark docker-up docker-down docker-logs
 
 PYTHON ?= python3.12
 BACKEND_VENV := backend/.venv
@@ -60,6 +60,9 @@ migrate:
 
 migration-check:
 	cd backend && ../$(BACKEND_VENV)/bin/alembic check
+
+bootstrap-release:
+	cd backend && ../$(BACKEND_VENV)/bin/python -m app.cli.bootstrap_release
 
 seed-users:
 	cd backend && ../$(BACKEND_VENV)/bin/python -m app.cli.seed_demo_users

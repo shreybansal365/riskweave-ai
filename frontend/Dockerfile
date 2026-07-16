@@ -3,6 +3,7 @@ FROM node:24.13.0-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+RUN npm install --global npm@11.6.2
 RUN npm ci
 
 COPY . .

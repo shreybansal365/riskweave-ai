@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     demo_admin_password: SecretStr | None = None
     demo_analyst_email: str = "analyst@riskweave.demo"
     demo_analyst_password: SecretStr | None = None
+    release_bootstrap_confirm: str | None = None
     auth_failure_limit: int = Field(default=5, ge=1, le=20)
     auth_failure_window_seconds: int = Field(default=60, ge=10, le=900)
     demo_seed: int = 26026
@@ -89,7 +90,13 @@ class Settings(BaseSettings):
             raise ValueError("JWT_SECRET must contain at least 32 characters")
         return value
 
-    @field_validator("jwt_secret", "demo_admin_password", "demo_analyst_password", mode="before")
+    @field_validator(
+        "jwt_secret",
+        "demo_admin_password",
+        "demo_analyst_password",
+        "release_bootstrap_confirm",
+        mode="before",
+    )
     @classmethod
     def blank_secret_is_unset(cls, value: object) -> object:
         if isinstance(value, str) and not value.strip():

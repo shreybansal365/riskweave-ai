@@ -141,7 +141,7 @@ test("@brand-visual capture Milestone 7B.1 logo and route-focus evidence", async
       <head>
         <style>
           * { box-sizing: border-box; }
-          body { margin: 0; font-family: Inter, "Avenir Next", "Segoe UI", sans-serif; }
+          body { margin: 0; font-family: "Inter Variable", Inter, "Segoe UI", system-ui, sans-serif; }
           .preview { width: 920px; min-height: 250px; padding: 64px; display: grid; place-items: center; }
           .preview img { display: block; width: 600px; max-width: 100%; }
           #light { background: #f7f9fb; }

@@ -15,14 +15,14 @@ The public wordmark is exactly **RiskWeave AI**:
 
 ## Meaning and colour
 
-| Element | Meaning | Production colour |
-|---|---|---|
-| Cyan/teal strand | Cyber signal | `#1F9E9D` |
-| Amber strand | Transaction signal | `#DF9417` |
-| Navy weave and endpoint | Authoritative decision | `#0B1A2D` |
-| Inverse decision path and endpoint | Authoritative decision on `#08111F` dark surfaces | `#98A4B3` |
-| Light-surface wordmark | Product authority | `#0B1A2D` |
-| Dark-surface wordmark | High-contrast product name | `#F7F9FB` |
+| Element                            | Meaning                                           | Production colour |
+| ---------------------------------- | ------------------------------------------------- | ----------------- |
+| Cyan/teal strand                   | Cyber signal                                      | `#1F9E9D`         |
+| Amber strand                       | Transaction signal                                | `#DF9417`         |
+| Navy weave and endpoint            | Authoritative decision                            | `#0B1A2D`         |
+| Inverse decision path and endpoint | Authoritative decision on `#08111F` dark surfaces | `#98A4B3`         |
+| Light-surface wordmark             | Product authority                                 | `#0B1A2D`         |
+| Dark-surface wordmark              | High-contrast product name                        | `#F7F9FB`         |
 
 The crossover is structural: the strands exchange visual precedence before they converge. The final
 decision segment and single endpoint represent one decision, not a third data source. On light
@@ -73,10 +73,12 @@ Assets live in `frontend/public/brand/`:
   `riskweave-app-icon-512.png` — manifest-compatible app-icon treatments;
 - `frontend/public/favicon.ico` — multi-size 16/32/48/64 fallback.
 
-The public horizontal SVG lockups contain deterministic vector outlines for the visible Avenir Next
-wordmark. They do not contain SVG `<text>` elements and do not embed or distribute a font file. The
-accessible `<title>` remains `RiskWeave AI`. The React Brand component intentionally keeps semantic
-HTML text, while the exported artwork renders consistently in README, slide, and browser contexts.
+The public horizontal SVG lockups contain deterministic vector outlines generated from the
+exact-pinned Inter Variable 5.2.8 asset under SIL OFL 1.1. They do not contain SVG `<text>` elements,
+embed a font, or distribute a proprietary typeface. The accessible `<title>` remains `RiskWeave AI`.
+The React Brand component intentionally keeps semantic HTML text, while the exported artwork renders
+consistently in README, slide, and browser contexts. Concept A geometry and the full-height teal `AI`
+treatment remain frozen; this licensing correction changes only the outlined wordmark glyph source.
 
 `frontend/src/components/Brand.tsx` is the reusable application component. It supports full lockup
 and icon-only variants, light and dark surfaces, three sizes, accessible product naming, and an
@@ -139,3 +141,10 @@ decision. The operational Decision Weave is a separate investigation visualizati
 data. It may share the two-signal-to-one-decision idea, but it must retain evidence labels,
 interaction provenance, weighted terms, accessible reading order, and the authoritative case
 outcome. Logo geometry must never replace operational evidence.
+
+## Licence boundary
+
+RiskWeave source code and documentation are available under Apache-2.0. The **RiskWeave AI** name,
+Concept A logo, wordmark, favicon, and associated brand assets are reserved and are not licensed for
+independent reuse under Apache-2.0. This boundary does not restrict the SIL OFL 1.1 rights granted by
+the Inter typeface authors in their original font software.

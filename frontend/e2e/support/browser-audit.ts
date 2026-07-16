@@ -7,11 +7,9 @@ export interface BrowserAudit {
   stop(): void;
 }
 
-const LOCAL_ORIGINS = new Set([
-  "http://localhost:4173",
-  "http://localhost:8000",
-  "http://127.0.0.1:4173",
-  "http://127.0.0.1:8000",
+const ALLOWED_ORIGINS = new Set([
+  new URL(e2eEnvironment.appUrl).origin,
+  new URL(e2eEnvironment.apiUrl).origin,
 ]);
 
 const TEST_SECRETS = [
@@ -47,7 +45,8 @@ export function beginBrowserAudit(
     if (
       reason.includes("ERR_ABORTED") ||
       reason.includes("NS_BINDING_ABORTED") ||
-      reason === "cancelled"
+      reason === "cancelled" ||
+      reason.includes("request cancelled")
     ) {
       return;
     }
@@ -73,7 +72,7 @@ export function beginBrowserAudit(
     }
     const url = new URL(requestUrl);
     if (url.protocol === "data:" || url.protocol === "blob:") return;
-    if (!LOCAL_ORIGINS.has(url.origin)) externalRequests.push(request.url());
+    if (!ALLOWED_ORIGINS.has(url.origin)) externalRequests.push(request.url());
   };
 
   page.on("console", onConsole);

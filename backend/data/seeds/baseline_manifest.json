@@ -4,6 +4,7 @@
   "simulation_epoch": "2026-07-14T09:00:00Z",
   "window_start": "2026-06-30T09:00:00Z",
   "window_end_exclusive": "2026-07-14T09:00:00Z",
+  "fingerprint": "2ac2c997d21246cc7380ce1f53e121bb58c79891ea98229e47e6f2ec998ef0ca",
   "counts": {
     "customers": 12,
     "accounts": 12,

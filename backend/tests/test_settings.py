@@ -57,8 +57,10 @@ def test_blank_optional_secrets_are_treated_as_unset() -> None:
         jwt_secret="",
         demo_admin_password="",
         demo_analyst_password="",
+        release_bootstrap_confirm="",
     )
 
     assert settings.jwt_secret is None
     assert settings.demo_admin_password is None
     assert settings.demo_analyst_password is None
+    assert settings.release_bootstrap_confirm is None

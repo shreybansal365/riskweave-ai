@@ -57,35 +57,52 @@ are ignored by Git. Artifacts are retained only on failure.
 
 ## Historical Milestone 6 browser matrix
 
-| Engine | Milestone 6 contract | Retained result |
-|---|---|---|
-| Chromium | Full suite, including failure injection, axe, responsive matrix, and timing sanity | 31 applicable tests passed |
-| Firefox | Core analyst/admin, evidence, workflow, queue, and scenario journeys | 20 applicable tests passed; 12 Chromium-only checks skipped |
-| WebKit | Core analyst/admin, evidence, workflow, queue, and scenario journeys | 20 applicable tests passed; 12 Chromium-only checks skipped |
+| Engine   | Milestone 6 contract                                                               | Retained result                                             |
+| -------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Chromium | Full suite, including failure injection, axe, responsive matrix, and timing sanity | 31 applicable tests passed                                  |
+| Firefox  | Core analyst/admin, evidence, workflow, queue, and scenario journeys               | 20 applicable tests passed; 12 Chromium-only checks skipped |
+| WebKit   | Core analyst/admin, evidence, workflow, queue, and scenario journeys               | 20 applicable tests passed; 12 Chromium-only checks skipped |
 
 On this macOS automation host, native headless Firefox 151 starts but cannot map its software-rendered
-framebuffer. The failure occurs before any test code runs. Firefox is therefore verified in the
-version-matched official Playwright Linux image against the same local Docker stack:
+framebuffer. The failure occurs before any test code runs. Firefox and WebKit can be verified in the
+exact Playwright 1.61.1 Linux image on the Compose network without relying on Docker Desktop's
+platform-specific host networking. The additive browser overlay builds a network-only frontend whose
+API origin is `http://backend:8000`, while retaining the normal host-facing frontend for Chromium.
+Start the deterministic stack, seed users, then run both secondary engines:
 
 ```bash
-docker run --rm --network host --env-file .env \
+docker compose -f docker-compose.yml -f docker-compose.browser.yml up --build -d
+docker compose -f docker-compose.yml -f docker-compose.browser.yml exec -T backend \
+  python -m app.cli.seed_demo_users
+
+docker run --rm --network riskweave_default --env-file .env \
   -e CI=true \
+  -e E2E_BASE_URL=http://frontend-browser \
+  -e E2E_API_URL=http://backend:8000 \
   -v "$PWD/frontend:/work" \
+  -v /work/node_modules \
   -w /work \
   mcr.microsoft.com/playwright:v1.61.1-noble \
-  npm run test:e2e -- --project=firefox
+  sh -lc 'npm install --global npm@11.6.2 && npm ci && npx playwright test --project=firefox && npx playwright test --project=webkit'
 ```
 
-This is a host-renderer limitation, not a waived Firefox product check. Chromium is the standard CI
-engine to control runtime cost; Firefox and WebKit remain part of the documented local release matrix.
+Firefox and WebKit run sequentially because both projects exercise the same deterministic demo
+database and each suite performs an atomic baseline reset. Running the projects concurrently would
+make two test harnesses contend for the single shared demonstration state.
+
+The anonymous `/work/node_modules` volume prevents Linux native packages from replacing the host
+installation and is deleted with the container. `.env` remains uncommitted. The
+`frontend-browser` service has no host port and exists only for this exact browser matrix. This is a
+host-renderer limitation, not a waived Firefox product check. Chromium is the standard CI engine to
+control runtime cost; Firefox and WebKit remain part of the documented release matrix.
 
 ## Milestone 7B browser matrix
 
-| Engine | Milestone 7B result | Scope note |
-|---|---|---|
-| Chromium | 35 passed; 1 explicit visual-capture test skipped in the functional run | Complete functional, failure-injection, axe, responsive, timing, and scenario contract |
-| WebKit | 22 passed; 14 intentional Chromium-only diagnostics skipped | Complete supported analyst/admin, evidence, workflow, queue, and scenario journeys |
-| Firefox | 22 passed; 14 intentional Chromium-only diagnostics skipped in the official Playwright Linux image | Native macOS launch stalls before test code, so the documented version-matched container runs the supported release contract |
+| Engine   | Milestone 7B result                                                                                | Scope note                                                                                                                   |
+| -------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Chromium | 35 passed; 1 explicit visual-capture test skipped in the functional run                            | Complete functional, failure-injection, axe, responsive, timing, and scenario contract                                       |
+| WebKit   | 22 passed; 14 intentional Chromium-only diagnostics skipped                                        | Complete supported analyst/admin, evidence, workflow, queue, and scenario journeys                                           |
+| Firefox  | 22 passed; 14 intentional Chromium-only diagnostics skipped in the official Playwright Linux image | Native macOS launch stalls before test code, so the documented version-matched container runs the supported release contract |
 
 The explicit Chromium visual-capture command passed separately and wrote 27 PNGs. The Firefox native
 host limitation remains visible, while the version-matched official Linux image provides a real
