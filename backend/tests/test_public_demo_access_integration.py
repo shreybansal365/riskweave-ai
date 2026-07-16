@@ -95,18 +95,23 @@ def test_public_demo_token_is_read_only_across_every_write_and_admin_route(
         assert integrity.status_code == 403
         assert admin_check.status_code == 403
 
+        analyst_password = enabled_settings.demo_analyst_password
+        admin_password = enabled_settings.demo_admin_password
+        assert analyst_password is not None
+        assert admin_password is not None
+
         analyst_login = client.post(
             "/api/auth/login",
             json={
                 "email": enabled_settings.demo_analyst_email,
-                "password": enabled_settings.demo_analyst_password.get_secret_value(),
+                "password": analyst_password.get_secret_value(),
             },
         )
         admin_login = client.post(
             "/api/auth/login",
             json={
                 "email": enabled_settings.demo_admin_email,
-                "password": enabled_settings.demo_admin_password.get_secret_value(),
+                "password": admin_password.get_secret_value(),
             },
         )
         assert analyst_login.status_code == 200

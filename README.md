@@ -57,19 +57,19 @@ fixed UTC simulation epoch `2026-07-14T09:00:00Z`.
 
 ### Operational overview
 
-![RiskWeave operational overview](docs/visual-baselines/milestone-7c/overview-1440x900.png)
+![RiskWeave operational overview](docs/visual-baselines/hosted-release-v1.0.1/overview-api-connected-1440x900.png)
 
 ### Account Takeover — Decision Weave
 
-![Account Takeover Decision Weave](docs/visual-baselines/milestone-7c/account-takeover-decision-weave-1440x900.png)
+![Account Takeover Decision Weave](docs/visual-baselines/hosted-release-v1.0.1/account-takeover-decision-weave-1440x900.png)
 
 ### Legitimate New Device — guarded and permitted
 
-![Legitimate New Device investigation](docs/visual-baselines/milestone-7c/legitimate-new-device-1440x900.png)
+![Legitimate New Device investigation](docs/visual-baselines/hosted-release-v1.0.1/legitimate-new-device-1440x900.png)
 
 ### Transparent synthetic evaluation
 
-![RiskWeave benchmark evaluation](docs/visual-baselines/milestone-7c/evaluation-1440x900.png)
+![RiskWeave benchmark evaluation](docs/visual-baselines/hosted-release-v1.0.1/evaluation-1440x900.png)
 
 ## Architecture
 

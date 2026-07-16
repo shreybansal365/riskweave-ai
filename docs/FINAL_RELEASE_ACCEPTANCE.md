@@ -61,7 +61,7 @@ Locked values remain intact:
 - pytest: 106 passed
 - coverage: 94.20%
 - Alembic drift: none
-- OpenAPI: 3.1.0, 20 paths
+- OpenAPI: 3.1.0, 21 paths after the additive public judge-access endpoint
 - Python dependency audit: no known vulnerabilities
 
 ### Frontend
@@ -160,7 +160,8 @@ fallback with the provider's 30-day Free-plan lifetime and no managed backups.
 ## Post-deployment release gate
 
 - Backend: Ruff format and lint, strict mypy, 106 PostgreSQL-backed pytest tests, 94.20% coverage,
-  Alembic drift, OpenAPI 3.1.0 with 20 paths, and Python dependency audit all pass.
+  Alembic drift, the then-current OpenAPI 3.1.0 contract, and Python dependency audit all passed for
+  the v1.0 baseline. The v1.0.1 release adds a 21st path and dedicated access-mode regressions.
 - Frontend: Prettier, ESLint with zero warnings, strict TypeScript, 41 Vitest tests, coverage,
   production build, local-font scan, and npm audit all pass.
 - Complete Chromium contract: 40 applicable tests pass; six explicitly opt-in historical visual
@@ -172,6 +173,31 @@ fallback with the provider's 30-day Free-plan lifetime and no managed backups.
   readiness reports database reachable and migration `0003_intelligence_support` current.
 - Local CLI release check: reset fingerprint and 15 incidents reproduced, all locked scenario values
   reproduced, benchmark-v1 retained unchanged, and the final incident count is 18.
+
+## v1.0.1 public judge-access addendum
+
+- `POST /api/auth/demo-access` is disabled by default and, when enabled by the server, issues a
+  normal 15-minute analyst JWT carrying `access_mode: demo_read_only` without accepting a password.
+- The capability boundary is server-authored. Demo-read-only sessions can use the analyst GET
+  surfaces but receive HTTP 403 from incident mutations, analyst actions, scenario execution/reset,
+  integrity evidence and every admin dependency.
+- Ordinary private analyst and administrator authentication retains `access_mode: standard` and its
+  existing permissions.
+- The login page exposes **Explore read-only demo** only when its non-security display flag is
+  enabled and preserves the protected return path.
+- The application shell treats either a successful unauthenticated health response or successful
+  authenticated system context as proof of connectivity. It reports checking/waking during bounded
+  Render cold-start retries and unavailable only when both checks fail.
+- Hosted Vercel/Render verification passed for demo entry, Overview, Incident Queue, both showcase
+  investigations, Evaluation, Simulator, deep-link/reload return, blocked mutation/admin access,
+  `/health`, `/ready`, favicon, manifest and the local Inter font. No unexpected browser console or
+  request failures were observed.
+- Seven judge-facing hosted captures at exactly 1440×900 are stored in
+  `visual-baselines/hosted-release-v1.0.1/`; the public README references this hosted evidence.
+- Targeted v1.0.1 verification: 14 backend unit targets, 9 PostgreSQL authentication/authorization
+  integration targets, 33 frontend unit targets, strict frontend/backend typing, formatting and
+  linting, one production frontend build, one focused local Chromium contract and one focused hosted
+  Chromium contract all pass. The pinned GitHub Actions workflow remains the full repository gate.
 
 ## Current verdict
 
