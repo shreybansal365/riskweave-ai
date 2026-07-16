@@ -15,6 +15,16 @@ transfer.
 [![License](https://img.shields.io/badge/source-Apache--2.0-0b1a2d.svg)](LICENSE)
 [![Synthetic data](https://img.shields.io/badge/data-deterministic%20synthetic-1f9e9d.svg)](docs/SYNTHETIC_DATA.md)
 
+## Live hackathon release
+
+- Analyst workspace: <https://riskweave-ai-shreybansal365.vercel.app>
+- Backend health: <https://riskweave-api-shreybansal365.onrender.com/health>
+- Public repository: <https://github.com/shreybansal365/riskweave-ai>
+
+The hosted demonstration uses Vercel, a Render Free FastAPI service, and Render Free PostgreSQL. A
+free backend may need about a minute to wake after inactivity. Demo credentials are environment
+managed and deliberately excluded from the repository and frontend bundle.
+
 ## The decision RiskWeave makes
 
 Fraud and security teams often see different fragments of the same attack. RiskWeave joins a
@@ -133,6 +143,8 @@ scenarios produces exactly 18 visible incidents.
 - PostgreSQL 17 locally; PostgreSQL is the only runtime database;
 - Vitest, Testing Library, Playwright, axe, pytest, Ruff, mypy, ESLint, Prettier;
 - Docker Compose and GitHub Actions;
+- Vercel frontend hosting plus a Render FastAPI service and Render PostgreSQL for the verified
+  hackathon deployment;
 - locally bundled Inter Variable under SIL OFL 1.1—no runtime font CDN.
 
 All runtime and development dependencies are exactly pinned in the committed lockfiles.

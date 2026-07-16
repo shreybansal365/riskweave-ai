@@ -39,11 +39,11 @@
 
 Locked values remain intact:
 
-| Scenario | Cyber | Transaction | Bonus | Raw fused | Rounded | Outcome |
-| --- | ---: | ---: | ---: | ---: | ---: | --- |
-| Normal Activity | 10 | 10 | 0 | 9.00 | 9 | Allowed |
-| Legitimate New Device | 40 | 10 | 0 | 22.50 | 23 | Guarded; allow and monitor |
-| Account Takeover | 78 | 79 | 18 | 88.65 | 89 | Critical; held |
+| Scenario              | Cyber | Transaction | Bonus | Raw fused | Rounded | Outcome                    |
+| --------------------- | ----: | ----------: | ----: | --------: | ------: | -------------------------- |
+| Normal Activity       |    10 |          10 |     0 |      9.00 |       9 | Allowed                    |
+| Legitimate New Device |    40 |          10 |     0 |     22.50 |      23 | Guarded; allow and monitor |
+| Account Takeover      |    78 |          79 |    18 |     88.65 |      89 | Critical; held             |
 
 - Atomic reset restores 15 baseline incidents.
 - All showcase scenarios produce 18 visible incidents.
@@ -111,11 +111,71 @@ Locked values remain intact:
 
 ## Hosted release status
 
-GitHub publication and hosted provider verification are completed after this local checkpoint. The
-final public URLs, CI result, bootstrap result and hosted smoke results must be recorded here before
-the release tag is created.
+### Publication
+
+- Public repository: <https://github.com/shreybansal365/riskweave-ai>
+- Repository owner: `shreybansal365`
+- Description and eight approved topics: verified
+- Remote publication scan: no committed environment file, private key, reusable credential, cache,
+  test artifact, or private workspace path
+
+### Hosted topology
+
+- Vercel application: <https://riskweave-ai-shreybansal365.vercel.app>
+- Render API: <https://riskweave-api-shreybansal365.onrender.com>
+- Database: Render Free PostgreSQL 17 in Singapore
+- `/health`: HTTP 200, RiskWeave API `0.5.0`
+- `/ready`: HTTP 200, PostgreSQL reachable, migrations current at
+  `0003_intelligence_support`
+
+Supabase is not part of the verified release. The Render database is a time-bounded hackathon
+fallback with the provider's 30-day Free-plan lifetime and no managed backups.
+
+### Guarded bootstrap and hosted deterministic state
+
+- Initialized an empty database only through `python -m app.cli.bootstrap_release`.
+- Baseline counts: 12 customers, 12 accounts, 16 devices, 180 transactions, 240 cyber events, 15
+  incidents, and three scenario-run records.
+- Exact baseline fingerprint:
+  `2ac2c997d21246cc7380ce1f53e121bb58c79891ea98229e47e6f2ec998ef0ca`.
+- A hosted reset reproduced that fingerprint and 15 incidents.
+- Scenario replays reproduced all locked values and the same UUIDv5 incident identifiers.
+- Post-showcase state: 18 visible incidents, 15 incidents in the exact 14-day trend window, and all
+  three scenario runs completed.
+
+### Hosted browser verification
+
+- Real admin and analyst authentication: pass.
+- Exact Account Takeover and Legitimate New Device investigations: pass.
+- Direct protected-route return after authentication: pass.
+- Memory-only JWT behavior: no `localStorage` or `sessionStorage` keys.
+- Route-focus correction: semantically focused heading with no ordinary-entry rectangle.
+- Favicon SVG, PNG fallbacks, ICO, Apple touch icon, and web manifest: HTTP 200 with correct MIME
+  types.
+- Inter Variable: loaded from the Vercel application origin.
+- Unexpected external hosts, console errors, and failed requests: none.
+- System Health: backend, PostgreSQL, migration, dataset, scenario, benchmark, and persisted-source
+  evidence rendered from the live API.
+
+## Post-deployment release gate
+
+- Backend: Ruff format and lint, strict mypy, 106 PostgreSQL-backed pytest tests, 94.20% coverage,
+  Alembic drift, OpenAPI 3.1.0 with 20 paths, and Python dependency audit all pass.
+- Frontend: Prettier, ESLint with zero warnings, strict TypeScript, 41 Vitest tests, coverage,
+  production build, local-font scan, and npm audit all pass.
+- Complete Chromium contract: 40 applicable tests pass; six explicitly opt-in historical visual
+  captures remain skipped.
+- Pinned Linux secondary-engine smoke matrix: Firefox 9/9 and WebKit 9/9 pass across both roles,
+  overview reconciliation, both showcase investigations, all scenarios, quantum separation,
+  benchmark limits, and system health.
+- Clean Compose rebuild: PostgreSQL, FastAPI, Nginx frontend, `/login`, `/health`, and `/ready` pass;
+  readiness reports database reachable and migration `0003_intelligence_support` current.
+- Local CLI release check: reset fingerprint and 15 incidents reproduced, all locked scenario values
+  reproduced, benchmark-v1 retained unchanged, and the final incident count is 18.
 
 ## Current verdict
 
-**CONDITIONAL PASS** — the local release candidate passes; public GitHub publication and hosted
-frontend/backend/database verification remain to be completed in this pass.
+**PASS** — the public repository, hosted frontend, hosted backend, hosted PostgreSQL database,
+guarded bootstrap, deterministic scenarios, deep links, authentication, assets, and health/readiness
+checks are verified for the hackathon release. The documented Free-tier cold-start and database
+lifetime remain deliberate demonstration limitations.

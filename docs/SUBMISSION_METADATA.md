@@ -29,3 +29,16 @@ verified release. It does not claim that the organizers supplied or required a p
 
 The registered-team list records submission membership only; it does not invent Git authorship or
 technical contributions.
+
+## Verified release services
+
+- Public repository: <https://github.com/shreybansal365/riskweave-ai>
+- Deployed application: <https://riskweave-ai-shreybansal365.vercel.app>
+- Frontend hosting: Vercel.
+- Backend hosting: Render Free Docker web service.
+- Runtime database: Render Free PostgreSQL 17.
+- Backend API: FastAPI with Pydantic, SQLAlchemy and Alembic.
+- Bounded anomaly SDK: scikit-learn Isolation Forest with fixed seed `26026`.
+
+Supabase is not part of the verified release and must not be named in the final portal response as an
+actually used provider.

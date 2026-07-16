@@ -10,7 +10,7 @@ claim.
 
 - Frontend: Vercel Hobby, static Vite build.
 - Backend: Render Free Docker web service.
-- Database: Supabase PostgreSQL Free (preferred).
+- Database: Render Free PostgreSQL for the verified hackathon release.
 - Source and CI: GitHub and GitHub Actions.
 - Mandatory fallback: the complete local Docker Compose stack.
 
@@ -21,6 +21,12 @@ The deployment configuration reserves these deterministic project/service names:
 - Render region: `singapore`;
 - frontend target origin: `https://riskweave-ai-shreybansal365.vercel.app`;
 - backend target origin: `https://riskweave-api-shreybansal365.onrender.com`.
+
+Verified public endpoints:
+
+- application: <https://riskweave-ai-shreybansal365.vercel.app>;
+- backend health: <https://riskweave-api-shreybansal365.onrender.com/health>;
+- backend readiness: <https://riskweave-api-shreybansal365.onrender.com/ready>.
 
 Treat an origin as live only after its endpoint checks pass. If a provider assigns a different origin,
 update `vercel.json`, `render.yaml`, `CORS_ORIGINS`, and `VITE_API_BASE_URL` together before the final
@@ -83,7 +89,21 @@ VITE_API_BASE_URL
 Render supplies `PORT`; the Docker image binds Uvicorn to `0.0.0.0:${PORT}`. PostgreSQL connection
 strings beginning with `postgresql://` are normalized to psycopg by validated backend settings.
 
-## Supabase PostgreSQL
+## Hosted PostgreSQL
+
+The verified release uses the Render database declared by `render.yaml`:
+
+- service name: `riskweave-db-shreybansal365`;
+- PostgreSQL major version: 17;
+- region: Singapore;
+- runtime access: backend-only through Render's injected `DATABASE_URL`.
+
+Render Free PostgreSQL expires 30 days after creation, has no managed backups, and is deleted after
+the provider's documented grace period unless upgraded. This is acceptable for the time-bounded
+hackathon demonstration, not durable production storage. Recreate an empty database, run the guarded
+bootstrap, and reverify the manifest if it expires.
+
+### Supabase PostgreSQL alternative
 
 1. Create one Free project in the Supabase dashboard.
 2. Use the provider's PostgreSQL connection string with TLS enabled. Prefer the transaction pooler
@@ -97,12 +117,9 @@ Supabase Free projects may pause after low activity over a seven-day window. The
 the dashboard within the provider's restore window. Before a judge session, resume the project and
 wake the backend, then verify `/ready`.
 
-### Render PostgreSQL fallback
-
-If Supabase authorization is unavailable, a Render Free PostgreSQL database can supply the same
-`DATABASE_URL`. This is a submission fallback only: Render Free PostgreSQL expires 30 days after
-creation, has no managed backups, and is deleted after the documented grace period unless upgraded.
-Recreate it, rerun the guarded bootstrap, and reverify the manifest if it expires.
+Supabase was not used by this verified release because no authenticated Supabase project was
+available during the release window. The steps above remain a documented future alternative; portal
+copy names only the providers actually used.
 
 ## Render backend
 
@@ -110,6 +127,10 @@ Recreate it, rerun the guarded bootstrap, and reverify the manifest if it expire
 reviewed environment inventory, and an `initialDeployHook` that runs the guarded bootstrap once.
 Secrets marked `sync: false` must be supplied in the Render consent screen. `JWT_SECRET` is generated
 by Render.
+
+Automatic deploys are disabled for the submission snapshot. This prevents a source push and an
+initial hook from racing on the single deterministic database. Deploy a reviewed commit explicitly
+from Render, then verify `/health`, `/ready`, and dataset integrity.
 
 The image always runs `alembic upgrade head` before starting Uvicorn. It does **not** reset data on
 restart. On the first deploy only, the hook runs:
@@ -154,20 +175,21 @@ origin before the production build.
 Directly reload `/overview` and an incident URL after deployment. Static assets, local Inter font,
 manifest, and favicon must continue returning their real content rather than the SPA shell.
 
-## First-release sequence
+## Verified first-release sequence
 
-1. Create or select the Supabase Free project and obtain the TLS PostgreSQL URL.
-2. Publish the GitHub repository only after secret and licensing checks pass.
-3. Create the Render Blueprint from `render.yaml`, supply only the prompted secrets, and wait for the
-   initial bootstrap hook.
-4. Verify backend `/health` and `/ready` plus the baseline manifest.
-5. Create the Vercel project from the repository, set `VITE_API_BASE_URL`, and deploy.
-6. Confirm Render `CORS_ORIGINS` equals the final Vercel origin exactly; redeploy if it changed.
-7. Sign in as both roles, verify RBAC, and run the three scenarios as administrator.
-8. Verify counts move from 15 baseline incidents to 18 visible incidents and the exact scenario
-   outcomes remain 9/low/permitted, 23/guarded/permitted, and 89/critical/held.
-9. Reset once and confirm the exact baseline fingerprint, then replay the scenarios for the demo.
-10. Verify benchmark-v1 limitations and quantum/fraud separation on the hosted UI.
+1. The public GitHub repository passed licensing, secret, private-path, and brand-boundary checks.
+2. The Render Blueprint created the Free PostgreSQL 17 database and Docker web service in Singapore.
+3. Release credentials were supplied through Render secrets; no value entered Git.
+4. The guarded bootstrap initialized the empty database and verified the exact baseline manifest.
+5. The normal image command was restored to migration plus Uvicorn startup; it never resets data.
+6. `/health` and `/ready` returned HTTP 200 with migrations current at
+   `0003_intelligence_support`.
+7. Vercel built the frontend with the exact Render API origin in both runtime configuration and CSP.
+8. Both roles authenticated; the browser retained no token in local or session storage.
+9. Reset reproduced 15 incidents and the baseline fingerprint; all three scenarios reproduced the
+   locked outcomes and 18 visible incidents, including idempotent replay.
+10. Direct routes, favicon, manifest, local Inter font, system-health truthfulness, benchmark
+    limitations, and quantum/fraud separation were checked on the hosted UI.
 
 ## Hosted acceptance checklist
 
@@ -188,7 +210,8 @@ manifest, and favicon must continue returning their real content rather than the
 ## Recovery
 
 - Backend cold start: request `/health`, wait for HTTP 200, then request `/ready`.
-- Paused Supabase project: resume it in the dashboard, then wake Render and verify `/ready`.
+- Expired Render database: create an empty replacement, update the injected `DATABASE_URL`, run the
+  guarded bootstrap once, and verify `/ready` plus the baseline fingerprint.
 - Empty replacement database: point `DATABASE_URL` to it and run the guarded release bootstrap once.
 - Partial or modified database: do not force bootstrap. Preserve evidence, create a fresh database, and
   initialize that empty target.

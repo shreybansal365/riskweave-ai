@@ -22,9 +22,12 @@ prototype and benchmark results are explicitly limited to synthetic data.
 
 ## APIs, SDKs, and cloud-services explanation
 
-**PENDING HOSTED DEPLOYMENT VERIFICATION.** Replace this line only after the final Vercel, Render, and
-PostgreSQL deployment is live and independently checked. Do not name an unverified provider in the
-portal.
+RiskWeave uses a React and TypeScript frontend hosted on Vercel, which calls a typed FastAPI REST API
+hosted on Render. The backend uses Pydantic, SQLAlchemy and Alembic with Render PostgreSQL to persist
+deterministic synthetic cybersecurity and transaction data. A fixed-seed scikit-learn Isolation
+Forest provides bounded anomaly support alongside the primary transparent rule engine. Docker
+Compose reproduces the full stack locally, and GitHub Actions runs the automated quality gates. No
+paid AI API or proprietary organizer toolkit is used.
 
 ## Public GitHub repository
 
@@ -32,7 +35,7 @@ portal.
 
 ## Deployed web application
 
-**TO BE ADDED AFTER DEPLOYMENT VERIFICATION**
+<https://riskweave-ai-shreybansal365.vercel.app>
 
 ## Video prototype
 
