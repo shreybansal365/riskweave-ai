@@ -1,5 +1,9 @@
 # RiskWeave AI — Acceptance Tests
 
+> This document defines the normative acceptance contract. Verified release completion and evidence
+> are recorded in `docs/FINAL_RELEASE_ACCEPTANCE.md`; unchecked boxes are not a live release-status
+> dashboard.
+
 ## Specification invariants
 
 - [ ] Every document that states a read order uses the canonical order from `AGENTS.md`.
@@ -24,7 +28,7 @@
 - [ ] Audit events are append-oriented through application APIs.
 - [ ] Transaction channels reference crypto assets.
 - [ ] Database constraints reject invalid scores, bonuses, amounts, and relationship mismatches.
-- [ ] Migrations run against local and Supabase PostgreSQL.
+- [ ] Migrations run against local and verified hosted Render PostgreSQL.
 
 ## Backend and API
 
@@ -326,7 +330,7 @@
 ## Deployment
 
 - [ ] Frontend and backend deploy.
-- [ ] Supabase PostgreSQL migrations and seeds run.
+- [ ] Render PostgreSQL migrations and guarded deterministic bootstrap run.
 - [ ] All three scenarios and reset work in deployment.
 - [ ] Benchmark summary works in deployment.
 - [ ] Free-tier wake-up and database-pausing behavior are documented.

@@ -41,6 +41,8 @@ services:
         value: "5"
       - key: AUTH_FAILURE_WINDOW_SECONDS
         value: "60"
+      - key: PUBLIC_DEMO_ACCESS_ENABLED
+        value: "true"
       - key: DEMO_ADMIN_EMAIL
         value: admin@riskweave.demo
       - key: DEMO_ADMIN_PASSWORD

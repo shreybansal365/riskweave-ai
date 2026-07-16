@@ -37,6 +37,7 @@ technical contributions.
 - Frontend hosting: Vercel.
 - Backend hosting: Render Free Docker web service.
 - Runtime database: Render Free PostgreSQL 17.
+- Judge access: environment-gated passwordless read-only analyst session; no public password.
 - Backend API: FastAPI with Pydantic, SQLAlchemy and Alembic.
 - Bounded anomaly SDK: scikit-learn Isolation Forest with fixed seed `26026`.
 

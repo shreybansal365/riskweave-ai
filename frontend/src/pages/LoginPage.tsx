@@ -18,14 +18,26 @@ function loginFailure(error: unknown): string {
   return `${error.message}${error.requestId === null ? "" : ` Reference ${error.requestId}.`}`;
 }
 
+function demoAccessFailure(error: unknown): string {
+  if (!(error instanceof ApiError))
+    return "The free backend is still waking. Please try again in a moment.";
+  if (error.status === 429) return "Too many demo access requests. Try again shortly.";
+  if (error.status === 404 || error.status === 503)
+    return "Read-only demo access is unavailable for this environment.";
+  return `${error.message}${error.requestId === null ? "" : ` Reference ${error.requestId}.`}`;
+}
+
 export function LoginPage() {
-  const { session, sessionNotice, login, clearSessionNotice } = useAuth();
+  const { session, sessionNotice, login, demoLogin, clearSessionNotice } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [demoSubmitting, setDemoSubmitting] = useState(false);
+  const publicDemoAccessEnabled =
+    import.meta.env.VITE_PUBLIC_DEMO_ACCESS_ENABLED === "true";
 
   const returnTo = (location.state as { from?: string } | null)?.from ?? "/overview";
   if (session !== null) return <Navigate to={returnTo} replace />;
@@ -43,6 +55,20 @@ export function LoginPage() {
       setError(loginFailure(caught));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const exploreDemo = async () => {
+    setError(null);
+    setDemoSubmitting(true);
+    try {
+      await demoLogin();
+      clearSessionNotice();
+      void navigate(returnTo, { replace: true });
+    } catch (caught) {
+      setError(demoAccessFailure(caught));
+    } finally {
+      setDemoSubmitting(false);
     }
   };
 
@@ -111,9 +137,29 @@ export function LoginPage() {
               {error}
             </div>
           )}
-          <button className="login-submit" type="submit" disabled={submitting}>
+          <button
+            className="login-submit"
+            type="submit"
+            disabled={submitting || demoSubmitting}
+          >
             {submitting ? "Verifying access…" : "Continue securely"}
           </button>
+          {publicDemoAccessEnabled && (
+            <div className="demo-access">
+              <span className="demo-access__divider">Public judge access</span>
+              <button
+                className="demo-access__button"
+                type="button"
+                disabled={submitting || demoSubmitting}
+                onClick={() => void exploreDemo()}
+              >
+                {demoSubmitting ? "Waking read-only demo…" : "Explore read-only demo"}
+              </button>
+              <p>
+                The free backend may take up to about a minute to wake after inactivity.
+              </p>
+            </div>
+          )}
           <p className="session-note">
             This prototype keeps access tokens in memory. A page refresh requires
             authentication again.

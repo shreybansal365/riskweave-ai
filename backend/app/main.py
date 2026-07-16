@@ -19,7 +19,7 @@ from app.api.routes.scenarios import router as scenarios_router
 from app.api.routes.system import router as system_router
 from app.core.config import Settings, get_settings
 from app.core.middleware import RequestIdMiddleware, SecurityHeadersMiddleware
-from app.core.rate_limit import AuthenticationFailureLimiter
+from app.core.rate_limit import AuthenticationFailureLimiter, PublicDemoAccessLimiter
 from app.core.security import PasswordService, TokenService
 from app.db.readiness import PostgresReadinessProbe, ReadinessProbe
 from app.db.session import (
@@ -41,6 +41,7 @@ def create_app(
     password_service: PasswordService | None = None,
     token_service: TokenService | None = None,
     failure_limiter: AuthenticationFailureLimiter | None = None,
+    public_demo_access_limiter: PublicDemoAccessLimiter | None = None,
 ) -> FastAPI:
     """Build the application with explicit, testable dependencies."""
 
@@ -53,6 +54,10 @@ def create_app(
     resolved_token_service = token_service or TokenService(resolved_settings)
     resolved_failure_limiter = failure_limiter or AuthenticationFailureLimiter(
         failure_limit=resolved_settings.auth_failure_limit,
+        window_seconds=resolved_settings.auth_failure_window_seconds,
+    )
+    resolved_public_demo_access_limiter = public_demo_access_limiter or PublicDemoAccessLimiter(
+        request_limit=10,
         window_seconds=resolved_settings.auth_failure_window_seconds,
     )
     audit_recorder = AuditRecorder()
@@ -84,6 +89,7 @@ def create_app(
     app.state.token_service = resolved_token_service
     app.state.audit_recorder = audit_recorder
     app.state.authentication_service = authentication_service
+    app.state.public_demo_access_limiter = resolved_public_demo_access_limiter
     app.add_middleware(
         CORSMiddleware,
         allow_origins=resolved_settings.cors_origin_list,

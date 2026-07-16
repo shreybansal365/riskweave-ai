@@ -32,12 +32,20 @@ configuration editor. Scenario run and reset routes are both admin-only.
 Requirements:
 
 - authorization is enforced server-side;
+- public judge access is disabled by default and enabled only through
+  `PUBLIC_DEMO_ACCESS_ENABLED`;
+- when enabled, `POST /api/auth/demo-access` issues a short-lived analyst token with the
+  server-authoritative `demo_read_only` access mode and receives no password;
+- the `demo_read_only` access mode may use authenticated read surfaces but is centrally rejected
+  from incident mutations, analyst-action writes, scenario run/reset, integrity, and all admin-only
+  routes;
 - demo passwords originate from environment variables and are persisted only as Argon2id hashes;
 - access tokens are short-lived JWTs;
 - frontend keeps the active access token in memory, not `localStorage`;
 - no refresh token is required for the prototype;
 - hard refresh may require re-authentication;
-- failed login attempts are rate-limited by a bounded in-process prototype limiter;
+- failed login attempts and public demo-session issuance are bounded by in-process prototype
+  limiters;
 - authentication success and failure create audit events without recording passwords or tokens.
 
 The in-process limiter is intentionally modest and is not represented as distributed production-grade

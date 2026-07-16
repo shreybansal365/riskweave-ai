@@ -56,7 +56,9 @@ A correlation bonus is awarded only when a documented cross-domain interaction r
 ## Locked data and simulation decisions
 
 - PostgreSQL is the only runtime database.
-- Docker provides PostgreSQL locally; Supabase PostgreSQL is the preferred deployment database.
+- Docker provides PostgreSQL locally; the verified hackathon deployment uses Render PostgreSQL.
+- Supabase PostgreSQL is documented only as a future hosted alternative and is not part of the
+  verified submission.
 - Simulation uses a fixed epoch, fixed seeds, deterministic UUIDv5 identifiers, idempotent scenario runs, and atomic reset.
 - Correlation includes only events satisfying:
 

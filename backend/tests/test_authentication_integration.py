@@ -69,6 +69,7 @@ def test_login_and_me_create_success_audit(
     assert payload["token_type"] == "bearer"
     assert payload["expires_in"] == 900
     assert payload["user"]["role"] == "analyst"
+    assert payload["user"]["access_mode"] == "standard"
     assert payload["user"]["last_login_at"] is not None
 
     me_response = postgres_client.get(
@@ -77,6 +78,7 @@ def test_login_and_me_create_success_audit(
     )
     assert me_response.status_code == 200
     assert me_response.json()["email"] == postgres_settings.demo_analyst_email
+    assert me_response.json()["access_mode"] == "standard"
     assert me_response.headers["X-Content-Type-Options"] == "nosniff"
     assert me_response.headers["X-Frame-Options"] == "DENY"
 

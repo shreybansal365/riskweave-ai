@@ -71,9 +71,24 @@ export function AuthProvider({
     [queryClient],
   );
 
+  const demoLogin = useCallback(
+    async (signal?: AbortSignal) => {
+      const result = await authApi.demoAccess(signal);
+      const user = await authApi.me(result.access_token, signal);
+      setSession({
+        token: result.access_token,
+        user,
+        expiresAt: Date.now() + result.expires_in * 1000,
+      });
+      setSessionNotice(null);
+      queryClient.clear();
+    },
+    [queryClient],
+  );
+
   const value = useMemo(
-    () => ({ session, sessionNotice, login, logout, clearSessionNotice }),
-    [session, sessionNotice, login, logout, clearSessionNotice],
+    () => ({ session, sessionNotice, login, demoLogin, logout, clearSessionNotice }),
+    [session, sessionNotice, login, demoLogin, logout, clearSessionNotice],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

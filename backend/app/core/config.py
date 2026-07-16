@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     release_bootstrap_confirm: str | None = None
     auth_failure_limit: int = Field(default=5, ge=1, le=20)
     auth_failure_window_seconds: int = Field(default=60, ge=10, le=900)
+    public_demo_access_enabled: bool = False
     demo_seed: int = 26026
     model_random_seed: int = 26026
     simulation_epoch: datetime = datetime(2026, 7, 14, 9, 0, tzinfo=UTC)

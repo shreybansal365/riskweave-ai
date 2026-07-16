@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { systemApi } from "../api/riskweave";
 import { useAuth } from "../app/use-auth";
 import { API_BASE_URL } from "../lib/api-client";
+import { deriveApiServiceStatus } from "../lib/api-status";
 import { formatDateTime, titleCase } from "../lib/format";
 import { Brand } from "./Brand";
 import { AccessibleTooltip, ServiceStatusIndicator } from "./ui";
@@ -46,6 +47,9 @@ const navigationGroups: NavigationGroup[] = [
 
 const navigation = navigationGroups.flatMap((group) => group.items);
 
+const coldStartRetryDelay = (attemptIndex: number) =>
+  Math.min(1_500 * 2 ** attemptIndex, 12_000);
+
 export function AppShell() {
   const { session, logout } = useAuth();
   const location = useLocation();
@@ -53,23 +57,29 @@ export function AppShell() {
     queryKey: ["system", "health"],
     queryFn: ({ signal }) => systemApi.health(signal),
     refetchInterval: 30_000,
+    retry: 6,
+    retryDelay: coldStartRetryDelay,
   });
   const context = useQuery({
     queryKey: ["system", "context"],
     queryFn: ({ signal }) => systemApi.context(session?.token ?? "", signal),
     enabled: session !== null,
     staleTime: 30_000,
+    retry: 6,
+    retryDelay: coldStartRetryDelay,
   });
   if (session === null) return null;
 
   const routeName =
     navigation.find((item) => location.pathname.startsWith(item.to))?.label ??
     "Workspace";
-  const serviceState = health.isPending
-    ? "checking"
-    : health.isSuccess
-      ? "connected"
-      : "degraded";
+  const service = deriveApiServiceStatus({
+    healthSucceeded: health.isSuccess,
+    contextSucceeded: context.isSuccess,
+    healthFailed: health.isError,
+    contextFailed: context.isError,
+    failureCount: health.failureCount + context.failureCount,
+  });
   const contextHeading = context.isPending
     ? "Loading environment context"
     : context.isError
@@ -140,25 +150,20 @@ export function AppShell() {
               <div className="shell-context" aria-label="Environment and dataset context">
                 <span>
                   <small>Environment</small>
-                  <strong>{context.data.environment_label}</strong>
+                  <strong title={context.data.environment_label}>
+                    {context.data.environment_label}
+                  </strong>
                 </span>
                 <span>
                   <small>Dataset</small>
-                  <strong>{context.data.dataset_state_label}</strong>
+                  <strong title={context.data.dataset_state_label}>
+                    {context.data.dataset_state_label}
+                  </strong>
                 </span>
               </div>
             )}
-            <AccessibleTooltip label={`API origin: ${API_BASE_URL}`}>
-              <ServiceStatusIndicator
-                status={serviceState}
-                label={
-                  health.isSuccess
-                    ? "API connected"
-                    : health.isPending
-                      ? "Checking API"
-                      : "API degraded"
-                }
-              />
+            <AccessibleTooltip label={`API origin: ${API_BASE_URL}. ${service.detail}.`}>
+              <ServiceStatusIndicator status={service.status} label={service.label} />
             </AccessibleTooltip>
             <div className="user-summary">
               <span className="user-monogram" aria-hidden="true">
@@ -170,7 +175,11 @@ export function AppShell() {
               </span>
               <span>
                 <strong>{session.user.display_name}</strong>
-                <small>{titleCase(session.user.role)}</small>
+                <small>
+                  {session.user.access_mode === "demo_read_only"
+                    ? "Read-only demo"
+                    : titleCase(session.user.role)}
+                </small>
               </span>
             </div>
             <button className="logout-button" type="button" onClick={logout}>

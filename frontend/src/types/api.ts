@@ -1,4 +1,5 @@
 export type UserRole = "analyst" | "admin";
+export type AccessMode = "standard" | "demo_read_only";
 export type Severity = "low" | "guarded" | "elevated" | "high" | "critical";
 export type IncidentStatus =
   "open" | "in_review" | "confirmed_fraud" | "legitimate" | "closed";
@@ -30,6 +31,7 @@ export interface AuthenticatedUser {
   active: boolean;
   created_at: string;
   last_login_at: string | null;
+  access_mode: AccessMode;
 }
 
 export interface LoginResponse {

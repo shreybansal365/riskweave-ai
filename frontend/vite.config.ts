@@ -11,6 +11,7 @@ export default defineConfig({
     port: 4173,
   },
   test: {
+    env: { VITE_PUBLIC_DEMO_ACCESS_ENABLED: "true" },
     exclude: [...configDefaults.exclude, "e2e/**"],
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],

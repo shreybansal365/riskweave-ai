@@ -91,6 +91,7 @@ export function IncidentDetailPage() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const token = session?.token ?? "";
+  const isDemoReadOnly = session?.user.access_mode === "demo_read_only";
   const [note, setNote] = useState("");
   const [pendingAction, setPendingAction] = useState<AnalystActionType | null>(null);
   const [workflowFeedback, setWorkflowFeedback] = useState<{
@@ -234,10 +235,11 @@ export function IncidentDetailPage() {
   };
   const isLegitimateNewDevice = data.scenario_key === "legitimate_new_device";
   const treatmentLabel = recommendedActionLabels[data.recommended_action];
-  const dispositionActions = data.available_actions.filter((action) =>
+  const availableWorkflowActions = isDemoReadOnly ? [] : data.available_actions;
+  const dispositionActions = availableWorkflowActions.filter((action) =>
     dispositionActionTypes.has(action),
   );
-  const transactionActions = data.available_actions.filter((action) =>
+  const transactionActions = availableWorkflowActions.filter((action) =>
     transactionActionTypes.has(action),
   );
   const alignedDispositionAction = isLegitimateNewDevice
@@ -484,6 +486,13 @@ export function IncidentDetailPage() {
           <IncidentTimeline items={data.timeline} />
         </Panel>
         <aside className="case-sidebar investigation-action-rail">
+          {isDemoReadOnly && (
+            <div className="permission-notice">
+              <strong>Read-only demo access.</strong> Evidence and decisions are fully
+              available, while case notes and state-changing analyst actions are disabled
+              by the API.
+            </div>
+          )}
           <Panel
             title="Investigation disposition"
             eyebrow="Valid server-approved case actions"
@@ -531,7 +540,7 @@ export function IncidentDetailPage() {
             eyebrow="Append-oriented investigation context"
             className="analyst-note-panel"
           >
-            {data.available_actions.includes("add_note") ? (
+            {availableWorkflowActions.includes("add_note") ? (
               <form className="note-form" onSubmit={submitNote}>
                 <label htmlFor="analyst-note">Case note</label>
                 <textarea

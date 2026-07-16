@@ -1748,6 +1748,51 @@ p {
   opacity: 0.58;
   cursor: wait;
 }
+.demo-access {
+  display: grid;
+  gap: 0.55rem;
+}
+.demo-access__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--slate-500);
+  font-size: 0.62rem;
+  font-weight: 680;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.demo-access__divider::before,
+.demo-access__divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: var(--slate-150);
+}
+.demo-access__button {
+  min-height: 2.7rem;
+  color: var(--teal-700);
+  background: var(--teal-100);
+  border: 1px solid #b9dfd9;
+  border-radius: var(--radius-control);
+  font-size: 0.72rem;
+  font-weight: 720;
+  cursor: pointer;
+}
+.demo-access__button:hover:not(:disabled) {
+  background: #d9f0ed;
+  border-color: var(--teal-700);
+}
+.demo-access__button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+.demo-access p {
+  margin: 0;
+  color: var(--slate-500);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
 .form-error {
   padding: 0.65rem;
   color: var(--red-700);

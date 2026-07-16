@@ -46,3 +46,37 @@ class AuthenticationFailureLimiter:
         while failures and failures[0] <= cutoff:
             failures.popleft()
         return failures
+
+
+class PublicDemoAccessLimiter:
+    """Bound successful passwordless demo-session issuance per client address."""
+
+    def __init__(
+        self,
+        *,
+        request_limit: int,
+        window_seconds: int,
+        clock: Callable[[], float] = monotonic,
+    ) -> None:
+        self._request_limit = request_limit
+        self._window_seconds = window_seconds
+        self._clock = clock
+        self._requests: defaultdict[str, deque[float]] = defaultdict(deque)
+        self._lock = Lock()
+
+    def consume(self, key: str) -> bool:
+        """Atomically accept one request when the fixed window has capacity."""
+
+        with self._lock:
+            requests = self._active_requests(key)
+            if len(requests) >= self._request_limit:
+                return False
+            requests.append(self._clock())
+            return True
+
+    def _active_requests(self, key: str) -> deque[float]:
+        requests = self._requests[key]
+        cutoff = self._clock() - self._window_seconds
+        while requests and requests[0] <= cutoff:
+            requests.popleft()
+        return requests

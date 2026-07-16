@@ -70,6 +70,7 @@ JWT_SECRET
 ACCESS_TOKEN_TTL_MINUTES
 AUTH_FAILURE_LIMIT
 AUTH_FAILURE_WINDOW_SECONDS
+PUBLIC_DEMO_ACCESS_ENABLED
 DEMO_ADMIN_EMAIL
 DEMO_ADMIN_PASSWORD
 DEMO_ANALYST_EMAIL
@@ -84,7 +85,13 @@ Vercel requires:
 
 ```text
 VITE_API_BASE_URL
+VITE_PUBLIC_DEMO_ACCESS_ENABLED
 ```
+
+Both public-demo flags default to false. The browser flag only controls whether the judge-entry
+button is shown. The Render flag is the security boundary that permits passwordless issuance of a
+short-lived `demo_read_only` token. That token cannot mutate incidents, add analyst actions, run or
+reset scenarios, inspect integrity, or use any admin-only route.
 
 Render supplies `PORT`; the Docker image binds Uvicorn to `0.0.0.0:${PORT}`. PostgreSQL connection
 strings beginning with `postgresql://` are normalized to psycopg by validated backend settings.
@@ -163,7 +170,9 @@ events, 15 incidents, three not-run scenario records, and fingerprint
 `2ac2c997d21246cc7380ce1f53e121bb58c79891ea98229e47e6f2ec998ef0ca`.
 
 Render Free web services spin down after inactivity. The first wake request can take about a minute;
-the UI exposes a recoverable service-unavailable state instead of inventing a green status.
+the login page explains this before public demo entry. The shell reports `API connected` when either
+the liveness check or authenticated system context succeeds, reports a bounded checking/waking state
+during retries, and reports unavailable only when both checks fail.
 
 ## Vercel frontend
 

@@ -25,6 +25,7 @@ export const analystUser: AuthenticatedUser = {
   active: true,
   created_at: "2026-07-14T09:00:00Z",
   last_login_at: "2026-07-14T09:01:00Z",
+  access_mode: "standard",
 };
 
 export const adminUser: AuthenticatedUser = {
@@ -660,6 +661,10 @@ export function installApiMock(
     incidentPages?: number;
     incidentNotFound?: boolean;
     scenarioReplay?: boolean;
+    demoAccessFails?: boolean;
+    demoAccessNetworkFailure?: boolean;
+    healthFails?: boolean;
+    contextFails?: boolean;
   } = {},
 ) {
   const user = options.role === "admin" ? adminUser : analystUser;
@@ -671,7 +676,9 @@ export function installApiMock(
       );
       const method = init?.method ?? "GET";
       if (url.pathname === "/health")
-        return response({ status: "ok", service: "RiskWeave API", version: "0.5.0" });
+        return options.healthFails === true
+          ? response({ detail: "Synthetic liveness failure" }, 503)
+          : response({ status: "ok", service: "RiskWeave API", version: "0.5.0" });
       if (url.pathname === "/ready")
         return response({
           status: "ready",
@@ -679,7 +686,10 @@ export function installApiMock(
           checks: { database: "reachable", migrations: "current" },
           revision: "0003_intelligence_support",
         });
-      if (url.pathname === "/api/system/context") return response(systemContext);
+      if (url.pathname === "/api/system/context")
+        return options.contextFails === true
+          ? response({ detail: "Synthetic context failure" }, 503)
+          : response(systemContext);
       if (url.pathname === "/api/system/integrity") return response(systemIntegrity);
       if (url.pathname === "/api/auth/login") {
         if (options.loginNetworkFailure === true)
@@ -704,7 +714,26 @@ export function installApiMock(
               user,
             });
       }
-      if (url.pathname === "/api/auth/me") return response(user);
+      if (url.pathname === "/api/auth/demo-access") {
+        if (options.demoAccessNetworkFailure === true)
+          throw new TypeError("synthetic demo-access network failure");
+        if (options.demoAccessFails === true)
+          return response({ detail: "Public demo access is unavailable" }, 503);
+        return response({
+          access_token: "public-demo-token",
+          token_type: "bearer",
+          expires_in: 900,
+          user: { ...analystUser, access_mode: "demo_read_only" },
+        });
+      }
+      if (url.pathname === "/api/auth/me") {
+        const authorization = new Headers(init?.headers).get("Authorization");
+        return response(
+          authorization === "Bearer public-demo-token"
+            ? { ...analystUser, access_mode: "demo_read_only" }
+            : user,
+        );
+      }
       if (url.pathname === "/api/dashboard/summary")
         return options.dashboardFails === true
           ? response({ detail: "Synthetic aggregate failure" }, 500)

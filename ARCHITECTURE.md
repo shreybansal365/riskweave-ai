@@ -4,7 +4,7 @@
 
 - Frontend: React, strict TypeScript, Vite, Tailwind CSS with semantic tokens, Radix primitives, Recharts, TanStack Query, React Router
 - Backend: Python 3.12, FastAPI, Pydantic 2, SQLAlchemy 2, Alembic, psycopg
-- Database: PostgreSQL only; Docker locally and Supabase PostgreSQL in deployment
+- Database: PostgreSQL only; Docker locally and Render PostgreSQL in the verified deployment
 - Intelligence: transparent rules, fixed-seed Isolation Forest, entity/session correlation, contextual fusion, explainability
 - Local runtime: Docker Compose
 - Verification: pytest, Ruff, mypy, Vitest, Testing Library, Playwright, accessibility checks

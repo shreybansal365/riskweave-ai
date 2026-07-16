@@ -7,9 +7,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.rate_limit import AuthenticationFailureLimiter
-from app.core.security import AccessToken, PasswordService, TokenService
+from app.core.security import AccessMode, AccessToken, PasswordService, TokenService
 from app.models.domain import User
-from app.models.enums import AuditEventType
+from app.models.enums import AuditEventType, UserRole
 from app.services.audit import AuditRecorder
 
 
@@ -19,6 +19,10 @@ class InvalidCredentialsError(ValueError):
 
 class AuthenticationRateLimitedError(ValueError):
     """Raised after repeated failed attempts for the same normalized account key."""
+
+
+class DemoAccessUnavailableError(ValueError):
+    """Raised when the seeded read-only analyst identity is unavailable."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,6 +94,40 @@ class AuthenticationService:
         )
         session.commit()
         self._failure_limiter.reset(normalized_email)
+        return AuthenticationResult(user=user, access_token=access_token)
+
+    def authenticate_demo_access(
+        self,
+        session: Session,
+        *,
+        analyst_email: str,
+        request_id: str,
+    ) -> AuthenticationResult:
+        """Issue a passwordless, capability-restricted token for the seeded analyst."""
+
+        user = session.scalar(select(User).where(User.email == analyst_email))
+        if user is None or not user.active or user.role != UserRole.ANALYST:
+            raise DemoAccessUnavailableError
+
+        access_token = self._tokens.create_access_token(
+            user_id=user.user_id,
+            role=user.role,
+            access_mode=AccessMode.DEMO_READ_ONLY,
+        )
+        user.last_login_at = datetime.now(UTC)
+        self._audit.record(
+            session,
+            event_type=AuditEventType.AUTHENTICATION_SUCCEEDED,
+            actor_user_id=user.user_id,
+            entity_type="user",
+            entity_id=str(user.user_id),
+            request_id=request_id,
+            details={
+                "role": user.role.value,
+                "access_mode": AccessMode.DEMO_READ_ONLY.value,
+            },
+        )
+        session.commit()
         return AuthenticationResult(user=user, access_token=access_token)
 
     def _record_failure(

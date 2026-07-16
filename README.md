@@ -22,8 +22,9 @@ transfer.
 - Public repository: <https://github.com/shreybansal365/riskweave-ai>
 
 The hosted demonstration uses Vercel, a Render Free FastAPI service, and Render Free PostgreSQL. A
-free backend may need about a minute to wake after inactivity. Demo credentials are environment
-managed and deliberately excluded from the repository and frontend bundle.
+free backend may need about a minute to wake after inactivity. Judges can select **Explore read-only
+demo** without receiving a password. Private analyst and administrator credentials remain
+environment-managed and excluded from the repository and frontend bundle.
 
 ## The decision RiskWeave makes
 
@@ -212,9 +213,9 @@ in [docs/API.md](docs/API.md).
 
 **Built and maintained by Shrey Bansal.**
 
-Submitted to FinSpark’26 under the registered team **CyberForge**: Shrey Bansal, Anureet Kaur,
-Aryaman Saraswat, and Anushka Dutta. This line records registered submission membership and does not
-assign Git authorship or invent individual technical contributions.
+**Submitted to FinSpark’26 under the registered team CyberForge:**
+
+Shrey Bansal · Anureet Kaur · Aryaman Saraswat · Anushka Dutta
 
 ## Licence and brand
 

@@ -14,10 +14,11 @@ import { adminUser, analystUser, incidentDetail, installApiMock } from "./test/f
 function session(
   role: "analyst" | "admin" = "analyst",
   expiresAt = Date.now() + 900_000,
+  accessMode: "standard" | "demo_read_only" = "standard",
 ): AuthSession {
   return {
     token: "test-token",
-    user: role === "admin" ? adminUser : analystUser,
+    user: { ...(role === "admin" ? adminUser : analystUser), access_mode: accessMode },
     expiresAt,
   };
 }
@@ -133,6 +134,44 @@ describe("RiskWeave authenticated product", () => {
     expect(localStorage).toHaveLength(0);
   });
 
+  it("enters the protected return path through passwordless read-only demo access", async () => {
+    const fetchMock = installApiMock();
+    renderApp("/incidents?severity=critical");
+    const user = userEvent.setup();
+
+    await user.click(
+      await screen.findByRole("button", { name: "Explore read-only demo" }),
+    );
+
+    expect(await screen.findByRole("heading", { name: "Incident queue" })).toBeVisible();
+    expect(window.location.pathname).toBe("/incidents");
+    expect(window.location.search).toBe("?severity=critical");
+    expect(screen.getByText("Read-only demo", { exact: true })).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: /System Health/i }),
+    ).not.toBeInTheDocument();
+    const demoRequest = fetchMock.mock.calls.find(([input]) =>
+      requestUrl(input).endsWith("/api/auth/demo-access"),
+    );
+    expect(demoRequest).toBeDefined();
+    expect(demoRequest?.[1]?.body).toBeUndefined();
+    expect(localStorage).toHaveLength(0);
+  });
+
+  it("shows a bounded wake failure for unavailable public demo access", async () => {
+    installApiMock({ demoAccessNetworkFailure: true });
+    renderApp("/login");
+    const user = userEvent.setup();
+
+    await user.click(
+      await screen.findByRole("button", { name: "Explore read-only demo" }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The free backend is still waking. Please try again in a moment.",
+    );
+  });
+
   it("restores an authenticated deep link including its query filters", async () => {
     installApiMock({ role: "analyst" });
     renderApp("/incidents?severity=critical");
@@ -166,6 +205,14 @@ describe("RiskWeave authenticated product", () => {
     expect(screen.getByText("Transactions held")).toBeVisible();
     expect(screen.getByText("Unusual but permitted")).toBeVisible();
     expect(await screen.findByText(incidentDetail.incident_reference)).toBeVisible();
+  });
+
+  it("shows API connected when authenticated context succeeds after liveness fails", async () => {
+    installApiMock({ healthFails: true });
+    const view = renderApp("/overview", session());
+
+    expect(await screen.findByText("API connected")).toBeVisible();
+    view.unmount();
   });
 
   it("renders a loading state and a bounded overview API failure", async () => {
@@ -271,6 +318,23 @@ describe("RiskWeave authenticated product", () => {
     expect(
       screen.getByText("Quantum readiness is separate from fraud-risk scoring."),
     ).toBeVisible();
+  });
+
+  it("renders demo investigations without state-changing analyst controls", async () => {
+    installApiMock();
+    renderApp(
+      `/incidents/${incidentDetail.incident_id}`,
+      session("analyst", Date.now() + 900_000, "demo_read_only"),
+    );
+
+    expect(await screen.findByText("Read-only demo access.")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Mark in review" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Add note" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Simulate release" }),
+    ).not.toBeInTheDocument();
   });
 
   it("handles a stale analyst transition as a visible conflict", async () => {

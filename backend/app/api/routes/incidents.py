@@ -6,7 +6,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 
-from app.api.dependencies import CurrentUser, DatabaseSession, request_id
+from app.api.dependencies import CurrentUser, DatabaseSession, WritableUser, request_id
 from app.models.enums import IncidentStatus, ScenarioKey, Severity, TransactionStatus
 from app.schemas.incidents import (
     AnalystActionRequest,
@@ -104,7 +104,7 @@ def patch_incident(
     incident_id: UUID,
     payload: IncidentPatchRequest,
     request: Request,
-    user: CurrentUser,
+    user: WritableUser,
     session: DatabaseSession,
     idempotency_key: Annotated[
         str,
@@ -140,7 +140,7 @@ def record_incident_action(
     incident_id: UUID,
     payload: AnalystActionRequest,
     request: Request,
-    user: CurrentUser,
+    user: WritableUser,
     session: DatabaseSession,
     idempotency_key: Annotated[
         str,

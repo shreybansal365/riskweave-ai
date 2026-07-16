@@ -11,6 +11,7 @@ def test_plain_postgresql_url_selects_psycopg_driver() -> None:
     )
 
     assert settings.database_url.startswith("postgresql+psycopg://")
+    assert settings.public_demo_access_enabled is False
 
 
 def test_non_postgresql_runtime_url_is_rejected() -> None:

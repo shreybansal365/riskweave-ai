@@ -2,9 +2,10 @@
 
 ## Boundary
 
-The API exposes only deterministic synthetic prototype data. Every `/api` route except login requires
-a short-lived bearer token. Scores, severity, recommendations, dashboard values, benchmark metrics,
-and readiness priority are server-owned values; clients do not submit or recalculate them.
+The API exposes only deterministic synthetic prototype data. Login and the environment-gated public
+demo-entry route are the only unauthenticated `/api` surfaces; all product data requires a short-lived
+bearer token. Scores, severity, recommendations, dashboard values, benchmark metrics, and readiness
+priority are server-owned values; clients do not submit or recalculate them.
 
 Interactive OpenAPI documentation is available at `/docs` outside production. Production settings
 hide the interactive documentation but retain the same validated route schemas.
@@ -14,11 +15,20 @@ hide the interactive documentation but retain the same validated route schemas.
 | Method | Path | Role | Purpose |
 |---|---|---|---|
 | POST | `/api/auth/login` | Public | Exchange demo credentials for a short-lived access token |
+| POST | `/api/auth/demo-access` | Public when enabled | Issue a passwordless read-only analyst token |
 | GET | `/api/auth/me` | Analyst or admin | Read the authenticated identity |
 | GET | `/api/auth/admin-check` | Admin | Milestone 2 RBAC verification surface |
 
 Demo credentials are supplied through environment variables and seeded as Argon2id hashes. Tokens and
 passwords must not be placed in documentation, URLs, source code, or Git history.
+
+Public demo access is disabled by default. When `PUBLIC_DEMO_ACCESS_ENABLED=true`, the endpoint
+issues a normal short-lived JWT for the seeded synthetic analyst with
+`access_mode: demo_read_only`; it accepts no password and is bounded by the existing in-process
+prototype limiting approach. That access mode may read analyst GET surfaces but is rejected from both
+incident mutation routes, scenario run/reset, system integrity, and every admin-only route. The
+frontend visibility flag `VITE_PUBLIC_DEMO_ACCESS_ENABLED` is presentation only and is never the
+authorization boundary.
 
 ## Incidents
 
@@ -28,6 +38,9 @@ passwords must not be placed in documentation, URLs, source code, or Git history
 | GET | `/api/incidents/{incident_id}` | Analyst or admin | Complete persisted investigation context |
 | PATCH | `/api/incidents/{incident_id}` | Analyst or admin | Apply an explicit incident-status transition |
 | POST | `/api/incidents/{incident_id}/actions` | Analyst or admin | Add a note or simulate an approved response |
+
+Both mutation routes additionally require standard access mode; a `demo_read_only` analyst receives
+`403` before business workflow code runs.
 
 ### List query contract
 

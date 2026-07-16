@@ -6,6 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 
+from app.core.security import AccessMode
 from app.models.enums import UserRole
 
 
@@ -43,6 +44,7 @@ class AuthenticatedUserResponse(BaseModel):
     active: bool
     created_at: datetime
     last_login_at: datetime | None
+    access_mode: AccessMode = AccessMode.STANDARD
 
 
 class LoginResponse(BaseModel):

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from enum import StrEnum
 from uuid import UUID, uuid4
 
 import jwt
@@ -20,6 +21,13 @@ class TokenValidationError(ValueError):
     """Raised when an access token is expired, malformed, or otherwise untrusted."""
 
 
+class AccessMode(StrEnum):
+    """Server-authoritative capability boundary carried by an access token."""
+
+    STANDARD = "standard"
+    DEMO_READ_ONLY = "demo_read_only"
+
+
 @dataclass(frozen=True, slots=True)
 class AccessToken:
     value: str
@@ -31,6 +39,7 @@ class TokenClaims:
     user_id: UUID
     role: UserRole
     token_id: UUID
+    access_mode: AccessMode
 
 
 class PasswordService:
@@ -83,7 +92,13 @@ class TokenService:
     def configured(self) -> bool:
         return self._secret is not None
 
-    def create_access_token(self, *, user_id: UUID, role: UserRole) -> AccessToken:
+    def create_access_token(
+        self,
+        *,
+        user_id: UUID,
+        role: UserRole,
+        access_mode: AccessMode = AccessMode.STANDARD,
+    ) -> AccessToken:
         secret = self._require_secret()
         issued_at = datetime.now(UTC)
         expires_at = issued_at + self._ttl
@@ -91,6 +106,7 @@ class TokenService:
         payload = {
             "sub": str(user_id),
             "role": role.value,
+            "access_mode": access_mode.value,
             "type": "access",
             "jti": str(token_id),
             "iat": issued_at,
@@ -110,7 +126,19 @@ class TokenService:
                 algorithms=[self._algorithm],
                 audience=self._audience,
                 issuer=self._issuer,
-                options={"require": ["sub", "role", "type", "jti", "iat", "exp", "iss", "aud"]},
+                options={
+                    "require": [
+                        "sub",
+                        "role",
+                        "access_mode",
+                        "type",
+                        "jti",
+                        "iat",
+                        "exp",
+                        "iss",
+                        "aud",
+                    ]
+                },
             )
             if payload.get("type") != "access":
                 raise TokenValidationError("token type is not accepted")
@@ -118,6 +146,7 @@ class TokenService:
                 user_id=UUID(str(payload["sub"])),
                 role=UserRole(str(payload["role"])),
                 token_id=UUID(str(payload["jti"])),
+                access_mode=AccessMode(str(payload["access_mode"])),
             )
         except (jwt.PyJWTError, KeyError, TypeError, ValueError) as exc:
             if isinstance(exc, TokenValidationError):

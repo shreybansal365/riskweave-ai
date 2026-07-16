@@ -10,8 +10,9 @@ from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
 from app.core.config import Settings
-from app.core.rate_limit import AuthenticationFailureLimiter
+from app.core.rate_limit import AuthenticationFailureLimiter, PublicDemoAccessLimiter
 from app.core.security import (
+    AccessMode,
     AuthenticationConfigurationError,
     PasswordService,
     TokenService,
@@ -46,7 +47,15 @@ def test_token_service_round_trip_and_rejections(settings: Settings) -> None:
 
     assert claims.user_id == user_id
     assert claims.role == UserRole.ADMIN
+    assert claims.access_mode == AccessMode.STANDARD
     assert token.expires_in_seconds == 900
+
+    demo_token = service.create_access_token(
+        user_id=user_id,
+        role=UserRole.ANALYST,
+        access_mode=AccessMode.DEMO_READ_ONLY,
+    )
+    assert service.decode_access_token(demo_token.value).access_mode == AccessMode.DEMO_READ_ONLY
 
     with pytest.raises(TokenValidationError):
         service.decode_access_token(f"{token.value}tampered")
@@ -95,6 +104,20 @@ def test_authentication_failure_limiter_uses_fixed_window() -> None:
     assert not limiter.is_allowed("analyst")
     limiter.reset("analyst")
     assert limiter.is_allowed("analyst")
+
+
+def test_public_demo_access_limiter_bounds_successful_issuance() -> None:
+    current_time = 100.0
+
+    def clock() -> float:
+        return current_time
+
+    limiter = PublicDemoAccessLimiter(request_limit=2, window_seconds=60, clock=clock)
+    assert limiter.consume("judge")
+    assert limiter.consume("judge")
+    assert not limiter.consume("judge")
+    current_time = 161.0
+    assert limiter.consume("judge")
 
 
 def test_production_error_response_is_safe(settings: Settings) -> None:

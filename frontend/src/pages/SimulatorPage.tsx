@@ -24,6 +24,7 @@ export function SimulatorPage() {
   const queryClient = useQueryClient();
   const token = session?.token ?? "";
   const isAdmin = session?.user.role === "admin";
+  const isDemoReadOnly = session?.user.access_mode === "demo_read_only";
   const [results, setResults] = useState<Partial<Record<ScenarioKey, ScenarioExecution>>>(
     {},
   );
@@ -118,8 +119,13 @@ export function SimulatorPage() {
       />
       {!isAdmin && (
         <div className="permission-notice">
-          <strong>Read-only analyst view.</strong> Scenario execution and reset are
-          administrator-only operations enforced by the API.
+          <strong>
+            {isDemoReadOnly
+              ? "Public read-only demonstration."
+              : "Read-only analyst view."}
+          </strong>{" "}
+          Scenario execution and reset are administrator-only operations enforced by the
+          API.
         </div>
       )}
       <p className="synthetic-notice">{catalog.data.synthetic_data_notice}</p>

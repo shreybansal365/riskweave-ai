@@ -65,6 +65,11 @@ export const authApi = {
     }),
   me: (token: string, signal?: AbortSignal) =>
     apiRequest<AuthenticatedUser>("/api/auth/me", { token, signal }),
+  demoAccess: (signal?: AbortSignal) =>
+    apiRequest<LoginResponse>("/api/auth/demo-access", {
+      method: "POST",
+      signal,
+    }),
 };
 
 export const dashboardApi = {
