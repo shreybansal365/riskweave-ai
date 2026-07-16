@@ -1,3 +1,11 @@
+databases:
+  - name: riskweave-db-shreybansal365
+    plan: free
+    region: singapore
+    postgresMajorVersion: "17"
+    databaseName: riskweave
+    user: riskweave
+
 services:
   - type: web
     name: riskweave-api-shreybansal365
@@ -22,7 +30,9 @@ services:
       - key: CORS_ORIGINS
         value: https://riskweave-ai-shreybansal365.vercel.app
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: riskweave-db-shreybansal365
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: ACCESS_TOKEN_TTL_MINUTES
